@@ -31,7 +31,7 @@ def admin_customer_user_create(request):
     else:
         form = CustomerUserCreateForm()
         if customer_id:
-            form.fields["customer"].initial = customer_id
+            form.fields["customer"].initial = int(customer_id)
 
     return render(
         request,
