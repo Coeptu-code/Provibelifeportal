@@ -9,17 +9,17 @@
 <div class="card flush">
   <div class="tbl-wrap">
     <table class="tbl">
-      <thead><tr><th>ID</th><th>Order</th><th>Customer</th><th>Carrier</th><th>Tracking</th><th>Status</th><th>Shipped</th></tr></thead>
+      <thead><tr><th class="d-mobile-none">ID</th><th>Order</th><th>Customer</th><th class="d-mobile-none">Carrier</th><th>Tracking</th><th>Status</th><th class="d-mobile-none">Shipped</th></tr></thead>
       <tbody>
         {% for s in shipments %}
         <tr>
-          <td class="strong">#{{ s.id }}</td>
+          <td class="strong d-mobile-none">#{{ s.id }}</td>
           <td>#{{ s.order.id }}</td>
           <td>{{ s.order.customer.name }}</td>
-          <td>{{ s.carrier|default:'-' }}</td>
+          <td class="d-mobile-none">{{ s.carrier|default:'-' }}</td>
           <td class="mono">{{ s.tracking_number|default:'-' }}</td>
           <td><span class="pill status-{{ s.status }}">{{ s.status }}</span></td>
-          <td>{{ s.shipped_at|date:"M d, Y"|default:'-' }}</td>
+          <td class="d-mobile-none">{{ s.shipped_at|date:"M d, Y"|default:'-' }}</td>
         </tr>
         {% empty %}
         <tr><td colspan="7" class="text-secondary">No shipments yet.</td></tr>

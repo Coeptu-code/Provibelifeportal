@@ -9,16 +9,16 @@
 <div class="card flush">
   <div class="tbl-wrap">
     <table class="tbl">
-      <thead><tr><th>Invoice</th><th>Order</th><th>Customer</th><th>Status</th><th class="num">Total</th><th>Due Date</th></tr></thead>
+      <thead><tr><th>Invoice</th><th class="d-mobile-none">Order</th><th>Customer</th><th>Status</th><th class="num">Total</th><th class="d-mobile-none">Due Date</th></tr></thead>
       <tbody>
         {% for invoice in invoices %}
         <tr>
           <td class="mono strong">{{ invoice.invoice_number }}</td>
-          <td>#{{ invoice.order.id }}</td>
+          <td class="d-mobile-none">#{{ invoice.order.id }}</td>
           <td>{{ invoice.customer.name }}</td>
           <td><span class="pill status-{{ invoice.status }}">{{ invoice.status }}</span></td>
           <td class="num strong">${{ invoice.total }}</td>
-          <td>{{ invoice.due_date|date:"M d, Y"|default:'-' }}</td>
+          <td class="d-mobile-none">{{ invoice.due_date|date:"M d, Y"|default:'-' }}</td>
         </tr>
         {% empty %}
         <tr><td colspan="6" class="text-secondary">No invoices generated.</td></tr>

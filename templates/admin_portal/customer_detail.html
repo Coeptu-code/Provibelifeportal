@@ -102,13 +102,13 @@
       <div class="card flush">
         <div class="tbl-wrap">
           <table class="tbl">
-            <thead><tr><th>SKU</th><th class="num">Price</th><th class="num">Min Qty</th><th>Expires</th><th></th></tr></thead>
+            <thead><tr><th>SKU</th><th class="num">Price</th><th class="num d-mobile-none">Min Qty</th><th>Expires</th><th></th></tr></thead>
             <tbody>
               {% for row in customer_prices %}
               <tr>
                 <td class="mono">{{ row.product.sku }}</td>
                 <td class="num">${{ row.unit_price }}</td>
-                <td class="num">{{ row.minimum_quantity }}</td>
+                <td class="num d-mobile-none">{{ row.minimum_quantity }}</td>
                 <td>{{ row.expiration_date|date:"M d, Y"|default:"Open" }}</td>
                 <td><a class="btn sm" href="{% url 'admin_portal:customer_price_edit' row.id %}">Edit</a></td>
               </tr>

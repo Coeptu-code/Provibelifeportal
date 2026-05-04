@@ -13,15 +13,15 @@
 <div class="card flush">
   <div class="tbl-wrap">
     <table class="tbl">
-      <thead><tr><th>Customer</th><th>SKU</th><th class="num">Price</th><th class="num">Min Qty</th><th>Effective</th><th>Expires</th></tr></thead>
+      <thead><tr><th>Customer</th><th>SKU</th><th class="num">Price</th><th class="num d-mobile-none">Min Qty</th><th class="d-mobile-none">Effective</th><th>Expires</th></tr></thead>
       <tbody>
         {% for price in prices %}
         <tr>
           <td>{{ price.customer.name }}</td>
           <td class="mono">{{ price.product.sku }}</td>
           <td class="num">${{ price.unit_price }}</td>
-          <td class="num">{{ price.minimum_quantity }}</td>
-          <td>{{ price.effective_date|date:"M d, Y"|default:'-' }}</td>
+          <td class="num d-mobile-none">{{ price.minimum_quantity }}</td>
+          <td class="d-mobile-none">{{ price.effective_date|date:"M d, Y"|default:'-' }}</td>
           <td>{{ price.expiration_date|date:"M d, Y"|default:"Open" }}</td>
         </tr>
         {% empty %}

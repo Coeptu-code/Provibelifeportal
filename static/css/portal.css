@@ -60,6 +60,17 @@
 .more-sheet { display: none; }
 
 @media (max-width: 899px) {
+  /* Hide columns not needed on small screens */
+  .d-mobile-none { display: none !important; }
+
+  /* Summary/CTA panel: drop sticky, float to top of stacked grid */
+  .summary { position: static !important; }
+  .grid-2 > .summary,
+  .grid-2 > .summary-col { order: -1; }
+
+  /* Login art panel: hide, show form immediately */
+  .login-art { display: none !important; }
+
   .more-sheet {
     display: none;
     position: fixed;
@@ -95,6 +106,11 @@
     border: none;
     font-family: inherit;
   }
+}
+
+/* 3-column grid: collapse to single column on small phones */
+@media (max-width: 600px) {
+  .grid-3 { grid-template-columns: 1fr !important; }
 }
 
 /* Print styles for pick ticket */
