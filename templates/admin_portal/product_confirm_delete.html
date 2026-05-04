@@ -1,0 +1,10 @@
+{% extends "admin_portal/base.html" %}
+{% block content %}
+<h2 class="h4 mb-3">Delete Product</h2>
+<p>Are you sure you want to delete <strong>{{ product.name }}</strong> ({{ product.sku }})?</p>
+<form method="post">
+  {% csrf_token %}
+  <button type="submit" class="btn btn-danger">Yes, Delete Product</button>
+  <a href="{% url 'admin_portal:products' %}" class="btn btn-outline-secondary">Cancel</a>
+</form>
+{% endblock %}

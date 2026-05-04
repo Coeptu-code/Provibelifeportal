@@ -1,0 +1,40 @@
+{% extends "admin_portal/base.html" %}
+{% block content %}
+<h2 class="h4 mb-3">Invoice {{ invoice.invoice_number }}</h2>
+<div class="row g-3 mb-3">
+  <div class="col-md-4"><strong>Order</strong><div>#{{ invoice.order.id }}</div></div>
+  <div class="col-md-4"><strong>Customer</strong><div>{{ invoice.customer.name }}</div></div>
+  <div class="col-md-2"><strong>Status</strong><div>{{ invoice.status }}</div></div>
+  <div class="col-md-2"><strong>Type</strong><div>{{ invoice.get_invoice_kind_display }}</div></div>
+</div>
+<div class="row g-3 mb-3">
+  <div class="col-md-3"><strong>Subtotal</strong><div>${{ invoice.subtotal }}</div></div>
+  <div class="col-md-3"><strong>Shipping</strong><div>${{ invoice.shipping_total }}</div></div>
+  <div class="col-md-3"><strong>Tax</strong><div>${{ invoice.tax_total }}</div></div>
+  <div class="col-md-3"><strong>Total</strong><div>${{ invoice.total }}</div></div>
+</div>
+<p><strong>Due:</strong> {{ invoice.due_date|default:"-" }}</p>
+
+<h3 class="h6 mt-4">Shipping Quote</h3>
+<ul>
+  <li>Status: {{ invoice.shipping_quote_status }}</li>
+  <li>Carrier/Service: {{ invoice.shipping_carrier|default:"-" }} {{ invoice.shipping_service|default:"" }}</li>
+  <li>Rate ID: {{ invoice.shipping_rate_id|default:"-" }}</li>
+  <li>Currency: {{ invoice.shipping_currency|default:"-" }}</li>
+  <li>Quoted At: {{ invoice.shipping_quoted_at|default:"-" }}</li>
+  <li>Input Source: {{ invoice.get_shipping_input_source_display }}</li>
+  {% if invoice.shipping_quote_reason %}<li>Reason: {{ invoice.shipping_quote_reason }}</li>{% endif %}
+</ul>
+
+<div class="d-flex flex-wrap gap-2">
+  {% if invoice.pdf_file %}
+    <a class="btn btn-primary btn-sm" href="{{ invoice.pdf_file.url }}" target="_blank">Branded Invoice PDF</a>
+  {% endif %}
+  {% if invoice.stripe_hosted_invoice_url %}
+    <a class="btn btn-success btn-sm" href="{{ invoice.stripe_hosted_invoice_url }}" target="_blank">Hosted Stripe Invoice</a>
+  {% endif %}
+  {% if invoice.stripe_invoice_pdf %}
+    <a class="btn btn-outline-secondary btn-sm" href="{{ invoice.stripe_invoice_pdf }}" target="_blank">Stripe PDF</a>
+  {% endif %}
+</div>
+{% endblock %}

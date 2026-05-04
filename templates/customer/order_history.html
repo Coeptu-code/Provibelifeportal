@@ -1,0 +1,22 @@
+{% extends "customer/base.html" %}
+{% block content %}
+<h2 class="h4 mb-3">Order History</h2>
+<div class="table-responsive">
+  <table class="table table-hover align-middle">
+    <thead><tr><th>ID</th><th>Status</th><th>Submitted</th><th>Total</th><th></th></tr></thead>
+    <tbody>
+      {% for order in orders %}
+      <tr>
+        <td>#{{ order.id }}</td>
+        <td><span class="badge badge-soft status-{{ order.status }}">{{ order.status }}</span></td>
+        <td>{{ order.submitted_at|default:'-' }}</td>
+        <td>${{ order.total }}</td>
+        <td><a class="btn btn-sm btn-outline-primary" href="{% url 'customers:order_detail' order.id %}">View</a></td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="5" class="text-secondary">No orders yet.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

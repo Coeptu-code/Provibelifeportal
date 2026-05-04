@@ -1,0 +1,9 @@
+{% extends "admin_portal/base.html" %}
+{% block content %}
+<h2 class="h4 mb-3">Approve Customer SKU</h2>
+<form method="post" class="row g-3">
+  {% csrf_token %}
+  {{ form.as_p }}
+  <div><button class="btn btn-primary" type="submit">Save Approval</button></div>
+</form>
+{% endblock %}

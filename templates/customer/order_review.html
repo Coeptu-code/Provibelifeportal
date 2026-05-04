@@ -1,0 +1,111 @@
+{% extends "customer/base.html" %}
+{% block content %}
+{% if order %}
+  <h2 class="h4 mb-3">Order Review</h2>
+  <p class="text-secondary mb-3">Order #{{ order.id }} status {{ order.get_status_display }}</p>
+  <div class="table-responsive mb-3">
+    <table class="table align-middle">
+      <thead>
+        <tr>
+          <th>SKU</th>
+          <th>QTY</th>
+          <th>UNIT</th>
+          <th>EXTENDED</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in order.items.all %}
+          <tr>
+            <td>{{ item.product.sku }}</td>
+            <td>{{ item.quantity }}</td>
+            <td>${{ item.unit_price }}</td>
+            <td>${{ item.extended_price }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div class="d-flex flex-column align-items-end gap-1">
+    <div>Subtotal: <strong>${{ subtotal }}</strong></div>
+    <div>Estimated Shipping: <strong>${{ shipping_total }}</strong></div>
+    <div>Tax: <strong>${{ tax_total }}</strong></div>
+    <div class="h5 mb-0">Estimated Total: <strong>${{ estimated_total }}</strong></div>
+  </div>
+{% else %}
+  <h2 class="h4 mb-3">Verify Order</h2>
+  <p class="text-secondary mb-3">Review pricing and shipping before final submission.</p>
+
+  {% if quote_warning %}
+    <div class="alert alert-warning py-2">{{ quote_warning }}</div>
+  {% endif %}
+
+  <div class="row g-3 mb-3">
+    <div class="col-md-4">
+      <div class="small text-secondary">PO Number</div>
+      <div class="fw-semibold">{{ po_number|default:"-" }}</div>
+    </div>
+    <div class="col-md-4">
+      <div class="small text-secondary">Requested Ship Date</div>
+      <div class="fw-semibold">{{ requested_ship_date|date:"F j, Y"|default:"-" }}</div>
+    </div>
+    <div class="col-md-4">
+      <div class="small text-secondary">Shipping Address</div>
+      <div class="fw-semibold">{{ shipping_address.label }}</div>
+      <div class="small text-secondary">
+        {{ shipping_address.line1 }}{% if shipping_address.line2 %}, {{ shipping_address.line2 }}{% endif %},
+        {{ shipping_address.city }}, {{ shipping_address.state }} {{ shipping_address.postal_code }}
+      </div>
+    </div>
+  </div>
+
+  <div class="table-responsive mb-3">
+    <table class="table align-middle">
+      <thead>
+        <tr>
+          <th>SKU</th>
+          <th>ITEM</th>
+          <th>QTY</th>
+          <th>UNIT</th>
+          <th>EXTENDED</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>{{ product.sku }}</td>
+          <td>{{ product.name }}</td>
+          <td>{{ quantity }}</td>
+          <td>${{ unit_price }}</td>
+          <td>${{ subtotal }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="row g-3 mb-3">
+    <div class="col-md-6">
+      <div class="small text-secondary">Quoted Carrier</div>
+      <div class="fw-semibold">{{ shipping_quote.carrier }} {{ shipping_quote.service }}</div>
+      <div class="small text-secondary">Rate ID: {{ shipping_quote.rate_id }}</div>
+    </div>
+    <div class="col-md-6">
+      <div class="small text-secondary">Currency</div>
+      <div class="fw-semibold text-uppercase">{{ shipping_quote.currency }}</div>
+    </div>
+  </div>
+
+  <div class="d-flex flex-column align-items-end gap-1 mb-3">
+    <div>Subtotal: <strong>${{ subtotal }}</strong></div>
+    <div>Estimated Shipping: <strong>${{ shipping_total }}</strong></div>
+    <div>Tax: <strong>${{ tax_total }}</strong></div>
+    <div class="h5 mb-0">Estimated Total: <strong>${{ estimated_total }}</strong></div>
+  </div>
+
+  <form method="post" class="d-flex gap-2">
+    {% csrf_token %}
+    <input type="hidden" name="action" value="confirm">
+    <input type="hidden" name="draft_token" value="{{ draft_token }}">
+    <button type="submit" class="btn btn-primary">Submit Order</button>
+    <a href="{% url 'customers:order_new' %}" class="btn btn-outline-secondary">Back</a>
+  </form>
+{% endif %}
+{% endblock %}

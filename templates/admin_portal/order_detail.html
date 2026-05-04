@@ -1,0 +1,35 @@
+{% extends "admin_portal/base.html" %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h2 class="h4 m-0">Order #{{ order.id }}</h2>
+  <span class="badge badge-soft status-{{ order.status }}">{{ order.status }}</span>
+</div>
+<div class="row g-3 mb-3">
+  <div class="col-md-4"><strong>Customer</strong><div>{{ order.customer.name }}</div></div>
+  <div class="col-md-4"><strong>PO Number</strong><div>{{ order.po_number|default:'-' }}</div></div>
+  <div class="col-md-4"><strong>Ship To</strong><div>{{ order.shipping_address.label }}</div></div>
+</div>
+<div class="table-responsive mb-3">
+<table class="table align-middle">
+  <thead><tr><th>SKU</th><th>Qty</th><th>Unit</th><th>Extended</th></tr></thead>
+  <tbody>{% for item in order.items.all %}<tr><td>{{ item.product.sku }}</td><td>{{ item.quantity }}</td><td>${{ item.unit_price }}</td><td>${{ item.extended_price }}</td></tr>{% endfor %}</tbody>
+</table>
+</div>
+<form method="post" action="{% url 'admin_portal:order_action' order.id %}" class="row g-2 align-items-end">
+  {% csrf_token %}
+  <div class="col-md-3"><label class="form-label">Carrier</label><input type="text" name="carrier" class="form-control" placeholder="UPS"></div>
+  <div class="col-md-4"><label class="form-label">Tracking Number</label><input type="text" name="tracking_number" class="form-control" placeholder="1Z..."></div>
+  <div class="col-md-3">
+    <label class="form-label">Shipping Override (Approve)</label>
+    <input type="number" name="shipping_override" class="form-control" min="0" step="0.01" placeholder="{{ approval_shipping_estimate }}">
+    <div class="form-text">Estimated: ${{ approval_shipping_estimate }}{% if approval_shipping_reason %} ({{ approval_shipping_reason }}){% endif %}</div>
+  </div>
+  <div class="col-md-12 d-flex flex-wrap gap-2 mt-2">
+    {% for action in available_actions %}
+      <button name="action" value="{{ action.value }}" type="submit" class="btn {{ action.btn_class }} btn-sm">{{ action.label }}</button>
+    {% empty %}
+      <span class="text-secondary">No further actions available for this order state.</span>
+    {% endfor %}
+  </div>
+</form>
+{% endblock %}

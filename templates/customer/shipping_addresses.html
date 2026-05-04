@@ -1,0 +1,24 @@
+{% extends "customer/base.html" %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h2 class="h4 m-0">Shipping Addresses</h2>
+  <a class="btn btn-primary btn-sm" href="{% url 'customers:shipping_address_new' %}">Add Address</a>
+</div>
+<div class="table-responsive">
+  <table class="table align-middle">
+    <thead><tr><th>Label</th><th>Address</th><th>Default</th><th>Active</th></tr></thead>
+    <tbody>
+      {% for address in addresses %}
+      <tr>
+        <td>{{ address.label }}</td>
+        <td>{{ address.line1 }}, {{ address.city }}, {{ address.state }} {{ address.postal_code }}</td>
+        <td>{{ address.is_default|yesno:'Yes,No' }}</td>
+        <td>{{ address.is_active|yesno:'Yes,No' }}</td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="4" class="text-secondary">No addresses added.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

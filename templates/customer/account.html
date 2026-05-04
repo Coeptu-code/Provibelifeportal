@@ -1,0 +1,6 @@
+{% extends "customer/base.html" %}
+{% block content %}
+<h2>Account</h2>
+<p>Customer: {{ request.user.customer.name }}</p>
+<p>Payment Terms: {{ request.user.customer.payment_terms }}</p>
+{% endblock %}

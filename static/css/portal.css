@@ -1,0 +1,120 @@
+:root {
+  --portal-bg: #f4f6fb;
+  --portal-card: #ffffff;
+  --portal-text: #1f2937;
+  --portal-muted: #6b7280;
+  --portal-primary: #0b5ed7;
+  --portal-success: #198754;
+  --portal-warning: #fd7e14;
+  --portal-danger: #dc3545;
+}
+body {
+  background: radial-gradient(circle at top right, #e9efff, var(--portal-bg) 55%);
+  color: var(--portal-text);
+}
+.portal-shell {
+  max-width: 1280px;
+}
+.portal-card {
+  border: 0;
+  border-radius: 14px;
+  box-shadow: 0 10px 30px rgba(23, 33, 70, 0.08);
+}
+.metric-card {
+  border-radius: 12px;
+  border: 1px solid #e6eaf4;
+  background: #fff;
+}
+.metric-label {
+  color: var(--portal-muted);
+  font-size: 0.85rem;
+}
+.metric-value {
+  font-size: 1.65rem;
+  font-weight: 700;
+  line-height: 1.1;
+}
+.table thead th {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  color: #5f6b84;
+  border-bottom-width: 1px;
+}
+.badge-soft {
+  background: #eef2ff;
+  color: #374151;
+  border: 1px solid #dbe4ff;
+}
+.status-SUBMITTED, .status-UNDER_REVIEW, .status-OPEN, .status-SENT { background: #e8f1ff; color: #0a58ca; }
+.status-APPROVED, .status-SHIPPED, .status-PAID { background: #e8f8ee; color: #146c43; }
+.status-ON_HOLD, .status-PACKED, .status-PARTIALLY_SHIPPED, .status-PARTIALLY_PAID { background: #fff2e6; color: #b45309; }
+.status-CANCELLED, .status-VOID { background: #fde8e8; color: #b91c1c; }
+.status-DRAFT, .status-RELEASED_TO_WAREHOUSE, .status-PICKING, .status-OVERDUE { background: #f3f4f6; color: #374151; }
+.table-actions {
+  display: inline-flex;
+  gap: 0.5rem;
+  white-space: nowrap;
+}
+.brand-logo {
+  height: 42px;
+  width: auto;
+  display: block;
+  filter: drop-shadow(0 1px 0 rgba(255, 255, 255, 0.15));
+}
+.login-logo {
+  height: 104px;
+  width: auto;
+  max-width: 100%;
+}
+.login-page {
+  background: #000 !important;
+}
+.login-card {
+  background: linear-gradient(180deg, #081733 0%, #071429 100%);
+  color: #f8fafc;
+  border: 1px solid #223357;
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.45);
+}
+.login-card .text-secondary {
+  color: #b2c4e3 !important;
+}
+.login-card .form-label {
+  color: #dbe7ff;
+  font-weight: 600;
+  margin-bottom: 0.35rem;
+  font-size: 0.95rem;
+}
+.login-input {
+  background: #0f172a;
+  border-color: #334155;
+  color: #e5e7eb;
+  min-height: 52px;
+  border-radius: 10px;
+  padding: 0.75rem 0.9rem;
+  font-size: 1.05rem;
+}
+.login-input:focus {
+  background: #111827;
+  color: #ffffff;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 0.18rem rgba(59, 130, 246, 0.2);
+}
+.login-field {
+  margin-bottom: 1rem;
+}
+.login-card .invalid-feedback {
+  color: #fca5a5;
+}
+.login-card .alert-danger {
+  background: rgba(220, 38, 38, 0.15);
+  border: 1px solid rgba(248, 113, 113, 0.45);
+  color: #fecaca;
+}
+.login-btn {
+  font-size: 1.2rem;
+  font-weight: 600;
+  border-radius: 10px;
+  box-shadow: 0 8px 20px rgba(37, 99, 235, 0.35);
+  min-height: 54px;
+}

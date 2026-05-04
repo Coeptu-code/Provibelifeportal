@@ -1,0 +1,7 @@
+{% extends "admin_portal/base.html" %}
+{% block content %}
+<h2>Payments</h2>
+<table border="1"><tr><th>Invoice</th><th>Customer</th><th>Status</th><th>Paid At</th></tr>
+{% for invoice in invoices %}<tr><td>{{ invoice.invoice_number }}</td><td>{{ invoice.customer.name }}</td><td>{{ invoice.status }}</td><td>{{ invoice.paid_at }}</td></tr>{% endfor %}
+</table>
+{% endblock %}
