@@ -11,6 +11,7 @@ class Product(models.Model):
     name = models.CharField(max_length=255)
     description = models.TextField(blank=True)
     image = models.ImageField(upload_to="products/", blank=True, null=True)
+    image_url = models.URLField(blank=True, null=True)
     case_quantity = models.PositiveIntegerField(default=1)
     shipping_weight = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     shipping_weight_unit = models.CharField(
@@ -67,4 +68,15 @@ class Product(models.Model):
 
     def __str__(self):
         return f"{self.sku} - {self.name}"
+
+    @property
+    def display_image_url(self):
+        if self.image_url:
+            return self.image_url
+        if self.image:
+            try:
+                return self.image.url
+            except ValueError:
+                return ""
+        return ""
 # Create your models here.

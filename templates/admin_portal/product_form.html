@@ -3,6 +3,9 @@
 <h2 class="h4 mb-3">{{ form_title|default:"Add Product" }}</h2>
 {% if product %}
 <p class="text-secondary">SKU: <strong>{{ product.sku }}</strong></p>
+{% if product.display_image_url %}
+<p class="mb-3"><img src="{{ product.display_image_url }}" alt="{{ product.name }}" style="width:120px;height:120px;object-fit:cover;border-radius:10px;"></p>
+{% endif %}
 {% else %}
 <p class="text-secondary">SKU will be auto-generated on save. Next SKU: <strong>{{ next_sku }}</strong></p>
 {% endif %}

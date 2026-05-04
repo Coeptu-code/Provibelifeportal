@@ -39,8 +39,8 @@
     <div class="col-lg-4 col-md-6">
       <div class="metric-card p-3 h-100 d-flex flex-column">
         <div class="d-flex align-items-center gap-3 mb-2">
-          {% if row.product.image %}
-            <img src="{{ row.product.image.url }}" alt="{{ row.product.name }}" style="width:60px;height:60px;object-fit:cover;border-radius:8px;">
+          {% if row.product.display_image_url %}
+            <img src="{{ row.product.display_image_url }}" alt="{{ row.product.name }}" style="width:60px;height:60px;object-fit:cover;border-radius:8px;">
           {% else %}
             <div class="d-flex align-items-center justify-content-center bg-light border rounded" style="width:60px;height:60px;">-</div>
           {% endif %}

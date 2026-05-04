@@ -4,6 +4,8 @@ from products.models import Product
 
 
 class ProductForm(forms.ModelForm):
+    image_upload = forms.ImageField(required=False, label="Product image")
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["sku"].required = False
@@ -19,7 +21,7 @@ class ProductForm(forms.ModelForm):
             "sku",
             "name",
             "description",
-            "image",
+            "image_upload",
             "case_quantity",
             "shipping_weight",
             "shipping_weight_unit",

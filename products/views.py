@@ -5,6 +5,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from accounts.decorators import ops_required
 from products.forms import ProductForm
 from products.models import Product
+from products.storage import upload_product_image
 
 
 @ops_required
@@ -18,9 +19,17 @@ def admin_product_create(request):
     if request.method == "POST":
         form = ProductForm(request.POST, request.FILES)
         if form.is_valid():
-            form.save()
-            messages.success(request, "Product created.")
-            return redirect("admin_portal:products")
+            product = form.save(commit=False)
+            image_upload = form.cleaned_data.get("image_upload")
+            if image_upload:
+                try:
+                    product.image_url = upload_product_image(image_upload)
+                except Exception as exc:
+                    form.add_error("image_upload", f"Upload failed: {exc}")
+            if not form.errors:
+                product.save()
+                messages.success(request, "Product created.")
+                return redirect("admin_portal:products")
     else:
         form = ProductForm()
     return render(
@@ -41,9 +50,17 @@ def admin_product_edit(request, pk):
     if request.method == "POST":
         form = ProductForm(request.POST, request.FILES, instance=product)
         if form.is_valid():
-            form.save()
-            messages.success(request, "Product updated.")
-            return redirect("admin_portal:products")
+            product = form.save(commit=False)
+            image_upload = form.cleaned_data.get("image_upload")
+            if image_upload:
+                try:
+                    product.image_url = upload_product_image(image_upload)
+                except Exception as exc:
+                    form.add_error("image_upload", f"Upload failed: {exc}")
+            if not form.errors:
+                product.save()
+                messages.success(request, "Product updated.")
+                return redirect("admin_portal:products")
     else:
         form = ProductForm(instance=product)
     return render(
