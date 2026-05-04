@@ -1,35 +1,100 @@
 {% extends "admin_portal/base.html" %}
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-3">
-  <h2 class="h4 m-0">Order #{{ order.id }}</h2>
-  <span class="badge badge-soft status-{{ order.status }}">{{ order.status }}</span>
-</div>
-<div class="row g-3 mb-3">
-  <div class="col-md-4"><strong>Customer</strong><div>{{ order.customer.name }}</div></div>
-  <div class="col-md-4"><strong>PO Number</strong><div>{{ order.po_number|default:'-' }}</div></div>
-  <div class="col-md-4"><strong>Ship To</strong><div>{{ order.shipping_address.label }}</div></div>
-</div>
-<div class="table-responsive mb-3">
-<table class="table align-middle">
-  <thead><tr><th>SKU</th><th>Qty</th><th>Unit</th><th>Extended</th></tr></thead>
-  <tbody>{% for item in order.items.all %}<tr><td>{{ item.product.sku }}</td><td>{{ item.quantity }}</td><td>${{ item.unit_price }}</td><td>${{ item.extended_price }}</td></tr>{% endfor %}</tbody>
-</table>
-</div>
-<form method="post" action="{% url 'admin_portal:order_action' order.id %}" class="row g-2 align-items-end">
-  {% csrf_token %}
-  <div class="col-md-3"><label class="form-label">Carrier</label><input type="text" name="carrier" class="form-control" placeholder="UPS"></div>
-  <div class="col-md-4"><label class="form-label">Tracking Number</label><input type="text" name="tracking_number" class="form-control" placeholder="1Z..."></div>
-  <div class="col-md-3">
-    <label class="form-label">Shipping Override (Approve)</label>
-    <input type="number" name="shipping_override" class="form-control" min="0" step="0.01" placeholder="{{ approval_shipping_estimate }}">
-    <div class="form-text">Estimated: ${{ approval_shipping_estimate }}{% if approval_shipping_reason %} ({{ approval_shipping_reason }}){% endif %}</div>
+<div class="page-head">
+  <div>
+    <h1>Order #{{ order.id }}</h1>
   </div>
-  <div class="col-md-12 d-flex flex-wrap gap-2 mt-2">
-    {% for action in available_actions %}
-      <button name="action" value="{{ action.value }}" type="submit" class="btn {{ action.btn_class }} btn-sm">{{ action.label }}</button>
-    {% empty %}
-      <span class="text-secondary">No further actions available for this order state.</span>
-    {% endfor %}
+  <div class="right">
+    <span class="pill status-{{ order.status }}">{{ order.status }}</span>
   </div>
-</form>
+</div>
+
+<div class="grid-2">
+  <div>
+    <div class="card">
+      <div class="card-head">
+        <h3>Order Information</h3>
+      </div>
+      <div class="card-body">
+        <div class="kv">
+          <div class="k">Customer</div>
+          <div class="v">{{ order.customer.name }}</div>
+        </div>
+        <div class="kv" style="margin-top: 16px;">
+          <div class="k">PO Number</div>
+          <div class="v mono">{{ order.po_number|default:'-' }}</div>
+        </div>
+        <div class="kv" style="margin-top: 16px;">
+          <div class="k">Ship To</div>
+          <div class="v">{{ order.shipping_address.label }}</div>
+        </div>
+        <div class="kv" style="margin-top: 16px;">
+          <div class="k">Requested Date</div>
+          <div class="v">{{ order.requested_ship_date|date:"M d, Y"|default:'-' }}</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top: 22px;">
+      <div class="card-head">
+        <h3>Items</h3>
+      </div>
+      <div class="tbl-wrap">
+        <table class="tbl">
+          <thead><tr><th>SKU</th><th class="num">Qty</th><th class="num">Unit</th><th class="num">Extended</th></tr></thead>
+          <tbody>
+            {% for item in order.items.all %}
+            <tr>
+              <td class="mono">{{ item.product.sku }}</td>
+              <td class="num">{{ item.quantity }}</td>
+              <td class="num">${{ item.unit_price }}</td>
+              <td class="num strong">${{ item.extended_price }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="summary">
+    <div class="row">
+      <span>Subtotal</span>
+      <span class="v">${{ order.subtotal }}</span>
+    </div>
+    <div class="row">
+      <span>Tax</span>
+      <span class="v">TBD</span>
+    </div>
+    <hr>
+    <div class="total">
+      <div class="l">Total</div>
+      <div class="v">${{ order.total }}</div>
+    </div>
+
+    <form method="post" action="{% url 'admin_portal:order_action' order.id %}" style="margin-top: 22px; display: flex; flex-direction: column; gap: 14px;">
+      {% csrf_token %}
+      <div class="field">
+        <label class="label">Carrier</label>
+        <input type="text" name="carrier" class="input" placeholder="UPS">
+      </div>
+      <div class="field">
+        <label class="label">Tracking Number</label>
+        <input type="text" name="tracking_number" class="input" placeholder="1Z...">
+      </div>
+      <div class="field">
+        <label class="label">Shipping Override</label>
+        <input type="number" name="shipping_override" class="input" min="0" step="0.01" placeholder="{{ approval_shipping_estimate }}">
+        <div class="help">Estimated: ${{ approval_shipping_estimate }}{% if approval_shipping_reason %} ({{ approval_shipping_reason }}){% endif %}</div>
+      </div>
+      <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+        {% for action in available_actions %}
+          <button name="action" value="{{ action.value }}" type="submit" class="btn {% if 'danger' in action.btn_class %}danger{% elif 'success' in action.btn_class %}gold{% else %}primary{% endif %} sm">{{ action.label }}</button>
+        {% empty %}
+          <span class="text-secondary">No further actions available.</span>
+        {% endfor %}
+      </div>
+    </form>
+  </div>
+</div>
 {% endblock %}

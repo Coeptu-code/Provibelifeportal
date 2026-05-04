@@ -24,6 +24,8 @@ def admin_product_create(request):
             if image_upload:
                 try:
                     product.image_url = upload_product_image(image_upload)
+                    # Prevent stale local media fallback after a successful Supabase upload.
+                    product.image = None
                 except Exception as exc:
                     form.add_error("image_upload", f"Upload failed: {exc}")
             if not form.errors:
@@ -55,6 +57,8 @@ def admin_product_edit(request, pk):
             if image_upload:
                 try:
                     product.image_url = upload_product_image(image_upload)
+                    # Prevent stale local media fallback after a successful Supabase upload.
+                    product.image = None
                 except Exception as exc:
                     form.add_error("image_upload", f"Upload failed: {exc}")
             if not form.errors:

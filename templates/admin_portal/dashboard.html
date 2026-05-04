@@ -1,64 +1,86 @@
 {% extends "admin_portal/base.html" %}
 {% block content %}
-<h2 class="h4 mb-3">Operations Dashboard</h2>
-<div class="row g-3">
-  <div class="col-lg-3 col-md-6"><div class="metric-card p-3"><div class="metric-label">Open Orders</div><div class="metric-value">{{ open_orders }}</div></div></div>
-  <div class="col-lg-3 col-md-6"><div class="metric-card p-3"><div class="metric-label">New Orders</div><div class="metric-value">{{ new_orders_count }}</div></div></div>
-  <div class="col-lg-3 col-md-6"><div class="metric-card p-3"><div class="metric-label">In Fulfillment</div><div class="metric-value">{{ fulfillment_orders }}</div></div></div>
-  <div class="col-lg-3 col-md-6"><div class="metric-card p-3"><div class="metric-label">Open Invoices</div><div class="metric-value">{{ open_invoices }}</div></div></div>
+<div class="page-head">
+  <div>
+    <h1>Operations Dashboard</h1>
+    <div class="lede">Real-time view of orders, fulfillment, and finances.</div>
+  </div>
 </div>
 
-<div class="row g-3 mt-1">
-  <div class="col-lg-4">
-    <div class="metric-card p-3 h-100">
-      <h3 class="h6 mb-3">Open Order Status</h3>
+<div class="stats">
+  <div class="stat">
+    <div class="lbl">Open Orders</div>
+    <div class="v">{{ open_orders }}</div>
+  </div>
+  <div class="stat">
+    <div class="lbl">New Orders</div>
+    <div class="v">{{ new_orders_count }}</div>
+  </div>
+  <div class="stat">
+    <div class="lbl">In Fulfillment</div>
+    <div class="v">{{ fulfillment_orders }}</div>
+  </div>
+  <div class="stat">
+    <div class="lbl">Open Invoices</div>
+    <div class="v">{{ open_invoices }}</div>
+  </div>
+</div>
+
+<div class="grid-3" style="margin-top: 28px;">
+  <div class="card">
+    <div class="card-head">
+      <h3>Order Status</h3>
+    </div>
+    <ul class="activity">
       {% for row in open_order_status_cards %}
-      <div class="d-flex justify-content-between align-items-center py-1 border-bottom">
-        <span class="small">{{ row.status }}</span>
-        <span class="badge badge-soft status-{{ row.status }}">{{ row.count }}</span>
-      </div>
+        <li>
+          <div class="when">{{ row.count }}</div>
+          <div class="what">{{ row.status }}</div>
+        </li>
       {% endfor %}
-    </div>
+    </ul>
   </div>
 
-  <div class="col-lg-4">
-    <div class="metric-card p-3 h-100">
-      <h3 class="h6 mb-3">New Orders</h3>
-      {% for order in new_orders %}
-      <div class="border rounded p-2 mb-2">
-        <div class="d-flex justify-content-between">
-          <strong>Order #{{ order.id }}</strong>
-          <span class="badge badge-soft status-{{ order.status }}">{{ order.status }}</span>
-        </div>
-        <div class="small text-secondary">{{ order.customer.name }}</div>
-        <div class="small">PO: {{ order.po_number|default:"-" }}</div>
-        <div class="small">Total: ${{ order.total }}</div>
-        <a href="{% url 'admin_portal:order_detail' order.id %}" class="btn btn-sm btn-outline-primary mt-2">Open</a>
-      </div>
-      {% empty %}
-      <div class="text-secondary small">No new orders right now.</div>
-      {% endfor %}
+  <div class="card">
+    <div class="card-head">
+      <h3>New Orders</h3>
     </div>
+    {% if new_orders %}
+      <ul class="activity">
+        {% for order in new_orders %}
+          <li>
+            <div class="what">
+              <b>Order #{{ order.id }}</b><br>
+              <span style="font-size: 12px; color: var(--pvl-text-mute);">{{ order.customer.name }}<br>Total: ${{ order.total }}</span>
+            </div>
+            <a href="{% url 'admin_portal:order_detail' order.id %}" class="btn sm" style="margin-left: auto;">View</a>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <div style="padding: 18px 22px; color: var(--pvl-text-mute); font-size: 13px;">No new orders right now.</div>
+    {% endif %}
   </div>
 
-  <div class="col-lg-4">
-    <div class="metric-card p-3 h-100">
-      <h3 class="h6 mb-3">Invoices (Open + Recently Closed)</h3>
-      <div class="small text-secondary mb-2">Recently closed = paid in last {{ recent_closed_days }} days.</div>
-      {% for invoice in invoice_feed %}
-      <div class="border rounded p-2 mb-2">
-        <div class="d-flex justify-content-between">
-          <strong>{{ invoice.invoice_number }}</strong>
-          <span class="badge badge-soft status-{{ invoice.status }}">{{ invoice.status }}</span>
-        </div>
-        <div class="small text-secondary">{{ invoice.customer.name }}</div>
-        <div class="small">Order #{{ invoice.order.id }} • Total: ${{ invoice.total }}</div>
-        <a href="{% url 'admin_portal:invoice_detail' invoice.id %}" class="btn btn-sm btn-outline-primary mt-2">Open</a>
-      </div>
-      {% empty %}
-      <div class="text-secondary small">No open or recently closed invoices.</div>
-      {% endfor %}
+  <div class="card">
+    <div class="card-head">
+      <h3>Invoice Activity</h3>
     </div>
+    {% if invoice_feed %}
+      <ul class="activity">
+        {% for invoice in invoice_feed %}
+          <li>
+            <div class="what">
+              <b>{{ invoice.invoice_number }}</b><br>
+              <span style="font-size: 12px; color: var(--pvl-text-mute);">{{ invoice.customer.name }}<br>Total: ${{ invoice.total }}</span>
+            </div>
+            <a href="{% url 'admin_portal:invoice_detail' invoice.id %}" class="btn sm" style="margin-left: auto;">View</a>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <div style="padding: 18px 22px; color: var(--pvl-text-mute); font-size: 13px;">No invoices to show.</div>
+    {% endif %}
   </div>
 </div>
 {% endblock %}

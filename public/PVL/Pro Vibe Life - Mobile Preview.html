@@ -1,0 +1,303 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Pro Vibe Life — Mobile Preview</title>
+<link href="https://fonts.googleapis.com/css2?family=Mona+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --bg: #f4f1ea;
+    --bg-2: #ebe6da;
+    --ink: #16161a;
+    --ink-2: #5b5a55;
+    --gold: #c9a04a;
+    --line: #d8d3c4;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body {
+    font-family: 'Mona Sans', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    -webkit-font-smoothing: antialiased;
+  }
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background:
+      radial-gradient(circle at 20% 0%, rgba(201,160,74,0.07), transparent 50%),
+      radial-gradient(circle at 90% 80%, rgba(22,22,26,0.04), transparent 60%);
+    pointer-events: none;
+    z-index: 0;
+  }
+  .header {
+    position: relative; z-index: 1;
+    padding: 36px 48px 24px;
+    display: flex; align-items: flex-end; justify-content: space-between;
+    border-bottom: 1px dashed var(--line);
+    flex-wrap: wrap;
+    gap: 18px;
+  }
+  .eyebrow {
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--gold);
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+  h1 {
+    margin: 0;
+    font-family: 'Mona Sans', sans-serif;
+    font-weight: 800;
+    font-size: 44px;
+    letter-spacing: -0.028em;
+    line-height: 1.04;
+  }
+  .sub { color: var(--ink-2); margin-top: 8px; max-width: 56ch; font-size: 15px; line-height: 1.5; }
+  .actions { display: flex; gap: 8px; align-items: center; }
+  .btn {
+    appearance: none; border: 1px solid var(--line); background: #fff;
+    padding: 9px 14px; border-radius: 8px; font: inherit; font-size: 13px; font-weight: 600;
+    color: var(--ink); cursor: pointer; transition: all 0.15s ease;
+  }
+  .btn:hover { background: var(--bg-2); }
+  .btn.primary { background: var(--ink); color: #f7f1de; border-color: var(--ink); }
+  .btn.gold { background: var(--gold); color: #1a1408; border-color: var(--gold); }
+
+  /* Strip */
+  .strip {
+    position: relative; z-index: 1;
+    padding: 36px 32px 64px;
+    display: flex;
+    gap: 32px;
+    overflow-x: auto;
+    scroll-snap-type: x proximity;
+  }
+  .strip::-webkit-scrollbar { height: 10px; }
+  .strip::-webkit-scrollbar-thumb { background: var(--line); border-radius: 6px; }
+
+  .frame-wrap {
+    flex: 0 0 auto;
+    scroll-snap-align: start;
+    display: flex; flex-direction: column; gap: 14px; align-items: center;
+  }
+  .frame-label {
+    text-align: center;
+    width: 100%;
+  }
+  .frame-label .num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px; color: var(--gold); font-weight: 600; letter-spacing: 0.06em;
+  }
+  .frame-label .ttl {
+    font-family: 'Mona Sans', sans-serif;
+    font-weight: 700;
+    font-size: 17px;
+    letter-spacing: -0.018em;
+    margin-top: 2px;
+    color: var(--ink);
+  }
+  .frame-label .desc {
+    font-size: 12.5px; color: var(--ink-2); margin-top: 2px;
+    max-width: 26ch; margin-left: auto; margin-right: auto;
+  }
+
+  /* iPhone bezel */
+  .device {
+    width: 392px;
+    height: 824px;
+    border-radius: 56px;
+    background: #0d0d10;
+    padding: 12px;
+    box-shadow:
+      0 50px 90px rgba(0,0,0,0.22),
+      0 14px 30px rgba(0,0,0,0.10),
+      inset 0 0 0 1.5px rgba(255,255,255,0.05);
+    position: relative;
+  }
+  .device::before {
+    /* dynamic island */
+    content: '';
+    position: absolute;
+    top: 22px; left: 50%; transform: translateX(-50%);
+    width: 122px; height: 36px;
+    background: #000;
+    border-radius: 22px;
+    z-index: 5;
+    pointer-events: none;
+  }
+  .device::after {
+    /* home indicator */
+    content: '';
+    position: absolute;
+    bottom: 22px; left: 50%; transform: translateX(-50%);
+    width: 130px; height: 5px; border-radius: 100px;
+    background: rgba(255,255,255,0.85);
+    z-index: 5;
+    pointer-events: none;
+  }
+  .screen {
+    width: 100%; height: 100%;
+    border-radius: 44px;
+    overflow: hidden;
+    background: #fff;
+    position: relative;
+    isolation: isolate;
+  }
+  .screen iframe {
+    width: 100%; height: 100%;
+    border: 0; display: block;
+    background: #f4f1ea;
+  }
+  /* Status bar overlay */
+  .statusbar {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 54px;
+    z-index: 4;
+    pointer-events: none;
+    display: flex; align-items: center;
+    padding: 18px 36px 0;
+    color: #16161a;
+    font-family: -apple-system, 'SF Pro Display', system-ui;
+    font-weight: 600;
+    font-size: 15px;
+  }
+  .statusbar .time { flex: 1; }
+  .statusbar .right {
+    display: flex; align-items: center; gap: 7px;
+    margin-left: auto;
+  }
+  .statusbar svg { display: block; }
+
+  .footer {
+    position: relative; z-index: 1;
+    padding: 24px 48px 48px;
+    color: var(--ink-2);
+    font-size: 12.5px;
+    border-top: 1px dashed var(--line);
+    display: flex; justify-content: space-between; align-items: center;
+    flex-wrap: wrap; gap: 12px;
+  }
+  .footer .pill {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 5px 10px;
+    background: #fff; border: 1px solid var(--line); border-radius: 100px;
+    font-size: 11.5px; font-weight: 600; color: var(--ink);
+  }
+  .footer .pill .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--gold); }
+
+  @media (max-width: 720px) {
+    .header { padding: 24px 20px 18px; }
+    h1 { font-size: 30px; }
+    .strip { padding: 28px 20px 48px; gap: 22px; }
+  }
+</style>
+</head>
+<body>
+  <header class="header">
+    <div>
+      <div class="eyebrow">Mobile preview</div>
+      <h1>Pro Vibe Life — on the phone.</h1>
+      <p class="sub">The same portal, served at iPhone width. Sidebar collapses to a bottom tab bar; search hides behind the menu; cards stack. Scroll the strip horizontally to see customer & admin flows.</p>
+    </div>
+    <div class="actions">
+      <a class="btn" href="Pro Vibe Life Portal.html">Open desktop version →</a>
+      <a class="btn primary" href="Pro Vibe Life Portal.html">View full portal</a>
+    </div>
+  </header>
+
+  <main class="strip" id="strip"></main>
+
+  <footer class="footer">
+    <div>Each frame is a live iframe at <b>392 × 824</b> — try clicking through the Pro Vibe Life Portal directly inside the device.</div>
+    <div style="display:flex; gap:8px;">
+      <span class="pill"><span class="dot"></span>Live preview</span>
+      <span class="pill" style="background:var(--ink); color:#f7f1de; border-color:var(--ink);">iOS · 6.1″</span>
+    </div>
+  </footer>
+
+<script>
+  // Status bar SVGs (signal · wifi · battery)
+  const STATUS_HTML = `
+    <span class="time">9:41</span>
+    <span class="right">
+      <svg width="18" height="11" viewBox="0 0 19 12">
+        <rect x="0" y="7.5" width="3.2" height="4.5" rx="0.7" fill="currentColor"/>
+        <rect x="4.8" y="5" width="3.2" height="7" rx="0.7" fill="currentColor"/>
+        <rect x="9.6" y="2.5" width="3.2" height="9.5" rx="0.7" fill="currentColor"/>
+        <rect x="14.4" y="0" width="3.2" height="12" rx="0.7" fill="currentColor"/>
+      </svg>
+      <svg width="16" height="11" viewBox="0 0 17 12">
+        <path d="M8.5 3.2C10.8 3.2 12.9 4.1 14.4 5.6L15.5 4.5C13.7 2.7 11.2 1.5 8.5 1.5C5.8 1.5 3.3 2.7 1.5 4.5L2.6 5.6C4.1 4.1 6.2 3.2 8.5 3.2Z" fill="currentColor"/>
+        <path d="M8.5 6.8C9.9 6.8 11.1 7.3 12 8.2L13.1 7.1C11.8 5.9 10.2 5.1 8.5 5.1C6.8 5.1 5.2 5.9 3.9 7.1L5 8.2C5.9 7.3 7.1 6.8 8.5 6.8Z" fill="currentColor"/>
+        <circle cx="8.5" cy="10.5" r="1.5" fill="currentColor"/>
+      </svg>
+      <svg width="26" height="12" viewBox="0 0 27 13">
+        <rect x="0.5" y="0.5" width="23" height="12" rx="3.5" stroke="currentColor" stroke-opacity="0.4" fill="none"/>
+        <rect x="2" y="2" width="20" height="9" rx="2" fill="currentColor"/>
+        <path d="M25 4.5V8.5C25.8 8.2 26.5 7.2 26.5 6.5C26.5 5.8 25.8 4.8 25 4.5Z" fill="currentColor" fill-opacity="0.4"/>
+      </svg>
+    </span>
+  `;
+
+  // Frames to render
+  const FRAMES = [
+    { num: '01',  ttl: 'Sign in',      desc: 'Stacked split layout collapses to one column.', route: 'login' },
+    { num: '02',  ttl: 'Dashboard',    desc: 'Stats reflow · table truncates · bottom tab bar appears.', route: 'dashboard' },
+    { num: '03',  ttl: 'New order',    desc: 'Catalog grid → 1 column · sticky summary at bottom.',     route: 'order_new' },
+    { num: '04',  ttl: 'Order history',desc: 'Tap any row to drill in.',                                 route: 'orders' },
+    { num: '05',  ttl: 'Order detail', desc: 'Customer view · activity timeline.',                       route: 'order_detail' },
+    { num: '06',  ttl: 'Invoices',     desc: 'Pay via Stripe hosted link inline.',                       route: 'invoices' },
+    { num: '07',  ttl: 'Admin · Ops',  desc: 'Staff dashboard · MTD revenue, queue, alerts.',            route: 'admin_dashboard', role: 'admin' },
+    { num: '08',  ttl: 'Admin · Order',desc: 'Approve / hold / cancel from the field.',                  route: 'admin_order_detail', role: 'admin' },
+  ];
+
+  const PORTAL = 'Pro Vibe Life Portal.html';
+
+  function buildFrame({ num, ttl, desc, route, role }, idx) {
+    const wrap = document.createElement('div');
+    wrap.className = 'frame-wrap';
+    const src = `${PORTAL}#mobile=1&route=${encodeURIComponent(route)}${role ? '&role='+role : ''}`;
+    wrap.innerHTML = `
+      <div class="device">
+        <div class="screen">
+          <div class="statusbar">${STATUS_HTML}</div>
+          <iframe data-src="${src}" data-route="${route}"></iframe>
+        </div>
+      </div>
+      <div class="frame-label">
+        <div class="num">${num}</div>
+        <div class="ttl">${ttl}</div>
+        <div class="desc">${desc}</div>
+      </div>
+    `;
+    return wrap;
+  }
+
+  const strip = document.getElementById('strip');
+  FRAMES.forEach((f, i) => strip.appendChild(buildFrame(f, i)));
+
+  // Boot iframes serially to avoid hitting browser resource caps.
+  // Each iframe waits for the previous one's "load" event before mounting.
+  const queue = [...document.querySelectorAll('iframe[data-src]')];
+  function bootNext() {
+    const next = queue.shift();
+    if (!next) return;
+    const onLoad = () => {
+      next.removeEventListener('load', onLoad);
+      // Small delay so React/Babel finish before the next iframe starts compiling
+      setTimeout(bootNext, 350);
+    };
+    next.addEventListener('load', onLoad);
+    // Fallback in case load never fires
+    setTimeout(() => { if (queue.includes(next)) return; if (next.dataset.src) bootNext(); }, 8000);
+    next.src = next.dataset.src;
+    delete next.dataset.src;
+  }
+  bootNext();
+</script>
+</body>
+</html>

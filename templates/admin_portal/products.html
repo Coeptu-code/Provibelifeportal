@@ -1,30 +1,45 @@
 {% extends "admin_portal/base.html" %}
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-3">
-  <h2 class="h4 m-0">Products</h2>
-  <a class="btn btn-primary btn-sm" href="{% url 'admin_portal:product_create' %}">Add Product</a>
+<div class="page-head">
+  <div>
+    <h1>Products</h1>
+  </div>
+  <div class="right">
+    <a class="btn primary sm" href="{% url 'admin_portal:product_create' %}">Add Product</a>
+  </div>
 </div>
-<div class="table-responsive">
-  <table class="table table-hover align-middle">
-    <thead><tr><th>Image</th><th>SKU</th><th>Name</th><th>Active</th><th>Actions</th></tr></thead>
-    <tbody>
-      {% for product in products %}
-      <tr>
-        <td>{% if product.display_image_url %}<img src="{{ product.display_image_url }}" alt="{{ product.name }}" style="width:40px;height:40px;object-fit:cover;border-radius:6px;">{% else %}<span class="text-secondary">-</span>{% endif %}</td>
-        <td>{{ product.sku }}</td>
-        <td>{{ product.name }}</td>
-        <td>{{ product.active|yesno:"Yes,No" }}</td>
-        <td>
-          <div class="table-actions">
-            <a class="btn btn-sm btn-outline-primary" href="{% url 'admin_portal:product_edit' product.id %}">Edit</a>
-            <a class="btn btn-sm btn-outline-danger" href="{% url 'admin_portal:product_delete' product.id %}">Delete</a>
-          </div>
-        </td>
-      </tr>
-      {% empty %}
-      <tr><td colspan="5" class="text-secondary">No products yet. Use "Add Product".</td></tr>
-      {% endfor %}
-    </tbody>
-  </table>
+
+<div class="card flush">
+  <div class="tbl-wrap">
+    <table class="tbl">
+      <thead><tr><th>Image</th><th>SKU</th><th>Name</th><th>Status</th><th></th></tr></thead>
+      <tbody>
+        {% for product in products %}
+        <tr>
+          <td>
+            {% if product.image_url %}
+              <img src="{{ product.image_url }}" alt="{{ product.name }}" style="width:40px;height:40px;object-fit:cover;border-radius:6px;">
+            {% elif product.image %}
+              <img src="{{ product.image.url }}" alt="{{ product.name }}" style="width:40px;height:40px;object-fit:cover;border-radius:6px;">
+            {% else %}
+              <span class="text-secondary">-</span>
+            {% endif %}
+          </td>
+          <td class="mono">{{ product.sku }}</td>
+          <td class="strong">{{ product.name }}</td>
+          <td><span class="pill {% if product.active %}green{% else %}ink{% endif %}">{{ product.active|yesno:"Active,Inactive" }}</span></td>
+          <td>
+            <div style="display: flex; gap: 6px;">
+              <a class="btn sm" href="{% url 'admin_portal:product_edit' product.id %}">Edit</a>
+              <a class="btn sm danger" href="{% url 'admin_portal:product_delete' product.id %}">Delete</a>
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="5" class="text-secondary">No products yet. Use "Add Product".</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
 </div>
 {% endblock %}

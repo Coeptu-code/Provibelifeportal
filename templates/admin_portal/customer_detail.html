@@ -1,53 +1,130 @@
 {% extends "admin_portal/base.html" %}
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-3">
+<div class="page-head">
   <div>
-    <h2 class="h4 m-0">{{ customer.name }}</h2>
-    <div class="text-secondary">Payment Terms: {{ customer.payment_terms }} | Preferred Carrier: {{ customer.preferred_carrier|default:"Auto" }}</div>
+    <h1>{{ customer.name }}</h1>
+    <div class="lede">Payment Terms: {{ customer.get_payment_terms_display }} | Preferred Carrier: {{ customer.get_preferred_carrier_display|default:"Auto" }}</div>
   </div>
-  <div class="d-flex gap-2">
-    <a class="btn btn-sm btn-outline-primary" href="{% url 'admin_portal:customer_user_create' %}?customer={{ customer.id }}">Add Customer User</a>
-    <a class="btn btn-sm btn-outline-primary" href="{% url 'admin_portal:shipping_address_create' %}?customer={{ customer.id }}">Add Shipping Address</a>
-    <a class="btn btn-sm btn-outline-primary" href="{% url 'admin_portal:customer_product_create' %}?customer={{ customer.id }}">Approve SKU</a>
-    <a class="btn btn-sm btn-primary" href="{% url 'admin_portal:customer_price_create' %}?customer={{ customer.id }}">Add Price Contract</a>
+  <div class="right">
+    <a class="btn primary sm" href="{% url 'admin_portal:customer_price_create' %}?customer={{ customer.id }}">Add Price Contract</a>
   </div>
 </div>
 
-<h3 class="h6 mt-4">Customer Users</h3>
-<div class="table-responsive mb-4">
-  <table class="table table-hover align-middle">
-    <thead><tr><th>Username</th><th>Name</th><th>Email</th><th>Active</th><th></th></tr></thead>
-    <tbody>
-      {% for user in customer_users %}
-      <tr>
-        <td>{{ user.username }}</td>
-        <td>{{ user.first_name }} {{ user.last_name }}</td>
-        <td>{{ user.email|default:"-" }}</td>
-        <td>{{ user.is_active|yesno:"Yes,No" }}</td>
-        <td><a class="btn btn-sm btn-outline-primary" href="{% url 'admin_portal:customer_user_edit' user.id %}">Edit</a></td>
-      </tr>
-      {% empty %}
-      <tr><td colspan="5" class="text-secondary">No users linked to this customer.</td></tr>
-      {% endfor %}
-    </tbody>
-  </table>
+<div class="grid-2" style="margin-bottom: 28px;">
+  <div>
+    <h2 class="section-title"><div>Customer Users</div></h2>
+    {% if customer_users %}
+      <div class="card flush">
+        <div class="tbl-wrap">
+          <table class="tbl">
+            <thead><tr><th>Username</th><th>Name</th><th>Email</th><th></th></tr></thead>
+            <tbody>
+              {% for user in customer_users %}
+              <tr>
+                <td class="strong">{{ user.username }}</td>
+                <td>{{ user.get_full_name|default:'-' }}</td>
+                <td>{{ user.email|default:"-" }}</td>
+                <td><a class="btn sm" href="{% url 'admin_portal:customer_user_edit' user.id %}">Edit</a></td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    {% else %}
+      <div class="empty">
+        <div class="glyph">👤</div>
+        <p>No users linked to this customer.</p>
+      </div>
+    {% endif %}
+    <a href="{% url 'admin_portal:customer_user_create' %}?customer={{ customer.id }}" class="btn primary" style="margin-top: 14px;">Add Customer User</a>
+  </div>
+
+  <div>
+    <h2 class="section-title"><div>Shipping Addresses</div></h2>
+    {% if customer.shipping_addresses.all %}
+      <div class="grid-cards">
+        {% for addr in customer.shipping_addresses.all %}
+          <div class="addr-card {% if addr.is_default %}default{% endif %}">
+            <div class="lbl-row">
+              <b>{{ addr.label }}</b>
+              {% if addr.is_default %}<span class="pill gold">Default</span>{% endif %}
+            </div>
+            <div class="lines">
+              {{ addr.line1 }}{% if addr.line2 %}<br>{{ addr.line2 }}{% endif %}<br>
+              <span class="mute">{{ addr.city }}, {{ addr.state }} {{ addr.postal_code }}</span>
+            </div>
+            <div class="actions">
+              <a class="btn sm ghost" href="{% url 'admin_portal:shipping_address_edit' addr.id %}">Edit</a>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="empty">
+        <div class="glyph">📍</div>
+        <p>No shipping addresses added.</p>
+      </div>
+    {% endif %}
+    <a href="{% url 'admin_portal:shipping_address_create' %}?customer={{ customer.id }}" class="btn primary" style="margin-top: 14px;">Add Shipping Address</a>
+  </div>
 </div>
 
-<h3 class="h6 mt-4">Approved Products</h3>
-<ul class="mb-4">
-  {% for row in customer_products %}
-    <li>{{ row.product.sku }} (active={{ row.active }})</li>
-  {% empty %}
-    <li class="text-secondary">No approved products yet.</li>
-  {% endfor %}
-</ul>
+<div class="grid-2">
+  <div>
+    <h2 class="section-title"><div>Approved Products</div></h2>
+    {% if customer_products %}
+      <div class="card flush">
+        <div class="tbl-wrap">
+          <table class="tbl">
+            <thead><tr><th>SKU</th><th>Product</th><th>Status</th></tr></thead>
+            <tbody>
+              {% for row in customer_products %}
+              <tr>
+                <td class="mono">{{ row.product.sku }}</td>
+                <td>{{ row.product.name }}</td>
+                <td><span class="pill {% if row.active %}green{% else %}ink{% endif %}">{{ row.active|yesno:"Active,Inactive" }}</span></td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    {% else %}
+      <div class="empty">
+        <div class="glyph">📦</div>
+        <p>No approved products yet.</p>
+      </div>
+    {% endif %}
+    <a href="{% url 'admin_portal:customer_product_create' %}?customer={{ customer.id }}" class="btn primary" style="margin-top: 14px;">Approve SKU</a>
+  </div>
 
-<h3 class="h6">Pricing</h3>
-<ul>
-  {% for row in customer_prices %}
-    <li>{{ row.product.sku }} ${{ row.unit_price }} min {{ row.minimum_quantity }} ({{ row.effective_date }} to {{ row.expiration_date|default:'open' }})</li>
-  {% empty %}
-    <li class="text-secondary">No pricing contracts yet.</li>
-  {% endfor %}
-</ul>
+  <div>
+    <h2 class="section-title"><div>Pricing Contracts</div></h2>
+    {% if customer_prices %}
+      <div class="card flush">
+        <div class="tbl-wrap">
+          <table class="tbl">
+            <thead><tr><th>SKU</th><th class="num">Price</th><th class="num">Min Qty</th><th>Expires</th></tr></thead>
+            <tbody>
+              {% for row in customer_prices %}
+              <tr>
+                <td class="mono">{{ row.product.sku }}</td>
+                <td class="num">${{ row.unit_price }}</td>
+                <td class="num">{{ row.minimum_quantity }}</td>
+                <td>{{ row.expiration_date|date:"M d, Y"|default:"Open" }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    {% else %}
+      <div class="empty">
+        <div class="glyph">💰</div>
+        <p>No pricing contracts yet.</p>
+      </div>
+    {% endif %}
+  </div>
+</div>
 {% endblock %}

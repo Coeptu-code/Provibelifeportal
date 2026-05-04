@@ -53,4 +53,5 @@ class User(AbstractUser):
         self.full_clean()
         return super().save(*args, **kwargs)
 
-# Create your models here.
+    def get_initials(self):
+        return (self.first_name[0] if self.first_name else '') + (self.last_name[0] if self.last_name else '') or self.username[0].upper()

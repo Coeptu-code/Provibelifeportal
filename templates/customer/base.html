@@ -5,50 +5,92 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Customer Portal</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="{% static 'PVL/styles.css' %}" rel="stylesheet">
   <link href="{% static 'css/portal.css' %}" rel="stylesheet">
 </head>
-<body>
-  <nav class="navbar navbar-expand-lg navbar-dark" style="background:#0f172a;">
-    <div class="container portal-shell">
-      <a class="navbar-brand d-flex align-items-center gap-2 me-3" href="{% url 'customers:dashboard' %}">
-        <img src="{% static 'PVL-LogoLockUp-4k_23aea92a-5a10-4e80-8421-66254bb1deb8.png' %}" alt="Provibe Life" class="brand-logo">
-        <span class="d-none d-xl-inline">Customer Portal</span>
-      </a>
-      <div class="navbar-nav gap-1">
-        <a class="nav-link" href="{% url 'customers:dashboard' %}">Dashboard</a>
-        <a class="nav-link" href="{% url 'customers:order_new' %}">New Order</a>
-        <a class="nav-link" href="{% url 'customers:order_history' %}">Order History</a>
-        <a class="nav-link" href="{% url 'customers:invoices' %}">Invoices</a>
-        <a class="nav-link" href="{% url 'customers:shipping_addresses' %}">Shipping Addresses</a>
-        <a class="nav-link" href="{% url 'customers:account' %}">Account</a>
+<body data-theme="light" data-density="comfortable">
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand">
+        <img src="{% static 'PVL/assets/pvl-logo-lockup.png' %}" alt="Pro Vibe Life" style="height:28px;">
       </div>
-      <form action="{% url 'logout' %}" method="post" class="ms-auto">
-        {% csrf_token %}
-        <button class="btn btn-outline-light btn-sm" type="submit">Logout</button>
-      </form>
-    </div>
-  </nav>
 
-  <main class="container portal-shell py-4">
-    {% if messages %}
-      {% for message in messages %}
-        <div class="alert alert-info py-2 mb-2">{{ message }}</div>
-      {% endfor %}
-    {% endif %}
-    <div class="card portal-card">
-      <div class="card-body p-4">
+      <nav>
+        <a href="{% url 'customers:dashboard' %}" class="nav-item {% if 'dashboard' in request.resolver_match.url_name %}active{% endif %}">
+          <span>Dashboard</span>
+        </a>
+        <a href="{% url 'customers:order_new' %}" class="nav-item {% if 'order_new' in request.resolver_match.url_name %}active{% endif %}">
+          <span>New Order</span>
+        </a>
+        <a href="{% url 'customers:order_history' %}" class="nav-item {% if 'order_history' in request.resolver_match.url_name %}active{% endif %}">
+          <span>Order History</span>
+        </a>
+        <a href="{% url 'customers:invoices' %}" class="nav-item {% if 'invoices' in request.resolver_match.url_name %}active{% endif %}">
+          <span>Invoices</span>
+        </a>
+        <a href="{% url 'customers:shipping_addresses' %}" class="nav-item {% if 'shipping_addresses' in request.resolver_match.url_name %}active{% endif %}">
+          <span>Shipping</span>
+        </a>
+        <a href="{% url 'customers:account' %}" class="nav-item {% if 'account' in request.resolver_match.url_name %}active{% endif %}">
+          <span>Account</span>
+        </a>
+      </nav>
+
+      <div class="footer">
+        <div class="avatar">{{ request.user.get_initials }}</div>
+        <div class="who">
+          <div class="n">{{ request.user.get_full_name|default:request.user.username }}</div>
+        </div>
+        <form action="{% url 'logout' %}" method="post" style="margin: 0; padding: 0;">
+          {% csrf_token %}
+          <button class="icon-btn" type="submit" title="Logout" style="width: 30px; height: 30px; font-size: 18px;">×</button>
+        </form>
+      </div>
+    </aside>
+
+    <div class="main">
+      <header class="topbar">
+        <div class="crumb"><span class="crumb-mobile">Portal</span></div>
+      </header>
+
+      <div class="page">
+        {% if messages %}
+          {% for message in messages %}
+            <div class="note gold mb-3">{{ message }}</div>
+          {% endfor %}
+        {% endif %}
+
         {% block content %}{% endblock %}
       </div>
     </div>
-  </main>
+  </div>
+
+  <nav class="tabbar">
+    <a href="{% url 'customers:dashboard' %}" class="t {% if 'dashboard' in request.resolver_match.url_name %}active{% endif %}">
+      <svg class="ico" viewBox="0 0 24 24" fill="currentColor"><path d="M3 13h2v8H3zm4-8h2v16H7zm4-2h2v18h-2zm4-2h2v20h-2zm4 4h2v16h-2z"/></svg>
+      <span>Dashboard</span>
+    </a>
+    <a href="{% url 'customers:order_new' %}" class="t {% if 'order_new' in request.resolver_match.url_name %}active{% endif %}">
+      <svg class="ico" viewBox="0 0 24 24" fill="currentColor"><path d="M7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-1.1-2-2-2zM1 2v2h2l3.6 7.59-1.35 2.45c-.16.28-.25.61-.25.96 0 1.1.9 2 2 2h12v-2H7.42c-.14 0-.25-.11-.25-.25l.03-.12.9-1.63h7.45c.75 0 1.41-.41 1.75-1.03l3.58-6.49a.996.996 0 000-1.08A1 1 0 0020 4H5.21l-.94-2H1zm16 16c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-.9-2-2-2z"/></svg>
+      <span>Orders</span>
+    </a>
+    <a href="{% url 'customers:order_history' %}" class="t {% if 'order_history' in request.resolver_match.url_name %}active{% endif %}">
+      <svg class="ico" viewBox="0 0 24 24" fill="currentColor"><path d="M9 11H7v2h2v-2zm4 0h-2v2h2v-2zm4 0h-2v2h2v-2zm2-7h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V9h14v11z"/></svg>
+      <span>History</span>
+    </a>
+    <a href="{% url 'customers:invoices' %}" class="t {% if 'invoices' in request.resolver_match.url_name %}active{% endif %}">
+      <svg class="ico" viewBox="0 0 24 24" fill="currentColor"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6z"/><path d="M16 18H8v-2h8v2zm0-4H8v-2h8v2zm0-4H8V8h8v2z"/></svg>
+      <span>Invoices</span>
+    </a>
+    <a href="{% url 'customers:account' %}" class="t {% if 'account' in request.resolver_match.url_name %}active{% endif %}">
+      <svg class="ico" viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+      <span>Account</span>
+    </a>
+  </nav>
 
   <script>
-    document.querySelectorAll('input:not([type=checkbox]):not([type=radio]), select, textarea').forEach(el => {
-      if (!el.classList.contains('form-control') && !el.classList.contains('form-select')) {
-        if (el.tagName === 'SELECT') el.classList.add('form-select');
-        else el.classList.add('form-control');
-      }
+    document.querySelectorAll('input:not([type=checkbox]):not([type=radio]):not([type=hidden]):not([type=submit]):not([type=file]), select, textarea').forEach(el => {
+      if (!el.classList.contains('input')) el.classList.add('input');
     });
   </script>
 </body>

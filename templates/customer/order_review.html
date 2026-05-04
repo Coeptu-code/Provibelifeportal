@@ -1,111 +1,163 @@
 {% extends "customer/base.html" %}
 {% block content %}
 {% if order %}
-  <h2 class="h4 mb-3">Order Review</h2>
-  <p class="text-secondary mb-3">Order #{{ order.id }} status {{ order.get_status_display }}</p>
-  <div class="table-responsive mb-3">
-    <table class="table align-middle">
-      <thead>
-        <tr>
-          <th>SKU</th>
-          <th>QTY</th>
-          <th>UNIT</th>
-          <th>EXTENDED</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for item in order.items.all %}
+  <div class="page-head">
+    <div>
+      <h1>Order #{{ order.id }}</h1>
+      <div class="lede">Order received and processing.</div>
+    </div>
+    <div class="right">
+      <span class="pill status-{{ order.status }}">{{ order.status }}</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <h3>Order Summary</h3>
+    </div>
+    <div class="tbl-wrap">
+      <table class="tbl">
+        <thead><tr><th>SKU</th><th class="num">Qty</th><th class="num">Unit Price</th><th class="num">Extended</th></tr></thead>
+        <tbody>
+          {% for item in order.items.all %}
           <tr>
-            <td>{{ item.product.sku }}</td>
-            <td>{{ item.quantity }}</td>
-            <td>${{ item.unit_price }}</td>
-            <td>${{ item.extended_price }}</td>
+            <td class="mono">{{ item.product.sku }}</td>
+            <td class="num">{{ item.quantity }}</td>
+            <td class="num">${{ item.unit_price }}</td>
+            <td class="num strong">${{ item.extended_price }}</td>
           </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
   </div>
-  <div class="d-flex flex-column align-items-end gap-1">
-    <div>Subtotal: <strong>${{ subtotal }}</strong></div>
-    <div>Estimated Shipping: <strong>${{ shipping_total }}</strong></div>
-    <div>Tax: <strong>${{ tax_total }}</strong></div>
-    <div class="h5 mb-0">Estimated Total: <strong>${{ estimated_total }}</strong></div>
+
+  <div class="summary" style="margin-top: 22px;">
+    <div class="row">
+      <span>Subtotal</span>
+      <span class="v">${{ order.subtotal }}</span>
+    </div>
+    <div class="row">
+      <span>Shipping</span>
+      <span class="v">TBD</span>
+    </div>
+    <hr>
+    <div class="total">
+      <div class="l">Total</div>
+      <div class="v">${{ order.total }}</div>
+    </div>
   </div>
+
 {% else %}
-  <h2 class="h4 mb-3">Verify Order</h2>
-  <p class="text-secondary mb-3">Review pricing and shipping before final submission.</p>
+  <div class="page-head">
+    <div>
+      <h1>Verify Order</h1>
+      <div class="lede">Review pricing and shipping before final submission.</div>
+    </div>
+  </div>
 
   {% if quote_warning %}
-    <div class="alert alert-warning py-2">{{ quote_warning }}</div>
+    <div class="note amber mb-3">{{ quote_warning }}</div>
   {% endif %}
 
-  <div class="row g-3 mb-3">
-    <div class="col-md-4">
-      <div class="small text-secondary">PO Number</div>
-      <div class="fw-semibold">{{ po_number|default:"-" }}</div>
+  <div class="grid-2">
+    <div>
+      <div class="card">
+        <div class="card-head">
+          <h3>Order Details</h3>
+        </div>
+        <div class="card-body">
+          <div class="kv">
+            <div class="k">PO Number</div>
+            <div class="v mono">{{ po_number|default:"-" }}</div>
+          </div>
+          <div class="kv" style="margin-top: 16px;">
+            <div class="k">Requested Ship Date</div>
+            <div class="v">{{ requested_ship_date|date:"M d, Y"|default:"-" }}</div>
+          </div>
+          <div class="kv" style="margin-top: 16px;">
+            <div class="k">Ship To</div>
+            <div class="v">
+              {{ shipping_address.label }}<br>
+              <span style="font-size: 12px; color: var(--pvl-text-mute);">
+                {{ shipping_address.line1 }}{% if shipping_address.line2 %}<br>{{ shipping_address.line2 }}{% endif %}<br>
+                {{ shipping_address.city }}, {{ shipping_address.state }} {{ shipping_address.postal_code }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top: 22px;">
+        <div class="card-head">
+          <h3>Items</h3>
+        </div>
+        <div class="tbl-wrap">
+          <table class="tbl">
+            <thead><tr><th>SKU</th><th>Item</th><th class="num">Qty</th><th class="num">Unit</th><th class="num">Extended</th></tr></thead>
+            <tbody>
+              <tr>
+                <td class="mono">{{ product.sku }}</td>
+                <td>{{ product.name }}</td>
+                <td class="num">{{ quantity }}</td>
+                <td class="num">${{ unit_price }}</td>
+                <td class="num strong">${{ subtotal }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
-    <div class="col-md-4">
-      <div class="small text-secondary">Requested Ship Date</div>
-      <div class="fw-semibold">{{ requested_ship_date|date:"F j, Y"|default:"-" }}</div>
-    </div>
-    <div class="col-md-4">
-      <div class="small text-secondary">Shipping Address</div>
-      <div class="fw-semibold">{{ shipping_address.label }}</div>
-      <div class="small text-secondary">
-        {{ shipping_address.line1 }}{% if shipping_address.line2 %}, {{ shipping_address.line2 }}{% endif %},
-        {{ shipping_address.city }}, {{ shipping_address.state }} {{ shipping_address.postal_code }}
+
+    <div>
+      <div class="card">
+        <div class="card-head">
+          <h3>Shipping</h3>
+        </div>
+        <div class="card-body">
+          <div class="kv">
+            <div class="k">Carrier</div>
+            <div class="v">{{ shipping_quote.carrier }} {{ shipping_quote.service }}</div>
+          </div>
+          <div class="kv" style="margin-top: 16px;">
+            <div class="k">Rate ID</div>
+            <div class="v mono">{{ shipping_quote.rate_id }}</div>
+          </div>
+          <div class="kv" style="margin-top: 16px;">
+            <div class="k">Currency</div>
+            <div class="v">{{ shipping_quote.currency|upper }}</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="summary" style="margin-top: 22px;">
+        <div class="row">
+          <span>Subtotal</span>
+          <span class="v">${{ subtotal }}</span>
+        </div>
+        <div class="row">
+          <span>Shipping</span>
+          <span class="v">${{ shipping_total }}</span>
+        </div>
+        <div class="row">
+          <span>Tax</span>
+          <span class="v">${{ tax_total }}</span>
+        </div>
+        <hr>
+        <div class="total">
+          <div class="l">Total</div>
+          <div class="v">${{ estimated_total }}</div>
+        </div>
+
+        <form method="post" style="margin-top: 22px; display: flex; flex-direction: column; gap: 10px;">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="confirm">
+          <input type="hidden" name="draft_token" value="{{ draft_token }}">
+          <button type="submit" class="btn gold block">Submit Order</button>
+          <a href="{% url 'customers:order_new' %}" class="btn ghost block" style="text-align: center;">Back</a>
+        </form>
       </div>
     </div>
   </div>
-
-  <div class="table-responsive mb-3">
-    <table class="table align-middle">
-      <thead>
-        <tr>
-          <th>SKU</th>
-          <th>ITEM</th>
-          <th>QTY</th>
-          <th>UNIT</th>
-          <th>EXTENDED</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td>{{ product.sku }}</td>
-          <td>{{ product.name }}</td>
-          <td>{{ quantity }}</td>
-          <td>${{ unit_price }}</td>
-          <td>${{ subtotal }}</td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
-
-  <div class="row g-3 mb-3">
-    <div class="col-md-6">
-      <div class="small text-secondary">Quoted Carrier</div>
-      <div class="fw-semibold">{{ shipping_quote.carrier }} {{ shipping_quote.service }}</div>
-      <div class="small text-secondary">Rate ID: {{ shipping_quote.rate_id }}</div>
-    </div>
-    <div class="col-md-6">
-      <div class="small text-secondary">Currency</div>
-      <div class="fw-semibold text-uppercase">{{ shipping_quote.currency }}</div>
-    </div>
-  </div>
-
-  <div class="d-flex flex-column align-items-end gap-1 mb-3">
-    <div>Subtotal: <strong>${{ subtotal }}</strong></div>
-    <div>Estimated Shipping: <strong>${{ shipping_total }}</strong></div>
-    <div>Tax: <strong>${{ tax_total }}</strong></div>
-    <div class="h5 mb-0">Estimated Total: <strong>${{ estimated_total }}</strong></div>
-  </div>
-
-  <form method="post" class="d-flex gap-2">
-    {% csrf_token %}
-    <input type="hidden" name="action" value="confirm">
-    <input type="hidden" name="draft_token" value="{{ draft_token }}">
-    <button type="submit" class="btn btn-primary">Submit Order</button>
-    <a href="{% url 'customers:order_new' %}" class="btn btn-outline-secondary">Back</a>
-  </form>
 {% endif %}
 {% endblock %}

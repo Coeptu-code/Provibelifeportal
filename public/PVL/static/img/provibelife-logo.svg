@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 620 140" role="img" aria-label="Provibe Life">
+  <defs>
+    
+  </defs>
+  <g transform="translate(10,8)">
+    <path class="s" d="M63 98c11 10 27 16 44 16"></path>
+    <path class="s" d="M145 98c-11 10-27 16-44 16"></path>
+    <path class="s" d="M61 37c12-12 28-19 46-19"></path>
+    <path class="s" d="M147 37c-12-12-28-19-46-19"></path>
+    <ellipse class="w" cx="92" cy="45" rx="8" ry="14" transform="rotate(-20 92 45)"></ellipse>
+    <ellipse class="w" cx="110" cy="44" rx="8" ry="14" transform="rotate(20 110 44)"></ellipse>
+    <ellipse class="w" cx="101" cy="53" rx="7" ry="12"></ellipse>
+    <rect class="w" x="99" y="52" width="4" height="14" rx="2"></rect>
+  </g>
+  <text x="170" y="88" class="w" font-size="72" font-family="Segoe UI, Arial, sans-serif" font-weight="800" letter-spacing="-1">provibelife</text>
+</svg>

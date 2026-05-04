@@ -1,6 +1,50 @@
 {% extends "customer/base.html" %}
 {% block content %}
-<h2>Account</h2>
-<p>Customer: {{ request.user.customer.name }}</p>
-<p>Payment Terms: {{ request.user.customer.payment_terms }}</p>
+<div class="page-head">
+  <div>
+    <h1>Account Settings</h1>
+  </div>
+</div>
+
+<div class="grid-2">
+  <div class="card">
+    <div class="card-head">
+      <h3>Account Information</h3>
+    </div>
+    <div class="card-body">
+      <div class="kv">
+        <div class="k">Username</div>
+        <div class="v">{{ request.user.username }}</div>
+      </div>
+      <div class="kv" style="margin-top: 16px;">
+        <div class="k">Email</div>
+        <div class="v">{{ request.user.email|default:'-' }}</div>
+      </div>
+      <div class="kv" style="margin-top: 16px;">
+        <div class="k">Full Name</div>
+        <div class="v">{{ request.user.get_full_name|default:request.user.username }}</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <h3>Company Information</h3>
+    </div>
+    <div class="card-body">
+      <div class="kv">
+        <div class="k">Company</div>
+        <div class="v">{{ request.user.customer.name }}</div>
+      </div>
+      <div class="kv" style="margin-top: 16px;">
+        <div class="k">Payment Terms</div>
+        <div class="v">{{ request.user.customer.get_payment_terms_display }}</div>
+      </div>
+      <div class="kv" style="margin-top: 16px;">
+        <div class="k">Preferred Carrier</div>
+        <div class="v">{{ request.user.customer.get_preferred_carrier_display|default:'-' }}</div>
+      </div>
+    </div>
+  </div>
+</div>
 {% endblock %}

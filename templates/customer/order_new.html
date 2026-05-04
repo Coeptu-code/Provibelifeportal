@@ -1,85 +1,140 @@
 {% extends "customer/base.html" %}
 {% block content %}
-<h2 class="h4 mb-3">New Order</h2>
-<p class="text-secondary">Choose one item and click Submit Order on that item card. Pricing is applied automatically from your active contract.</p>
-<form method="post" class="row g-3">
-  {% csrf_token %}
-  <input type="hidden" name="action" value="verify">
-
-  {% if form.non_field_errors %}
-    <div class="col-12">
-      <div class="alert alert-danger py-2 mb-0">
-        {% for err in form.non_field_errors %}<div>{{ err }}</div>{% endfor %}
-      </div>
-    </div>
-  {% endif %}
-
-  <div class="col-md-4">
-    <label class="form-label" for="{{ form.po_number.id_for_label }}">PO Number</label>
-    {{ form.po_number }}
-    {% if form.po_number.errors %}<div class="text-danger small">{{ form.po_number.errors|join:", " }}</div>{% endif %}
+<div class="page-head">
+  <div>
+    <h1>Create New Order</h1>
+    <div class="lede">Choose products, set quantities, and submit for approval.</div>
   </div>
-  <div class="col-md-4">
-    <label class="form-label" for="{{ form.requested_ship_date.id_for_label }}">Requested Ship Date</label>
-    {{ form.requested_ship_date }}
-    {% if form.requested_ship_date.errors %}<div class="text-danger small">{{ form.requested_ship_date.errors|join:", " }}</div>{% endif %}
-  </div>
-  <div class="col-md-4">
-    <label class="form-label" for="{{ form.shipping_address.id_for_label }}">Shipping Address</label>
-    {{ form.shipping_address }}
-    {% if form.shipping_address.errors %}<div class="text-danger small">{{ form.shipping_address.errors|join:", " }}</div>{% endif %}
-  </div>
+</div>
 
-  <div class="col-12"><hr class="my-1"></div>
-  <div class="col-12">
-    <h3 class="h5 mb-3">Approved Items</h3>
-  </div>
+<div class="grid-2">
+  <div>
+    <form method="post">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="verify">
 
-  {% for row in order_items %}
-    <div class="col-lg-4 col-md-6">
-      <div class="metric-card p-3 h-100 d-flex flex-column">
-        <div class="d-flex align-items-center gap-3 mb-2">
-          {% if row.product.display_image_url %}
-            <img src="{{ row.product.display_image_url }}" alt="{{ row.product.name }}" style="width:60px;height:60px;object-fit:cover;border-radius:8px;">
-          {% else %}
-            <div class="d-flex align-items-center justify-content-center bg-light border rounded" style="width:60px;height:60px;">-</div>
-          {% endif %}
-          <div>
-            <div class="fw-semibold">{{ row.product.name }}</div>
-            <div class="text-secondary small">{{ row.product.sku }}</div>
+      {% if form.non_field_errors %}
+        <div class="note red mb-3">
+          {% for err in form.non_field_errors %}<div>{{ err }}</div>{% endfor %}
+        </div>
+      {% endif %}
+
+      <div class="card" style="margin-bottom: 22px;">
+        <div class="card-body">
+          <h3 style="margin: 0 0 16px 0; font-size: 15px; font-weight: 600;">Order Details</h3>
+
+          <div class="field">
+            <label for="{{ form.po_number.id_for_label }}" class="label">PO Number</label>
+            {{ form.po_number }}
+            {% if form.po_number.errors %}<div class="text-danger">{{ form.po_number.errors|join:", " }}</div>{% endif %}
+          </div>
+
+          <div class="field">
+            <label for="{{ form.requested_ship_date.id_for_label }}" class="label">Requested Ship Date</label>
+            {{ form.requested_ship_date }}
+            {% if form.requested_ship_date.errors %}<div class="text-danger">{{ form.requested_ship_date.errors|join:", " }}</div>{% endif %}
+          </div>
+
+          <div class="field">
+            <label for="{{ form.shipping_address.id_for_label }}" class="label">Shipping Address</label>
+            {{ form.shipping_address }}
+            {% if form.shipping_address.errors %}<div class="text-danger">{{ form.shipping_address.errors|join:", " }}</div>{% endif %}
           </div>
         </div>
-
-        {% if row.available %}
-          <div class="small mb-2">Unit Price: <strong>${{ row.unit_price }}</strong></div>
-          <div class="small mb-2">Minimum Qty: <strong>{{ row.minimum_quantity }}</strong></div>
-          <label class="form-label mt-1">Quantity</label>
-          <div class="input-group mb-3" style="max-width: 180px;">
-            <button class="btn btn-outline-secondary qty-minus" type="button" data-target="quantity_{{ row.product.id }}">-</button>
-            <input
-              type="number"
-              name="quantity_{{ row.product.id }}"
-              id="quantity_{{ row.product.id }}"
-              min="1"
-              step="1"
-              value="{{ row.quantity }}"
-              class="form-control text-center"
-            >
-            <button class="btn btn-outline-secondary qty-plus" type="button" data-target="quantity_{{ row.product.id }}">+</button>
-          </div>
-          <button type="submit" name="product_id" value="{{ row.product.id }}" class="btn btn-primary mt-auto">Submit Order</button>
-        {% else %}
-          <div class="text-warning small mb-3">{{ row.reason }}</div>
-          <button type="button" class="btn btn-secondary mt-auto" disabled>Unavailable</button>
-        {% endif %}
       </div>
+
+      <div class="card" style="margin-bottom: 22px;">
+        <div class="card-head">
+          <h3>Approved Items</h3>
+        </div>
+        <div style="padding: 18px 22px;">
+          {% if order_items %}
+            <div class="grid-cards">
+              {% for row in order_items %}
+                <div class="product">
+                  {% if row.product.display_image_url %}
+                    <div class="img">
+                      <img src="{{ row.product.display_image_url }}" alt="{{ row.product.name }}">
+                      <div class="gold-glow"></div>
+                    </div>
+                  {% elif row.product.image_url %}
+                    <div class="img">
+                      <img src="{{ row.product.image_url }}" alt="{{ row.product.name }}">
+                      <div class="gold-glow"></div>
+                    </div>
+                  {% elif row.product.image %}
+                    <div class="img">
+                      <img src="{{ row.product.image.url }}" alt="{{ row.product.name }}">
+                      <div class="gold-glow"></div>
+                    </div>
+                  {% else %}
+                    <div class="img" style="background: var(--pvl-paper-2); color: var(--pvl-text-mute); font-size: 12px;">No image</div>
+                  {% endif %}
+
+                  <div class="meta">
+                    <h4>{{ row.product.name }}</h4>
+                    <div class="sku">{{ row.product.sku }}</div>
+
+                    {% if row.available %}
+                      <div class="price-row">
+                        <div class="price">${{ row.unit_price }}</div>
+                        <div class="per">per unit</div>
+                      </div>
+                      <div style="font-size: 12px; color: var(--pvl-text-mute); margin-top: 4px;">Min: {{ row.minimum_quantity }}</div>
+
+                      <div class="row" style="margin-top: 12px;">
+                        <label class="label" style="margin: 0;">Quantity</label>
+                      </div>
+                      <div class="qty" style="margin-top: 8px;">
+                        <button type="button" class="qty-minus" data-target="quantity_{{ row.product.id }}">−</button>
+                        <input
+                          type="number"
+                          name="quantity_{{ row.product.id }}"
+                          id="quantity_{{ row.product.id }}"
+                          min="1"
+                          step="1"
+                          value="{{ row.quantity }}"
+                          style="width: 48px; border: 0; text-align: center; background: transparent; font: inherit; font-weight: 600; outline: none;"
+                        >
+                        <button type="button" class="qty-plus" data-target="quantity_{{ row.product.id }}">+</button>
+                      </div>
+
+                      <button type="submit" name="product_id" value="{{ row.product.id }}" class="btn gold block" style="margin-top: 12px;">Submit Order</button>
+                    {% else %}
+                      <div class="note amber" style="margin: 12px 0 0 0;">{{ row.reason }}</div>
+                      <button type="button" class="btn" style="margin-top: 12px;" disabled>Unavailable</button>
+                    {% endif %}
+                  </div>
+                </div>
+              {% endfor %}
+            </div>
+          {% else %}
+            <div class="empty">
+              <div class="glyph">✕</div>
+              <p>No approved items available for ordering.</p>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <div class="summary">
+    <div class="row">
+      <span>Subtotal</span>
+      <span class="v">$0.00</span>
     </div>
-  {% empty %}
-    <div class="col-12">
-      <div class="alert alert-warning mb-0">No approved items available for ordering yet.</div>
+    <div class="row">
+      <span>Shipping</span>
+      <span class="v">TBD</span>
     </div>
-  {% endfor %}
-</form>
+    <hr>
+    <div class="total">
+      <div class="l">Total</div>
+      <div class="v">$0.00</div>
+    </div>
+  </div>
+</div>
 
 <script>
   document.querySelectorAll(".qty-minus").forEach(btn => {
