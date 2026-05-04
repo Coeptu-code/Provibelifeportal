@@ -2,7 +2,7 @@
 {% block content %}
 <div class="page-head">
   <div>
-    <h1>Add Customer Price Contract</h1>
+    <h1>{{ form_title }}</h1>
   </div>
 </div>
 
@@ -28,8 +28,8 @@
     </div>
 
     <div class="card-body" style="border-top: 1px dashed var(--pvl-paper-3); padding: 18px 22px; display: flex; gap: 10px; justify-content: flex-end;">
-      <a href="{% url 'admin_portal:pricing' %}" class="btn ghost">Cancel</a>
-      <button type="submit" class="btn primary">Save Pricing Contract</button>
+      <a href="{{ cancel_url }}" class="btn ghost">Cancel</a>
+      <button type="submit" class="btn primary">{{ submit_label }}</button>
     </div>
   </form>
 </div>

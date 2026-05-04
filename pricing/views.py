@@ -1,5 +1,5 @@
 from django.contrib import messages
-from django.shortcuts import redirect, render
+from django.shortcuts import get_object_or_404, redirect, render
 
 from accounts.decorators import ops_required
 from pricing.forms import CustomerPriceForm, CustomerProductForm
@@ -43,5 +43,29 @@ def admin_customer_price_create(request):
         form = CustomerPriceForm()
         if customer_id:
             form.fields["customer"].initial = customer_id
-    return render(request, "admin_portal/customer_price_form.html", {"form": form})
+    return render(request, "admin_portal/customer_price_form.html", {
+        "form": form,
+        "form_title": "Add Customer Price Contract",
+        "submit_label": "Save Pricing Contract",
+        "cancel_url": f"/admin-portal/customers/{customer_id}/" if customer_id else "/admin-portal/pricing/",
+    })
+
+
+@ops_required
+def admin_customer_price_edit(request, pk):
+    price = get_object_or_404(CustomerPrice, pk=pk)
+    if request.method == "POST":
+        form = CustomerPriceForm(request.POST, instance=price)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Pricing contract updated.")
+            return redirect("admin_portal:customer_detail", pk=price.customer_id)
+    else:
+        form = CustomerPriceForm(instance=price)
+    return render(request, "admin_portal/customer_price_form.html", {
+        "form": form,
+        "form_title": "Edit Pricing Contract",
+        "submit_label": "Save Changes",
+        "cancel_url": request.META.get("HTTP_REFERER", f"/admin-portal/customers/{price.customer_id}/"),
+    })
 # Create your views here.

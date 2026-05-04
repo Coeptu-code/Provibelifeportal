@@ -5,9 +5,6 @@
     <h1>{{ customer.name }}</h1>
     <div class="lede">Payment Terms: {{ customer.get_payment_terms_display }} | Preferred Carrier: {{ customer.get_preferred_carrier_display|default:"Auto" }}</div>
   </div>
-  <div class="right">
-    <a class="btn primary sm" href="{% url 'admin_portal:customer_price_create' %}?customer={{ customer.id }}">Add Price Contract</a>
-  </div>
 </div>
 
 <div class="grid-2" style="margin-bottom: 28px;">
@@ -105,7 +102,7 @@
       <div class="card flush">
         <div class="tbl-wrap">
           <table class="tbl">
-            <thead><tr><th>SKU</th><th class="num">Price</th><th class="num">Min Qty</th><th>Expires</th></tr></thead>
+            <thead><tr><th>SKU</th><th class="num">Price</th><th class="num">Min Qty</th><th>Expires</th><th></th></tr></thead>
             <tbody>
               {% for row in customer_prices %}
               <tr>
@@ -113,6 +110,7 @@
                 <td class="num">${{ row.unit_price }}</td>
                 <td class="num">{{ row.minimum_quantity }}</td>
                 <td>{{ row.expiration_date|date:"M d, Y"|default:"Open" }}</td>
+                <td><a class="btn sm" href="{% url 'admin_portal:customer_price_edit' row.id %}">Edit</a></td>
               </tr>
               {% endfor %}
             </tbody>
@@ -125,6 +123,7 @@
         <p>No pricing contracts yet.</p>
       </div>
     {% endif %}
+    <a href="{% url 'admin_portal:customer_price_create' %}?customer={{ customer.id }}" class="btn primary" style="margin-top: 14px;">Add Price Contract</a>
   </div>
 </div>
 {% endblock %}

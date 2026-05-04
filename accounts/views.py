@@ -1,6 +1,7 @@
 from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
+from django.core.exceptions import ValidationError
 from django.shortcuts import get_object_or_404, redirect, render
 
 from accounts.decorators import ops_required
@@ -23,11 +24,14 @@ def admin_customer_user_create(request):
     if request.method == "POST":
         form = CustomerUserCreateForm(request.POST)
         if form.is_valid():
-            user = form.save()
-            messages.success(request, "Customer user created.")
-            if user.customer_id:
-                return redirect("admin_portal:customer_detail", pk=user.customer_id)
-            return redirect("admin_portal:customers")
+            try:
+                user = form.save()
+                messages.success(request, "Customer user created.")
+                if user.customer_id:
+                    return redirect("admin_portal:customer_detail", pk=user.customer_id)
+                return redirect("admin_portal:customers")
+            except ValidationError as e:
+                form.add_error(None, e)
     else:
         form = CustomerUserCreateForm()
         if customer_id:
@@ -46,11 +50,14 @@ def admin_customer_user_edit(request, pk):
     if request.method == "POST":
         form = CustomerUserUpdateForm(request.POST, instance=user)
         if form.is_valid():
-            updated_user = form.save()
-            messages.success(request, "Customer user updated.")
-            if updated_user.customer_id:
-                return redirect("admin_portal:customer_detail", pk=updated_user.customer_id)
-            return redirect("admin_portal:customers")
+            try:
+                updated_user = form.save()
+                messages.success(request, "Customer user updated.")
+                if updated_user.customer_id:
+                    return redirect("admin_portal:customer_detail", pk=updated_user.customer_id)
+                return redirect("admin_portal:customers")
+            except ValidationError as e:
+                form.add_error(None, e)
     else:
         form = CustomerUserUpdateForm(instance=user)
 

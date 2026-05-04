@@ -20,6 +20,12 @@ class CustomerUserCreateForm(forms.ModelForm):
             "is_active",
         ]
 
+    def _post_clean(self):
+        # role must be set before model.clean() runs so the role/customer
+        # constraint doesn't fire against the model's "admin" default
+        self.instance.role = User.Role.CUSTOMER_USER
+        super()._post_clean()
+
     def clean(self):
         cleaned = super().clean()
         if cleaned.get("password1") != cleaned.get("password2"):
@@ -29,8 +35,6 @@ class CustomerUserCreateForm(forms.ModelForm):
     def save(self, commit=True):
         user = super().save(commit=False)
         user.role = User.Role.CUSTOMER_USER
-        user.is_customer_user = True
-        user.is_ops_user = False
         user.set_password(self.cleaned_data["password1"])
         if commit:
             user.save()
@@ -51,6 +55,10 @@ class CustomerUserUpdateForm(forms.ModelForm):
             "customer",
             "is_active",
         ]
+
+    def _post_clean(self):
+        self.instance.role = User.Role.CUSTOMER_USER
+        super()._post_clean()
 
     def clean(self):
         cleaned = super().clean()

@@ -82,6 +82,33 @@
     </div>
   </div>
 
+  <div class="more-sheet" id="moreSheet">
+    <a href="{% url 'admin_portal:fulfillment_queue' %}" class="more-item {% if 'fulfillment_queue' in request.resolver_match.url_name %}active{% endif %}">
+      <svg class="ico" viewBox="0 0 24 24" fill="currentColor"><path d="M17 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z"/></svg>
+      <span>Fulfillment</span>
+    </a>
+    <a href="{% url 'admin_portal:shipments' %}" class="more-item {% if 'shipments' in request.resolver_match.url_name %}active{% endif %}">
+      <svg class="ico" viewBox="0 0 24 24" fill="currentColor"><path d="M20 8h-3V4H3c-1.1 0-2 .9-2 2v11h2c0 1.66 1.34 3 3 3s3-1.34 3-3h6c0 1.66 1.34 3 3 3s3-1.34 3-3h2v-5l-3-4zM6 18.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm13.5-9l1.96 2.5H17V9.5h2.5zm-1.5 9c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/></svg>
+      <span>Shipments</span>
+    </a>
+    <a href="{% url 'admin_portal:products' %}" class="more-item {% if 'products' in request.resolver_match.url_name %}active{% endif %}">
+      <svg class="ico" viewBox="0 0 24 24" fill="currentColor"><path d="M18 6h-2c0-2.21-1.79-4-4-4S8 3.79 8 6H6c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-8 4c0 .55-.45 1-1 1s-1-.45-1-1V8h2v2zm2-6c1.1 0 2 .9 2 2h-4c0-1.1.9-2 2-2zm4 6c0 .55-.45 1-1 1s-1-.45-1-1V8h2v2z"/></svg>
+      <span>Products</span>
+    </a>
+    <a href="{% url 'admin_portal:pricing' %}" class="more-item {% if 'pricing' in request.resolver_match.url_name %}active{% endif %}">
+      <svg class="ico" viewBox="0 0 24 24" fill="currentColor"><path d="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z"/></svg>
+      <span>Pricing</span>
+    </a>
+    <a href="{% url 'admin_portal:payments' %}" class="more-item {% if 'payments' in request.resolver_match.url_name %}active{% endif %}">
+      <svg class="ico" viewBox="0 0 24 24" fill="currentColor"><path d="M20 4H4c-1.11 0-1.99.89-1.99 2L2 18c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm0 14H4v-6h16v6zm0-10H4V6h16v2z"/></svg>
+      <span>Payments</span>
+    </a>
+    <a href="{% url 'admin_portal:reports' %}" class="more-item {% if 'reports' in request.resolver_match.url_name %}active{% endif %}">
+      <svg class="ico" viewBox="0 0 24 24" fill="currentColor"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/></svg>
+      <span>Reports</span>
+    </a>
+  </div>
+
   <nav class="tabbar">
     <a href="{% url 'admin_portal:dashboard' %}" class="t {% if 'dashboard' in request.resolver_match.url_name %}active{% endif %}">
       <svg class="ico" viewBox="0 0 24 24" fill="currentColor"><path d="M3 13h2v8H3zm4-8h2v16H7zm4-2h2v18h-2zm4-2h2v20h-2zm4 4h2v16h-2z"/></svg>
@@ -96,18 +123,31 @@
       <span>Invoicing</span>
     </a>
     <a href="{% url 'admin_portal:customers' %}" class="t {% if 'customers' in request.resolver_match.url_name %}active{% endif %}">
-      <svg class="ico" viewBox="0 0 24 24" fill="currentColor"><path d="M9 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4zm10.76-9.54l-3.5-3.5a.75.75 0 00-1.06 0L14.5 3.9 17.6 7l-.84.84a.75.75 0 000 1.06l3.5 3.5a.75.75 0 001.06 0l.84-.84.84.84a.75.75 0 001.06 0l3.5-3.5a.75.75 0 000-1.06l-3.5-3.5z"/></svg>
+      <svg class="ico" viewBox="0 0 24 24" fill="currentColor"><path d="M9 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
       <span>Customers</span>
     </a>
-    <a href="{% url 'admin_portal:fulfillment_queue' %}" class="t {% if 'fulfillment_queue' in request.resolver_match.url_name %}active{% endif %}">
-      <svg class="ico" viewBox="0 0 24 24" fill="currentColor"><path d="M17 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z"/></svg>
-      <span>Fulfillment</span>
-    </a>
+    <button id="moreBtn" class="t {% if 'fulfillment_queue' in request.resolver_match.url_name or 'shipments' in request.resolver_match.url_name or 'products' in request.resolver_match.url_name or 'pricing' in request.resolver_match.url_name or 'payments' in request.resolver_match.url_name or 'reports' in request.resolver_match.url_name %}active{% endif %}" onclick="toggleMore(event)">
+      <svg class="ico" viewBox="0 0 24 24" fill="currentColor"><path d="M6 10c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm12 0c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm-6 0c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>
+      <span>More</span>
+    </button>
   </nav>
 
   <script>
     document.querySelectorAll('input:not([type=checkbox]):not([type=radio]):not([type=hidden]):not([type=submit]):not([type=file]), select, textarea').forEach(el => {
       if (!el.classList.contains('input')) el.classList.add('input');
+    });
+
+    function toggleMore(e) {
+      e.stopPropagation();
+      document.getElementById('moreSheet').classList.toggle('open');
+    }
+
+    document.addEventListener('click', function(e) {
+      const sheet = document.getElementById('moreSheet');
+      const btn = document.getElementById('moreBtn');
+      if (sheet && !sheet.contains(e.target) && !btn.contains(e.target)) {
+        sheet.classList.remove('open');
+      }
     });
   </script>
 </body>

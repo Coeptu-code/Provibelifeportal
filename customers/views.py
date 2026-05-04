@@ -108,4 +108,20 @@ def admin_shipping_address_create(request):
             form.fields["customer"].initial = customer_id
     return render(request, "admin_portal/shipping_address_form.html", {"form": form})
 
-# Create your views here.
+
+@ops_required
+def admin_shipping_address_edit(request, pk):
+    address = get_object_or_404(ShippingAddress, pk=pk)
+    if request.method == "POST":
+        form = AdminShippingAddressForm(request.POST, instance=address)
+        if form.is_valid():
+            shipping_address = form.save()
+            if shipping_address.is_default:
+                ShippingAddress.objects.filter(customer=shipping_address.customer).exclude(
+                    pk=shipping_address.pk
+                ).update(is_default=False)
+            messages.success(request, "Shipping address updated.")
+            return redirect("admin_portal:customer_detail", pk=shipping_address.customer_id)
+    else:
+        form = AdminShippingAddressForm(instance=address)
+    return render(request, "admin_portal/shipping_address_form.html", {"form": form})

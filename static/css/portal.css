@@ -56,6 +56,47 @@
 /* Grid utilities for common layouts */
 .grid-wrap { display: grid; gap: 14px; }
 
+/* Mobile "More" sheet — slides up above tabbar */
+.more-sheet { display: none; }
+
+@media (max-width: 899px) {
+  .more-sheet {
+    display: none;
+    position: fixed;
+    bottom: 68px;
+    left: 0; right: 0;
+    background: var(--pvl-ink);
+    border-top: 1px solid #2a2a30;
+    z-index: 29;
+    padding: 14px 12px;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+  }
+  .more-sheet.open { display: grid; }
+  .more-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 12px 6px;
+    border-radius: 10px;
+    color: #9a9485;
+    text-decoration: none;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    transition: background 0.15s, color 0.15s;
+  }
+  .more-item .ico { width: 22px; height: 22px; }
+  .more-item:hover { background: #1d1d22; color: #e8e3d4; }
+  .more-item.active { color: #c9a04a; }
+  #moreBtn {
+    background: none;
+    border: none;
+    font-family: inherit;
+  }
+}
+
 /* Print styles for pick ticket */
 @media print {
   body { background: white; }
