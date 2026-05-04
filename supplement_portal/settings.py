@@ -9,9 +9,21 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(BASE_DIR / ".env")
 
 
+def env_bool(name: str, default: bool = False) -> bool:
+    value = os.getenv(name)
+    if value is None:
+        return default
+    return value.strip().lower() in {"1", "true", "yes", "on"}
+
+
+def env_list(name: str, default: str = "") -> list[str]:
+    return [item.strip() for item in os.getenv(name, default).split(",") if item.strip()]
+
+
 SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "django-insecure-local-dev-key")
-DEBUG = os.getenv("DJANGO_DEBUG", "1") == "1"
-ALLOWED_HOSTS = [host.strip() for host in os.getenv("DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1").split(",") if host.strip()]
+DEBUG = env_bool("DJANGO_DEBUG", True)
+ALLOWED_HOSTS = env_list("DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1")
+CSRF_TRUSTED_ORIGINS = env_list("CSRF_TRUSTED_ORIGINS", "")
 
 
 
@@ -36,6 +48,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -94,6 +107,10 @@ USE_TZ = True
 STATIC_URL = "/static/"
 STATICFILES_DIRS = [BASE_DIR / "static", BASE_DIR / "public"]
 STATIC_ROOT = BASE_DIR / "staticfiles"
+STORAGES = {
+    "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+    "staticfiles": {"BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage"},
+}
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
@@ -107,9 +124,10 @@ LOGOUT_REDIRECT_URL = "login"
 STRIPE_SECRET_KEY = os.getenv("STRIPE_SECRET_KEY", "")
 STRIPE_WEBHOOK_SECRET = os.getenv("STRIPE_WEBHOOK_SECRET", "")
 STRIPE_CURRENCY = os.getenv("STRIPE_CURRENCY", "usd")
-STRIPE_INVOICING_ENABLED = os.getenv("STRIPE_INVOICING_ENABLED", "1") == "1"
+STRIPE_INVOICING_ENABLED = env_bool("STRIPE_INVOICING_ENABLED", True)
 EASYPOST_API_KEY = os.getenv("EASYPOST_API_KEY", "")
-EASYPOST_ENABLED = os.getenv("EASYPOST_ENABLED", "0") == "1"
+EASYPOST_ENABLED = env_bool("EASYPOST_ENABLED", False)
+SHIPPING_PROVIDER = os.getenv("SHIPPING_PROVIDER", "none")
 
 SHIP_FROM_NAME = os.getenv("SHIP_FROM_NAME", "")
 SHIP_FROM_STREET1 = os.getenv("SHIP_FROM_STREET1", "")
@@ -118,3 +136,27 @@ SHIP_FROM_STATE = os.getenv("SHIP_FROM_STATE", "")
 SHIP_FROM_ZIP = os.getenv("SHIP_FROM_ZIP", "")
 SHIP_FROM_COUNTRY = os.getenv("SHIP_FROM_COUNTRY", "US")
 SHIP_FROM_PHONE = os.getenv("SHIP_FROM_PHONE", "")
+
+if not DEBUG:
+    if SECRET_KEY == "django-insecure-local-dev-key":
+        raise ValueError("DJANGO_SECRET_KEY must be set in production.")
+    if not ALLOWED_HOSTS:
+        raise ValueError("DJANGO_ALLOWED_HOSTS must be set in production.")
+
+    secure_proxy_header = os.getenv(
+        "DJANGO_SECURE_PROXY_SSL_HEADER", "HTTP_X_FORWARDED_PROTO,https"
+    )
+    proxy_parts = [part.strip() for part in secure_proxy_header.split(",", 1) if part.strip()]
+    if len(proxy_parts) == 2:
+        SECURE_PROXY_SSL_HEADER = (proxy_parts[0], proxy_parts[1])
+    else:
+        SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+
+    SESSION_COOKIE_SECURE = env_bool("DJANGO_SESSION_COOKIE_SECURE", True)
+    CSRF_COOKIE_SECURE = env_bool("DJANGO_CSRF_COOKIE_SECURE", True)
+    SECURE_SSL_REDIRECT = env_bool("DJANGO_SECURE_SSL_REDIRECT", True)
+    SECURE_HSTS_SECONDS = int(os.getenv("DJANGO_SECURE_HSTS_SECONDS", "31536000"))
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = env_bool(
+        "DJANGO_SECURE_HSTS_INCLUDE_SUBDOMAINS", False
+    )
+    SECURE_HSTS_PRELOAD = env_bool("DJANGO_SECURE_HSTS_PRELOAD", False)
