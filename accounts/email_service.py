@@ -19,11 +19,15 @@ def send_email(to: str, subject: str, html: str) -> None:
 
 
 def send_invitation_email(invitation, accept_url: str) -> None:
+    inviter_name = "Pro Vibe Life"
+    if invitation.invited_by:
+        inviter_name = invitation.invited_by.get_full_name() or invitation.invited_by.username
+
     subject = f"You're invited to {invitation.customer.name}"
     html = f"""
     <html><body style="font-family: Arial, sans-serif; color: #333;">
       <h2>Welcome to Pro Vibe Life Portal</h2>
-      <p>You've been invited by <strong>{invitation.invited_by.get_full_name or invitation.invited_by.username}</strong> to manage orders for <strong>{invitation.customer.name}</strong>.</p>
+      <p>You've been invited by <strong>{inviter_name}</strong> to manage orders for <strong>{invitation.customer.name}</strong>.</p>
       <p><a href="{accept_url}" style="display: inline-block; background-color: #d4a574; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px;">Create Your Account</a></p>
       <p>This link expires in 7 days.</p>
     </body></html>

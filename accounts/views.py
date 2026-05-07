@@ -106,13 +106,20 @@ def invitation_accept(request, token):
     else:
         form = AcceptInvitationForm()
 
+    inviter = invitation.invited_by
+    invited_by_name = (
+        (inviter.get_full_name() or inviter.username)
+        if inviter
+        else "Pro Vibe Life"
+    )
+
     return render(
         request,
         "registration/accept_invitation.html",
         {
             "form": form,
             "invitation": invitation,
-            "invited_by_name": invitation.invited_by.get_full_name() or invitation.invited_by.username,
+            "invited_by_name": invited_by_name,
         },
     )
 

@@ -7,7 +7,7 @@ from django.contrib.auth import get_user_model
 from django.utils import timezone
 
 from customers.models import Customer
-from accounts.models import RetailerLead, RetailerAccountCreationToken
+from accounts.models import CustomerInvitation, RetailerLead, RetailerAccountCreationToken
 
 
 class CustomerUserAdminPortalTests(TestCase):
@@ -35,6 +35,16 @@ class CustomerUserAdminPortalTests(TestCase):
 
         invitation = CustomerInvitation.objects.get(email="acme1@example.com", customer=self.customer)
         self.assertTrue(invitation.is_valid)
+
+    def test_invitation_accept_page_handles_missing_inviter(self):
+        invitation = CustomerInvitation.objects.create(
+            email="newuser@example.com",
+            customer=self.customer,
+            invited_by=None,
+        )
+        response = self.client.get(reverse("invitation_accept", kwargs={"token": invitation.token}))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Create Your Account")
 
 
 @override_settings(SITE_URL="https://portal.provibelife.com")
