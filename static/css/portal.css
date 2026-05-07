@@ -1,38 +1,77 @@
 /* Pro Vibe Life Portal — Django-specific helpers
    Complements public/PVL/styles.css */
 
-/* Status pill color mapping */
+/* Status pill color mapping — explicit CSS replacing @apply */
+/* DRAFT / PENDING / RELEASED_TO_WAREHOUSE / PICKING → ink */
 .pill.status-DRAFT,
 .pill.status-PENDING,
 .pill.status-RELEASED_TO_WAREHOUSE,
-.pill.status-PICKING { @apply .pill.ink; }
+.pill.status-PICKING {
+  color: var(--pvl-text);
+  border-color: var(--pvl-paper-3);
+  background: var(--pvl-paper-2);
+}
 
+/* SUBMITTED / UNDER_REVIEW / APPROVED / OPEN / SENT → gold */
 .pill.status-SUBMITTED,
 .pill.status-UNDER_REVIEW,
 .pill.status-APPROVED,
 .pill.status-OPEN,
-.pill.status-SENT { @apply .pill.gold; }
+.pill.status-SENT {
+  color: var(--pvl-gold-deep);
+  border-color: color-mix(in srgb, var(--pvl-gold) 35%, transparent);
+  background: color-mix(in srgb, var(--pvl-gold) 10%, var(--pvl-bone));
+}
 
-.pill.status-APPROVED,
+/* SHIPPED / PAID / PACKED / PICKING → green */
 .pill.status-SHIPPED,
 .pill.status-PAID,
 .pill.status-PICKING,
-.pill.status-PACKED { @apply .pill.green; }
+.pill.status-PACKED {
+  color: #2c5e2e;
+  border-color: #c5dcc3;
+  background: #e8f1e3;
+}
 
+/* ON_HOLD / PARTIALLY_SHIPPED / PARTIALLY_PAID → amber */
 .pill.status-ON_HOLD,
-.pill.status-PACKED,
 .pill.status-PARTIALLY_SHIPPED,
-.pill.status-PARTIALLY_PAID { @apply .pill.amber; }
+.pill.status-PARTIALLY_PAID {
+  color: #8a5a08;
+  border-color: #e8d2a0;
+  background: #fbf2dd;
+}
 
+/* CANCELLED / VOID / OVERDUE → red */
 .pill.status-CANCELLED,
 .pill.status-VOID,
-.pill.status-OVERDUE { @apply .pill.red; }
+.pill.status-OVERDUE {
+  color: #842118;
+  border-color: #e8c4be;
+  background: #f8e8e3;
+}
 
 /* Flash messages map to PVL .note classes */
-.alert-info { @apply .note.gold; }
-.alert-warning { @apply .note.amber; }
-.alert-danger { @apply .note.red; }
-.alert-secondary { @apply .note.gray; }
+.alert-info {
+  background: color-mix(in srgb, var(--pvl-gold) 8%, var(--pvl-bone));
+  border-color: color-mix(in srgb, var(--pvl-gold) 35%, transparent);
+  color: var(--pvl-text);
+}
+.alert-warning {
+  background: #fbf2dd;
+  border-color: #e8d2a0;
+  color: #6c4d10;
+}
+.alert-danger {
+  background: #f8e8e3;
+  border-color: #e8c4be;
+  color: #842118;
+}
+.alert-secondary {
+  background: var(--pvl-paper-2);
+  border-color: var(--pvl-paper-3);
+  color: var(--pvl-text-mute);
+}
 
 .text-danger { color: var(--pvl-danger); }
 .text-secondary { color: var(--pvl-text-mute); }
@@ -59,9 +98,20 @@
 /* Mobile "More" sheet — slides up above tabbar */
 .more-sheet { display: none; }
 
+/* Mobile login header */
+.mobile-login-header { display: none; }
+
 @media (max-width: 899px) {
   /* Hide columns not needed on small screens */
   .d-mobile-none { display: none !important; }
+
+  /* Prevent table horizontal scrolling - tables stay stable and compact */
+  .tbl-wrap { overflow-x: visible !important; width: 100%; }
+  table.tbl { table-layout: fixed; width: 100%; font-size: 13px; }
+  table.tbl thead th { padding: 10px 8px; font-size: 10px; }
+  table.tbl tbody td { padding: 10px 8px; word-wrap: break-word; word-break: break-word; overflow-wrap: break-word; white-space: normal; }
+  table.tbl .mono { font-size: 11px; }
+  table.tbl .strong { font-weight: 600; }
 
   /* Summary/CTA panel: drop sticky, float to top of stacked grid */
   .summary { position: static !important; }
@@ -71,8 +121,25 @@
   /* Login art panel: hide, show form immediately */
   .login-art { display: none !important; }
 
+  /* iOS HIG: 44pt minimum touch target */
+  .btn.sm { min-height: 44px; padding: 10px 16px; font-size: 13px; }
+  .btn { min-height: 36px; }
+  .qty button { min-width: 44px; min-height: 44px; }
+
+  /* Prevent iOS auto-zoom on input focus (requires 16px font) */
+  input.input, select.input, textarea.input { font-size: 16px; }
+
+  /* Keep cards and containers stable - no overflow */
+  .card { overflow: hidden; }
+  .card-body { padding: 16px 18px; }
+  .card-head { padding: 14px 18px; }
+  .addr-card { padding: 14px 16px; }
+  .product { padding: 14px; gap: 10px; }
+  .pill { padding: 3px 8px; font-size: 11px; }
+
+  /* More sheet: slide-up animation instead of instant display toggle */
   .more-sheet {
-    display: none;
+    display: grid;
     position: fixed;
     bottom: 68px;
     left: 0; right: 0;
@@ -82,14 +149,18 @@
     padding: 14px 12px;
     grid-template-columns: repeat(3, 1fr);
     gap: 6px;
+    transform: translateY(110%);
+    transition: transform 220ms cubic-bezier(0.22, 0.61, 0.36, 1);
   }
-  .more-sheet.open { display: grid; }
+  .more-sheet.open { transform: translateY(0); }
+
   .more-item {
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 4px;
     padding: 12px 6px;
+    min-height: 56px;
     border-radius: 10px;
     color: #9a9485;
     text-decoration: none;
@@ -97,15 +168,23 @@
     font-weight: 500;
     letter-spacing: 0.02em;
     transition: background 0.15s, color 0.15s;
+    justify-content: center;
   }
   .more-item .ico { width: 22px; height: 22px; }
   .more-item:hover { background: #1d1d22; color: #e8e3d4; }
+  .more-item:active { opacity: 0.8; }
   .more-item.active { color: #c9a04a; }
   #moreBtn {
     background: none;
     border: none;
     font-family: inherit;
   }
+
+  /* Back button for detail pages */
+  #backBtn { display: grid; }
+
+  /* Mobile login header */
+  .mobile-login-header { display: block; text-align: center; margin-bottom: 24px; }
 }
 
 /* 3-column grid: collapse to single column on small phones */
@@ -152,3 +231,107 @@
 .mt-4 { margin-top: 28px; }
 .p-3 { padding: 22px; }
 .py-2 { padding-top: 14px; padding-bottom: 14px; }
+
+/* PWA safe-area + install prompt */
+:root {
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+}
+
+html, body {
+  overscroll-behavior-y: none;
+}
+
+body {
+  padding-left: var(--safe-left);
+  padding-right: var(--safe-right);
+  touch-action: manipulation;
+}
+
+.topbar {
+  padding-top: max(12px, var(--safe-top));
+}
+
+.tabbar {
+  padding-bottom: var(--safe-bottom);
+}
+
+/* Standalone mode: reduce browser chrome feel */
+html.pwa-standalone .topbar {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  backdrop-filter: blur(8px);
+}
+
+html.pwa-standalone .main {
+  min-height: 100dvh;
+}
+
+html.pwa-standalone .tabbar {
+  padding-bottom: max(10px, var(--safe-bottom));
+}
+
+html.pwa-standalone .more-sheet {
+  bottom: calc(68px + var(--safe-bottom));
+}
+
+/* Custom install prompt */
+.pvl-install-prompt {
+  position: fixed;
+  left: max(12px, var(--safe-left));
+  right: max(12px, var(--safe-right));
+  bottom: calc(14px + var(--safe-bottom));
+  z-index: 9999;
+  opacity: 0;
+  transform: translateY(16px);
+  transition: opacity 180ms ease, transform 220ms cubic-bezier(0.22, 0.61, 0.36, 1);
+  pointer-events: none;
+}
+
+.pvl-install-prompt.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.pvl-install-card {
+  background: #090909;
+  color: #f4efe1;
+  border: 1px solid #2c2c2c;
+  border-radius: 16px;
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.42);
+  padding: 16px 14px 14px;
+}
+
+.pvl-install-close {
+  float: right;
+  border: 0;
+  background: transparent;
+  color: #9f9f9f;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.pvl-install-title {
+  font-size: 16px;
+  font-weight: 800;
+  margin-bottom: 6px;
+  letter-spacing: 0.01em;
+}
+
+.pvl-install-copy {
+  font-size: 13px;
+  line-height: 1.45;
+  color: #d7d1c1;
+  margin-bottom: 12px;
+}
+
+.pvl-install-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}

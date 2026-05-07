@@ -12,12 +12,12 @@
 <div class="card flush">
   <div class="tbl-wrap">
     <table class="tbl">
-      <thead><tr><th>Name</th><th>Payment Terms</th><th>Sales Rep</th><th>Status</th><th></th></tr></thead>
+      <thead><tr><th>Name</th><th class="d-mobile-none">Payment Terms</th><th>Sales Rep</th><th>Status</th><th></th></tr></thead>
       <tbody>
         {% for customer in customers %}
         <tr>
           <td class="strong">{{ customer.name }}</td>
-          <td>{{ customer.get_payment_terms_display }}</td>
+          <td class="d-mobile-none">{{ customer.get_payment_terms_display }}</td>
           <td>{{ customer.sales_rep.get_full_name|default:customer.sales_rep.username|default:"-" }}</td>
           <td><span class="pill {% if customer.is_active %}green{% else %}red{% endif %}">{{ customer.is_active|yesno:"Active,Inactive" }}</span></td>
           <td><a class="btn sm" href="{% url 'admin_portal:customer_detail' customer.id %}">Manage</a></td>

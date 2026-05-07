@@ -9,14 +9,14 @@
 <div class="card flush">
   <div class="tbl-wrap">
     <table class="tbl">
-      <thead><tr><th>Invoice</th><th>Status</th><th class="num">Total</th><th>Due Date</th><th></th></tr></thead>
+      <thead><tr><th>Invoice</th><th>Status</th><th class="num">Total</th><th class="d-mobile-none">Due Date</th><th></th></tr></thead>
       <tbody>
         {% for invoice in invoices %}
         <tr>
           <td class="strong mono">{{ invoice.invoice_number }}</td>
           <td><span class="pill status-{{ invoice.status }}">{{ invoice.status }}</span></td>
           <td class="num strong">${{ invoice.total }}</td>
-          <td>{{ invoice.due_date|date:"M d, Y"|default:'-' }}</td>
+          <td class="d-mobile-none">{{ invoice.due_date|date:"M d, Y"|default:'-' }}</td>
           <td>
             {% if invoice.hosted_invoice_url %}
               <a class="btn sm gold" href="{{ invoice.hosted_invoice_url }}" target="_blank">Pay</a>

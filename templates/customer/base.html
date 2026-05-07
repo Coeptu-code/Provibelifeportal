@@ -3,7 +3,14 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#000000">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Provibe">
+  <link rel="manifest" href="/manifest.json">
+  <link rel="apple-touch-icon" href="/PVL/provibelife_icon_pack/icon-180.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/PVL/provibelife_icon_pack/icon-32.png">
   <title>Customer Portal</title>
   <link href="{% static 'PVL/styles.css' %}" rel="stylesheet">
   <link href="{% static 'css/portal.css' %}" rel="stylesheet">
@@ -50,6 +57,7 @@
 
     <div class="main">
       <header class="topbar">
+        {% block topbar_left %}{% endblock %}
         <div class="crumb"><span class="crumb-mobile">Portal</span></div>
       </header>
 
@@ -91,6 +99,15 @@
   <script>
     document.querySelectorAll('input:not([type=checkbox]):not([type=radio]):not([type=hidden]):not([type=submit]):not([type=file]), select, textarea').forEach(el => {
       if (!el.classList.contains('input')) el.classList.add('input');
+    });
+  </script>
+  <script src="/hooks/usePwaInstall.js" defer></script>
+  <script src="/components/mobile/InstallPrompt.js" defer></script>
+  <script>
+    window.addEventListener("DOMContentLoaded", function () {
+      if (window.PVLInstallPrompt) {
+        window.PVLInstallPrompt.init();
+      }
     });
   </script>
 </body>

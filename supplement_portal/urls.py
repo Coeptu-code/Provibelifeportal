@@ -1,13 +1,21 @@
 from django.contrib import admin
 from django.conf import settings
 from django.conf.urls.static import static
-from django.urls import include, path
+from django.urls import include, path, re_path
 from django.views.generic import TemplateView
 
 from accounts import views as account_views
 from accounts.views import root_redirect, CustomPasswordResetConfirmView
+from supplement_portal import pwa_views
 
 urlpatterns = [
+    path("manifest.json", pwa_views.manifest, name="pwa_manifest"),
+    path("sw.js", pwa_views.service_worker, name="pwa_service_worker"),
+    path("retailer-app/mobile", pwa_views.retailer_mobile_entry, name="retailer_mobile_entry"),
+    path("retailer-app/mobile/", pwa_views.retailer_mobile_entry),
+    re_path(r"^PVL/(?P<path>.*)$", pwa_views.pvl_static, name="pvl_static"),
+    re_path(r"^hooks/(?P<path>.*)$", pwa_views.hooks_static, name="hooks_static"),
+    re_path(r"^components/(?P<path>.*)$", pwa_views.components_static, name="components_static"),
     path("", root_redirect, name="root_redirect"),
     path("accounts/", include("django.contrib.auth.urls")),
     path("accounts/invite/<uuid:token>/", account_views.invitation_accept, name="invitation_accept"),

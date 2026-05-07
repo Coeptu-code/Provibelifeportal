@@ -9,13 +9,13 @@
 <div class="card flush">
   <div class="tbl-wrap">
     <table class="tbl">
-      <thead><tr><th>Order ID</th><th>Status</th><th>Submitted</th><th class="num">Total</th><th></th></tr></thead>
+      <thead><tr><th>Order ID</th><th>Status</th><th class="d-mobile-none">Submitted</th><th class="num">Total</th><th></th></tr></thead>
       <tbody>
         {% for order in orders %}
         <tr>
           <td class="strong">#{{ order.id }}</td>
           <td><span class="pill status-{{ order.status }}">{{ order.status }}</span></td>
-          <td>{{ order.submitted_at|date:"M d, Y"|default:'-' }}</td>
+          <td class="d-mobile-none">{{ order.submitted_at|date:"M d, Y"|default:'-' }}</td>
           <td class="num strong">${{ order.total }}</td>
           <td><a class="btn sm" href="{% url 'customers:order_detail' order.id %}">View</a></td>
         </tr>

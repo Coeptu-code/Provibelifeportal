@@ -19,7 +19,7 @@
     <div class="card-body">
       <div class="field">
         <label for="{{ form.email.id_for_label }}" class="label">{{ form.email.label }}</label>
-        {{ form.email }}
+        <input type="email" name="email" id="{{ form.email.id_for_label }}" class="input" inputmode="email" autocomplete="email" required>
         {% if form.email.errors %}<div class="text-danger">{{ form.email.errors|join:", " }}</div>{% endif %}
       </div>
 

@@ -12,11 +12,11 @@
 <div class="card flush">
   <div class="tbl-wrap">
     <table class="tbl">
-      <thead><tr><th>Image</th><th>SKU</th><th>Name</th><th>Status</th><th></th></tr></thead>
+      <thead><tr><th class="d-mobile-none">Image</th><th>SKU</th><th>Name</th><th>Status</th><th></th></tr></thead>
       <tbody>
         {% for product in products %}
         <tr>
-          <td>
+          <td class="d-mobile-none">
             {% if product.image_url %}
               <img src="{{ product.image_url }}" alt="{{ product.name }}" style="width:40px;height:40px;object-fit:cover;border-radius:6px;">
             {% elif product.image %}
@@ -29,7 +29,7 @@
           <td class="strong">{{ product.name }}</td>
           <td><span class="pill {% if product.active %}green{% else %}ink{% endif %}">{{ product.active|yesno:"Active,Inactive" }}</span></td>
           <td>
-            <div style="display: flex; gap: 6px;">
+            <div style="display: flex; gap: 6px; white-space: nowrap;">
               <a class="btn sm" href="{% url 'admin_portal:product_edit' product.id %}">Edit</a>
               <a class="btn sm danger" href="{% url 'admin_portal:product_delete' product.id %}">Delete</a>
             </div>
