@@ -51,3 +51,27 @@ def send_retailer_shilajit_info_email(*, to: str, account_creation_url: str) -> 
         {"account_creation_url": account_creation_url},
     )
     send_email(to, subject, html)
+
+
+MOBILE_APP_DOWNLOAD_URL = "https://portal.provibelife.com/retailer-app/mobile"
+
+
+def send_retailer_vitali_t_info_email(*, to: str, account_creation_url: str) -> None:
+    subject = "Pro Vibe Life Vitali-T — Retailer Product Information"
+    html = render_to_string(
+        "emails/retailer_vitali_t_info.html",
+        {"account_creation_url": account_creation_url},
+    )
+    send_email(to, subject, html)
+
+
+def send_retailer_app_invite_email(*, to: str, account_creation_url: str) -> None:
+    subject = "You're invited — Pro Vibe Life Retail Portal + Mobile App"
+    html = render_to_string(
+        "emails/retailer_app_invite.html",
+        {
+            "account_creation_url": account_creation_url,
+            "mobile_app_download_url": MOBILE_APP_DOWNLOAD_URL,
+        },
+    )
+    send_email(to, subject, html)

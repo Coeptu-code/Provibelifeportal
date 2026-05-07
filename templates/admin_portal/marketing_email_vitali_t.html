@@ -1,19 +1,18 @@
-{% extends “admin_portal/base.html” %}
-{% block topbar_left %}<button class=”icon-btn” id=”backBtn” onclick=”history.back()” style=”display:none;”>←</button>{% endblock %}
+{% extends "admin_portal/base.html" %}
+{% block topbar_left %}<button class="icon-btn" id="backBtn" onclick="history.back()" style="display:none;">←</button>{% endblock %}
 {% block content %}
-<div class=”page-head”>
+<div class="page-head">
   <div>
-    <h1>Shilajit Retailer Info</h1>
-    <div class=”muted”>Sends the Shilajit product info email with a secure account-creation link.</div>
+    <h1>Vitali‑T Retailer Info</h1>
+    <div class="muted">Sends the Vitali-T product info email with a secure account-creation link.</div>
   </div>
-  <div class=”right”>
-    <a href=”{% url 'admin_portal:marketing_email_preview' 'shilajit' %}” target=”_blank” class=”btn ghost”>Preview Email</a>
-    <a href=”{% url 'admin_portal:marketing_emails' %}” class=”btn ghost”>← All Emails</a>
+  <div class="right">
+    <a href="{% url 'admin_portal:marketing_email_preview' 'vitali-t' %}" target="_blank" class="btn ghost">Preview Email</a>
+    <a href="{% url 'admin_portal:marketing_emails' %}" class="btn ghost">← All Emails</a>
   </div>
 </div>
 
-<div style=”max-width: 720px;”>
-
+<div style="max-width: 720px;">
   <form method="post" class="card">
     {% csrf_token %}
 
@@ -56,4 +55,3 @@
   </form>
 </div>
 {% endblock %}
-

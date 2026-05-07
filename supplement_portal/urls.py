@@ -24,6 +24,7 @@ urlpatterns = [
     path("accounts/reset/<uidb64>/<token>/", CustomPasswordResetConfirmView.as_view(), name="password_reset_confirm"),
     path("accounts/reset/done/", TemplateView.as_view(template_name="registration/password_reset_complete.html"), name="password_reset_complete"),
     path("retailer/create-account/", account_views.retailer_create_account, name="retailer_create_account"),
+    path("", include("shopify_integration.urls")),
     path("customer/", include("customers.urls")),
     path("admin-portal/", include("supplement_portal.admin_portal_urls")),
     path("webhooks/", include("payments.urls")),

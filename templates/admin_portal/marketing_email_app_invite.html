@@ -1,18 +1,24 @@
-{% extends “admin_portal/base.html” %}
-{% block topbar_left %}<button class=”icon-btn” id=”backBtn” onclick=”history.back()” style=”display:none;”>←</button>{% endblock %}
+{% extends "admin_portal/base.html" %}
+{% block topbar_left %}<button class="icon-btn" id="backBtn" onclick="history.back()" style="display:none;">←</button>{% endblock %}
 {% block content %}
-<div class=”page-head”>
+<div class="page-head">
   <div>
-    <h1>Shilajit Retailer Info</h1>
-    <div class=”muted”>Sends the Shilajit product info email with a secure account-creation link.</div>
+    <h1>App Invite</h1>
+    <div class="muted">Sends a two-step invitation: account-creation link + mobile app install.</div>
   </div>
-  <div class=”right”>
-    <a href=”{% url 'admin_portal:marketing_email_preview' 'shilajit' %}” target=”_blank” class=”btn ghost”>Preview Email</a>
-    <a href=”{% url 'admin_portal:marketing_emails' %}” class=”btn ghost”>← All Emails</a>
+  <div class="right">
+    <a href="{% url 'admin_portal:marketing_email_preview' 'app-invite' %}" target="_blank" class="btn ghost">Preview Email</a>
+    <a href="{% url 'admin_portal:marketing_emails' %}" class="btn ghost">← All Emails</a>
   </div>
 </div>
 
-<div style=”max-width: 720px;”>
+<div style="max-width: 720px;">
+  <div class="card mb-3">
+    <div class="card-body">
+      <div style="font-weight: 900; margin-bottom: 8px;">Create Account + Mobile App Invite</div>
+      <div class="muted">Sends a two-step invitation email: step 1 is the secure account-creation link, step 2 is the mobile app install link. Each recipient gets a unique expiring link.</div>
+    </div>
+  </div>
 
   <form method="post" class="card">
     {% csrf_token %}
@@ -56,4 +62,3 @@
   </form>
 </div>
 {% endblock %}
-

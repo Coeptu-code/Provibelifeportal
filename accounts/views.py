@@ -6,7 +6,9 @@ from django.contrib.auth.views import PasswordResetConfirmView
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import transaction
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.template.loader import render_to_string
 from django.utils.encoding import force_str
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 from django.utils.decorators import method_decorator
@@ -16,7 +18,11 @@ import uuid
 
 from accounts.decorators import admin_required, customer_required, sales_required
 from accounts.activity import log_activity
-from accounts.email_service import send_invitation_email, send_password_reset_email, send_retailer_shilajit_info_email
+from accounts.email_service import (
+    send_invitation_email, send_password_reset_email,
+    send_retailer_shilajit_info_email, send_retailer_app_invite_email,
+    send_retailer_vitali_t_info_email, MOBILE_APP_DOWNLOAD_URL,
+)
 from accounts.forms import (
     AcceptInvitationForm, CustomPasswordResetForm, CustomerUserCreateForm, CustomerUserUpdateForm,
     InternalUserCreateForm, InternalUserUpdateForm, SendInvitationForm, MarketingShilajitEmailForm,
@@ -158,6 +164,124 @@ def admin_marketing_email_shilajit(request):
         "admin_portal/marketing_email_shilajit.html",
         {"form": form},
     )
+
+
+@sales_required
+def admin_marketing_emails(request):
+    return render(request, "admin_portal/marketing_emails.html")
+
+
+@sales_required
+def admin_marketing_email_app_invite(request):
+    if request.method == "POST":
+        form = MarketingShilajitEmailForm(request.POST)
+        if form.is_valid():
+            email = form.cleaned_data["email"].strip().lower()
+            store_name = (form.cleaned_data.get("store_name") or "").strip()
+            first_name = (form.cleaned_data.get("first_name") or "").strip()
+            last_name = (form.cleaned_data.get("last_name") or "").strip()
+
+            with transaction.atomic():
+                lead, _created = RetailerLead.objects.update_or_create(
+                    email=email,
+                    defaults={
+                        "store_name": store_name,
+                        "first_name": first_name,
+                        "last_name": last_name,
+                        "created_by": request.user,
+                    },
+                )
+                token = RetailerAccountCreationToken.objects.create(
+                    lead=lead,
+                    created_by=request.user,
+                )
+
+            account_creation_url = (
+                settings.SITE_URL.rstrip("/")
+                + reverse("retailer_create_account")
+                + f"?token={token.token}"
+            )
+            send_retailer_app_invite_email(to=email, account_creation_url=account_creation_url)
+            log_activity(
+                request.user,
+                "marketing_email_sent",
+                f"Sent App Invite email to {email}",
+                request,
+            )
+            messages.success(request, f"App invite email sent to {email}")
+            return redirect("admin_portal:marketing_email_app_invite")
+    else:
+        form = MarketingShilajitEmailForm()
+
+    return render(
+        request,
+        "admin_portal/marketing_email_app_invite.html",
+        {"form": form},
+    )
+
+
+@sales_required
+def admin_marketing_email_vitali_t(request):
+    if request.method == "POST":
+        form = MarketingShilajitEmailForm(request.POST)
+        if form.is_valid():
+            email = form.cleaned_data["email"].strip().lower()
+            store_name = (form.cleaned_data.get("store_name") or "").strip()
+            first_name = (form.cleaned_data.get("first_name") or "").strip()
+            last_name = (form.cleaned_data.get("last_name") or "").strip()
+
+            with transaction.atomic():
+                lead, _created = RetailerLead.objects.update_or_create(
+                    email=email,
+                    defaults={
+                        "store_name": store_name,
+                        "first_name": first_name,
+                        "last_name": last_name,
+                        "created_by": request.user,
+                    },
+                )
+                token = RetailerAccountCreationToken.objects.create(
+                    lead=lead,
+                    created_by=request.user,
+                )
+
+            account_creation_url = (
+                settings.SITE_URL.rstrip("/")
+                + reverse("retailer_create_account")
+                + f"?token={token.token}"
+            )
+            send_retailer_vitali_t_info_email(to=email, account_creation_url=account_creation_url)
+            log_activity(
+                request.user,
+                "marketing_email_sent",
+                f"Sent Vitali-T retailer info email to {email}",
+                request,
+            )
+            messages.success(request, f"Vitali-T retailer info email sent to {email}")
+            return redirect("admin_portal:marketing_email_vitali_t")
+    else:
+        form = MarketingShilajitEmailForm()
+
+    return render(
+        request,
+        "admin_portal/marketing_email_vitali_t.html",
+        {"form": form},
+    )
+
+
+@sales_required
+def admin_marketing_email_preview(request, slug):
+    sample_url = "#preview-link"
+    templates = {
+        "shilajit": ("emails/retailer_shilajit_info.html", {"account_creation_url": sample_url}),
+        "app-invite": ("emails/retailer_app_invite.html", {"account_creation_url": sample_url, "mobile_app_download_url": MOBILE_APP_DOWNLOAD_URL}),
+        "vitali-t": ("emails/retailer_vitali_t_info.html", {"account_creation_url": sample_url}),
+    }
+    if slug not in templates:
+        return HttpResponse("Not found", status=404)
+    template_name, context = templates[slug]
+    html = render_to_string(template_name, context)
+    return HttpResponse(html)
 
 
 def _derive_customer_name_from_email(email: str) -> str:
