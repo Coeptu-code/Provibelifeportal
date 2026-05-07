@@ -10,7 +10,11 @@ from uuid import uuid4
 from django.conf import settings
 from accounts.decorators import customer_required, ops_required
 from customers.models import ShippingAddress
-from fulfillment.shipping_quote import ShippingQuoteError, quote_shipping_for_order
+from fulfillment.shipping_quote import (
+    ShippingQuoteError,
+    quote_shipping_for_order,
+    shipping_quote_provider_enabled,
+)
 from fulfillment.models import Shipment, ShipmentStatus
 from invoicing.services import (
     create_and_send_primary_invoice,
@@ -22,6 +26,7 @@ from orders.models import Order, OrderItem, OrderStatus
 from pricing.models import CustomerProduct
 from pricing.services import get_active_customer_price
 from products.models import Product
+from shopify_integration.services import ShopifySyncError, sync_shipment_to_shopify
 from orders.services import (
     ADMIN_ACTION_TO_STATUS,
     get_available_admin_actions,
@@ -150,9 +155,9 @@ def _load_order_draft(request, token):
 
 
 def _quote_shipping_preview(customer, shipping_address, product, quantity):
-    if not _easypost_enabled():
+    if not shipping_quote_provider_enabled():
         quote = _DisabledShippingQuote()
-        quote.currency = (settings.STRIPE_CURRENCY or "usd").lower()
+        quote.currency = (settings.SHOPIFY_DEFAULT_CURRENCY or settings.STRIPE_CURRENCY or "usd").lower()
         return quote
     proxy_order = _QuoteOrderProxy(
         customer=customer,
@@ -160,10 +165,6 @@ def _quote_shipping_preview(customer, shipping_address, product, quantity):
         items=[_QuoteItemProxy(product=product, quantity=quantity)],
     )
     return quote_shipping_for_order(proxy_order)
-
-
-def _easypost_enabled():
-    return bool(getattr(settings, "EASYPOST_ENABLED", False) and settings.EASYPOST_API_KEY)
 
 
 def _quote_changed(old_quote, new_quote):
@@ -283,7 +284,7 @@ def order_new(request):
                     shipping_address,
                     warning=(
                         "Shipping quote changed. Review updated totals and submit again."
-                        if _easypost_enabled()
+                        if shipping_quote_provider_enabled()
                         else None
                     ),
                 )
@@ -390,7 +391,7 @@ def order_new(request):
                                 form.cleaned_data["shipping_address"],
                                 warning=(
                                     "Shipping quote is currently disabled. Shipping is shown as $0.00."
-                                    if not _easypost_enabled()
+                                    if not shipping_quote_provider_enabled()
                                     else None
                                 ),
                             )
@@ -506,6 +507,12 @@ def admin_order_action(request, pk):
                 shipped_at=timezone.now(),
                 status=ShipmentStatus.SHIPPED,
             )
+            latest_shipment = order.shipments.order_by("-created_at").first()
+            if latest_shipment:
+                try:
+                    sync_shipment_to_shopify(latest_shipment)
+                except ShopifySyncError:
+                    pass
             adjustment = reconcile_shipping_after_ship(order)
             if adjustment:
                 messages.success(

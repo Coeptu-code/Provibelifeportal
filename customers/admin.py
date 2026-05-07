@@ -19,7 +19,7 @@ class CustomerUserInline(admin.TabularInline):
 class CustomerAdmin(admin.ModelAdmin):
     list_display = ("name", "payment_terms", "credit_limit", "is_active")
     list_filter = ("payment_terms", "is_active")
-    search_fields = ("name", "stripe_customer_id")
+    search_fields = ("name", "shopify_customer_id", "stripe_customer_id")
     inlines = [CustomerUserInline]
 
 

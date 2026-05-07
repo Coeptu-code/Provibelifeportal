@@ -87,7 +87,7 @@ def render_invoice_pdf(invoice):
     draw.text((760, y), "Total:", fill="#0f172a", font=bold_font)
     draw.text((980, y), f"${invoice.total:.2f}", fill="#0f172a", font=bold_font)
     y += 70
-    draw.text((60, y), "Payment: Use the Stripe hosted invoice link to pay online.", fill="#374151", font=small_font)
+    draw.text((60, y), "Payment: Use the hosted invoice link in the portal to pay online.", fill="#374151", font=small_font)
 
     buffer = BytesIO()
     image.save(buffer, format="PDF", resolution=100.0)

@@ -18,8 +18,8 @@
           <td class="num strong">${{ invoice.total }}</td>
           <td>{{ invoice.due_date|date:"M d, Y"|default:'-' }}</td>
           <td>
-            {% if invoice.stripe_hosted_invoice_url %}
-              <a class="btn sm gold" href="{{ invoice.stripe_hosted_invoice_url }}" target="_blank">Pay</a>
+            {% if invoice.hosted_invoice_url %}
+              <a class="btn sm gold" href="{{ invoice.hosted_invoice_url }}" target="_blank">Pay</a>
             {% else %}
               <a class="btn sm" href="{% url 'customers:invoice_detail' invoice.id %}">View</a>
             {% endif %}

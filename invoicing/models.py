@@ -32,7 +32,7 @@ class Invoice(models.Model):
         MANUAL_OVERRIDE = "MANUAL_OVERRIDE", "Manual Override"
         FALLBACK_ZERO = "FALLBACK_ZERO", "Fallback Zero"
 
-    order = models.OneToOneField(Order, on_delete=models.CASCADE, related_name="invoice")
+    order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name="invoices")
     parent_invoice = models.ForeignKey(
         "self", null=True, blank=True, on_delete=models.SET_NULL, related_name="adjustments"
     )
@@ -69,6 +69,9 @@ class Invoice(models.Model):
     stripe_invoice_id = models.CharField(max_length=255, blank=True)
     stripe_hosted_invoice_url = models.URLField(blank=True)
     stripe_invoice_pdf = models.URLField(blank=True)
+    shopify_draft_order_id = models.CharField(max_length=255, blank=True)
+    shopify_order_id = models.CharField(max_length=255, blank=True)
+    shopify_hosted_invoice_url = models.URLField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     paid_at = models.DateTimeField(null=True, blank=True)
 
@@ -78,10 +81,13 @@ class Invoice(models.Model):
             models.Index(fields=["customer", "status"]),
             models.Index(fields=["due_date"]),
             models.Index(fields=["stripe_invoice_id"]),
+            models.Index(fields=["shopify_draft_order_id"]),
+            models.Index(fields=["shopify_order_id"]),
         ]
         constraints = [
             models.CheckConstraint(
-                condition=Q(subtotal__gte=0), name="invoice_subtotal_non_negative"
+                condition=Q(invoice_kind="ADJUSTMENT_CREDIT") | Q(subtotal__gte=0),
+                name="invoice_subtotal_valid_by_kind",
             ),
             models.CheckConstraint(
                 condition=Q(shipping_total__gte=0), name="invoice_shipping_non_negative"
@@ -90,10 +96,28 @@ class Invoice(models.Model):
                 condition=Q(tax_total__gte=0), name="invoice_tax_non_negative"
             ),
             models.CheckConstraint(
-                condition=Q(total__gte=0), name="invoice_total_non_negative"
+                condition=Q(invoice_kind="ADJUSTMENT_CREDIT") | Q(total__gte=0),
+                name="invoice_total_valid_by_kind",
+            ),
+            models.UniqueConstraint(
+                fields=["order", "invoice_kind"],
+                condition=Q(invoice_kind="PRIMARY"),
+                name="unique_primary_invoice_per_order",
             ),
         ]
 
     def __str__(self):
         return self.invoice_number
+
+    @property
+    def hosted_invoice_url(self):
+        return self.shopify_hosted_invoice_url or self.stripe_hosted_invoice_url
+
+    @property
+    def external_invoice_id(self):
+        return self.shopify_draft_order_id or self.stripe_invoice_id
+
+    @property
+    def external_invoice_pdf_url(self):
+        return self.stripe_invoice_pdf
 # Create your models here.

@@ -1,11 +1,12 @@
 from datetime import date
 from decimal import Decimal
+from unittest.mock import patch
 
-from django.test import TestCase
+from django.test import TestCase, override_settings
 
 from customers.models import Customer, ShippingAddress
-from invoicing.models import InvoiceStatus
-from invoicing.services import create_invoice_for_order
+from invoicing.models import Invoice, InvoiceStatus
+from invoicing.services import create_invoice_for_order, create_shipping_adjustment_invoice, send_invoice_to_provider
 from orders.models import Order, OrderItem, OrderStatus
 from products.models import Product
 
@@ -72,3 +73,20 @@ class InvoiceGenerationTests(TestCase):
         self.assertEqual(invoice.shipping_carrier, "UPS")
         self.assertEqual(invoice.shipping_quote_status, "SUCCESS")
         self.assertTrue(bool(invoice.pdf_file))
+
+    @override_settings(SHOPIFY_ENABLED=False, STRIPE_INVOICING_ENABLED=False)
+    def test_shipping_adjustment_invoice_allows_second_invoice_for_same_order(self):
+        primary = create_invoice_for_order(self.order, shipping_total=Decimal("5.00"))
+        adjustment = create_shipping_adjustment_invoice(self.order, primary, Decimal("-2.50"))
+        self.assertIsNotNone(adjustment)
+        self.assertEqual(Invoice.objects.filter(order=self.order).count(), 2)
+        self.assertEqual(adjustment.invoice_kind, Invoice.InvoiceKind.ADJUSTMENT_CREDIT)
+        self.assertEqual(adjustment.total, Decimal("-2.50"))
+
+    @override_settings(SHOPIFY_ENABLED=True)
+    def test_send_invoice_to_provider_uses_shopify_sender(self):
+        invoice = create_invoice_for_order(self.order, shipping_total=Decimal("5.00"))
+        with patch("invoicing.services.send_invoice_to_shopify") as mocked_sender:
+            mocked_sender.return_value = invoice
+            send_invoice_to_provider(invoice)
+        mocked_sender.assert_called_once_with(invoice)

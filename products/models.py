@@ -28,6 +28,8 @@ class Product(models.Model):
         default="in",
     )
     shipping_package_type = models.CharField(max_length=50, blank=True)
+    shopify_product_id = models.CharField(max_length=255, blank=True)
+    shopify_variant_id = models.CharField(max_length=255, blank=True)
     active = models.BooleanField(default=True)
 
     class Meta:

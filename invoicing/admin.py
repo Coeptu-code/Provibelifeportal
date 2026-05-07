@@ -7,4 +7,11 @@ from invoicing.models import Invoice
 class InvoiceAdmin(admin.ModelAdmin):
     list_display = ("invoice_number", "order", "customer", "status", "total", "due_date")
     list_filter = ("status", "due_date")
-    search_fields = ("invoice_number", "customer__name", "order__id", "stripe_invoice_id")
+    search_fields = (
+        "invoice_number",
+        "customer__name",
+        "order__id",
+        "shopify_draft_order_id",
+        "shopify_order_id",
+        "stripe_invoice_id",
+    )

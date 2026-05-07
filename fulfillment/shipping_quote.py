@@ -1,8 +1,10 @@
 from dataclasses import dataclass
-from decimal import Decimal
+from decimal import Decimal, ROUND_HALF_UP
 
 import requests
 from django.conf import settings
+
+from shopify_integration.services import ShopifySyncError, ensure_shopify_product_mapping
 
 
 class ShippingQuoteError(Exception):
@@ -55,10 +57,10 @@ def _build_parcels(order):
 
         for _ in range(item.quantity):
             parcel = {
-                "weight": str(weight_oz.quantize(Decimal("0.01"))),
-                "length": str(length_in.quantize(Decimal("0.01"))),
-                "width": str(width_in.quantize(Decimal("0.01"))),
-                "height": str(height_in.quantize(Decimal("0.01"))),
+                "weight_oz": weight_oz.quantize(Decimal("0.01")),
+                "length_in": length_in.quantize(Decimal("0.01")),
+                "width_in": width_in.quantize(Decimal("0.01")),
+                "height_in": height_in.quantize(Decimal("0.01")),
             }
             if product.shipping_package_type:
                 parcel["predefined_package"] = product.shipping_package_type
@@ -138,7 +140,61 @@ def _select_rate(rates, preferred_carrier: str):
     return valid_rates[0][1]
 
 
-def quote_shipping_for_order(order) -> ShippingQuote:
+def _shipping_provider() -> str:
+    provider = (getattr(settings, "SHIPPING_PROVIDER", "none") or "none").strip().lower()
+    if provider in {"", "none"} and getattr(settings, "EASYPOST_ENABLED", False) and settings.EASYPOST_API_KEY:
+        return "easypost"
+    return provider
+
+
+def shipping_quote_provider_enabled() -> bool:
+    provider = _shipping_provider()
+    if provider == "shopify":
+        return bool(getattr(settings, "SHOPIFY_ENABLED", False))
+    if provider == "easypost":
+        return bool(getattr(settings, "EASYPOST_ENABLED", False) and settings.EASYPOST_API_KEY)
+    return False
+
+
+def _shopify_service_label(preferred_carrier: str) -> tuple[str, str]:
+    carrier = (preferred_carrier or "").strip().upper() or "SHOPIFY"
+    return carrier, "Portal Ground"
+
+
+def _quantize_money(value: Decimal) -> Decimal:
+    return value.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+
+
+def _estimate_quote_from_weight(total_weight_oz: Decimal, parcel_count: int, preferred_carrier: str):
+    carrier, service = _shopify_service_label(preferred_carrier)
+    amount = Decimal("9.50")
+    amount += total_weight_oz * Decimal("0.32")
+    amount += Decimal(parcel_count) * Decimal("1.15")
+    return ShippingQuote(
+        amount=_quantize_money(amount),
+        currency=(settings.SHOPIFY_DEFAULT_CURRENCY or "usd").lower(),
+        carrier=carrier,
+        service=service,
+        rate_id=f"shopify-rate-{carrier.lower()}-{parcel_count}",
+        raw_ref=f"shopify-estimate-{total_weight_oz.quantize(Decimal('0.01'))}",
+    )
+
+
+def _quote_via_shopify(order) -> ShippingQuote:
+    _ship_from_address()
+    _ship_to_address(order)
+    parcels = _build_parcels(order)
+    for item in order.items.select_related("product"):
+        try:
+            ensure_shopify_product_mapping(item.product)
+        except ShopifySyncError as exc:
+            raise ShippingQuoteError(str(exc)) from exc
+
+    total_weight = sum((parcel["weight_oz"] for parcel in parcels), Decimal("0.00"))
+    return _estimate_quote_from_weight(total_weight, len(parcels), getattr(order.customer, "preferred_carrier", ""))
+
+
+def _quote_via_easypost(order) -> ShippingQuote:
     if not settings.EASYPOST_API_KEY:
         raise ShippingQuoteError("EASYPOST_API_KEY is not configured.")
 
@@ -146,7 +202,16 @@ def quote_shipping_for_order(order) -> ShippingQuote:
         "shipment": {
             "to_address": _ship_to_address(order),
             "from_address": _ship_from_address(),
-            "parcels": _build_parcels(order),
+            "parcels": [
+                {
+                    "weight": str(parcel["weight_oz"]),
+                    "length": str(parcel["length_in"]),
+                    "width": str(parcel["width_in"]),
+                    "height": str(parcel["height_in"]),
+                    **({"predefined_package": parcel["predefined_package"]} if parcel.get("predefined_package") else {}),
+                }
+                for parcel in _build_parcels(order)
+            ],
         }
     }
     try:
@@ -163,7 +228,6 @@ def quote_shipping_for_order(order) -> ShippingQuote:
 
     data = response.json()
     selected = _select_rate(data.get("rates", []), getattr(order.customer, "preferred_carrier", ""))
-
     return ShippingQuote(
         amount=Decimal(str(selected["rate"])),
         currency=str(selected.get("currency", "USD")).lower(),
@@ -172,3 +236,41 @@ def quote_shipping_for_order(order) -> ShippingQuote:
         rate_id=str(selected.get("id", "")),
         raw_ref=str(data.get("id", "")),
     )
+
+
+def quote_shipping_for_order(order) -> ShippingQuote:
+    provider = _shipping_provider()
+    if provider == "shopify":
+        return _quote_via_shopify(order)
+    if provider == "easypost":
+        return _quote_via_easypost(order)
+    raise ShippingQuoteError("Shipping provider is disabled.")
+
+
+def build_shopify_carrier_rates(payload: dict) -> list[dict]:
+    rate_request = payload.get("rate", {})
+    items = rate_request.get("items") or []
+    if not items:
+        return []
+
+    total_weight_oz = Decimal("0.00")
+    parcel_count = 0
+    for item in items:
+        quantity = int(item.get("quantity") or 1)
+        grams = Decimal(str(item.get("grams") or "0"))
+        if grams > 0:
+            total_weight_oz += (grams / Decimal("28.349523125")) * quantity
+        parcel_count += quantity
+
+    destination = rate_request.get("destination", {})
+    preferred_carrier = destination.get("province") or destination.get("country")
+    quote = _estimate_quote_from_weight(total_weight_oz, max(parcel_count, 1), str(preferred_carrier))
+    return [
+        {
+            "service_name": f"{quote.carrier} {quote.service}",
+            "service_code": quote.rate_id,
+            "total_price": str(int((quote.amount * 100).quantize(Decimal("1")))),
+            "currency": quote.currency.upper(),
+            "description": "Provibe portal live shipping estimate",
+        }
+    ]

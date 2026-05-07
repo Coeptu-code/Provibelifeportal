@@ -1,7 +1,6 @@
 from datetime import timedelta
 from decimal import Decimal
 
-import stripe
 from django.conf import settings
 from django.db import transaction
 from django.utils import timezone
@@ -11,6 +10,8 @@ from fulfillment.shipping_quote import ShippingQuoteError, quote_shipping_for_or
 from invoicing.models import Invoice, InvoiceStatus, ShippingQuoteStatus
 from invoicing.pdf import render_invoice_pdf
 from orders.models import OrderStatus
+from shopify_integration.client import ShopifyError
+from shopify_integration.services import ShopifySyncError, send_invoice_to_shopify
 
 
 def _days_until_due(payment_terms):
@@ -23,6 +24,10 @@ def _days_until_due(payment_terms):
 
 def _build_invoice_number(order_id):
     return f"INV-{timezone.now():%Y%m%d}-{order_id:06d}"
+
+
+def _default_currency():
+    return (getattr(settings, "SHOPIFY_DEFAULT_CURRENCY", "") or settings.STRIPE_CURRENCY or "usd").lower()
 
 
 @transaction.atomic
@@ -54,7 +59,7 @@ def create_invoice_for_order(
             "total": total,
             "status": InvoiceStatus.DRAFT,
             "due_date": due_date,
-            "shipping_currency": getattr(shipping_quote, "currency", settings.STRIPE_CURRENCY),
+            "shipping_currency": getattr(shipping_quote, "currency", _default_currency()),
             "shipping_carrier": getattr(shipping_quote, "carrier", ""),
             "shipping_service": getattr(shipping_quote, "service", ""),
             "shipping_rate_id": getattr(shipping_quote, "rate_id", ""),
@@ -74,10 +79,10 @@ def mark_invoice_quote_failed(order, reason: str):
     due_date = timezone.localdate() + timedelta(days=_days_until_due(order.customer.payment_terms))
     invoice, _ = Invoice.objects.update_or_create(
         order=order,
+        invoice_kind=Invoice.InvoiceKind.PRIMARY,
         defaults={
             "customer": order.customer,
             "invoice_number": _build_invoice_number(order.id),
-            "invoice_kind": Invoice.InvoiceKind.PRIMARY,
             "subtotal": subtotal,
             "shipping_total": Decimal("0"),
             "tax_total": Decimal("0"),
@@ -95,92 +100,29 @@ def mark_invoice_quote_failed(order, reason: str):
 
 
 @transaction.atomic
-def send_invoice_to_stripe(invoice: Invoice):
+def send_invoice_to_provider(invoice: Invoice):
+    if getattr(settings, "SHOPIFY_ENABLED", False):
+        try:
+            return send_invoice_to_shopify(invoice)
+        except (ShopifyError, ShopifySyncError) as exc:
+            invoice.shipping_quote_reason = str(exc)[:1000]
+            invoice.save(update_fields=["shipping_quote_reason"])
+            raise
+
     if not getattr(settings, "STRIPE_INVOICING_ENABLED", True):
         return invoice
-    if not settings.STRIPE_SECRET_KEY:
-        return invoice
-
-    stripe.api_key = settings.STRIPE_SECRET_KEY
-    customer = invoice.customer
-    if not customer.stripe_customer_id:
-        stripe_customer = stripe.Customer.create(name=customer.name)
-        customer.stripe_customer_id = stripe_customer.id
-        customer.save(update_fields=["stripe_customer_id"])
-
-    days_until_due = _days_until_due(customer.payment_terms)
-    stripe_invoice = stripe.Invoice.create(
-        customer=customer.stripe_customer_id,
-        collection_method="send_invoice",
-        days_until_due=days_until_due,
-        metadata={
-            "local_invoice_id": invoice.id,
-            "order_id": invoice.order_id,
-            "invoice_kind": invoice.invoice_kind,
-            "parent_invoice_id": invoice.parent_invoice_id or "",
-        },
-    )
-
-    currency = settings.STRIPE_CURRENCY
-    if invoice.invoice_kind == Invoice.InvoiceKind.PRIMARY:
-        for item in invoice.order.items.select_related("product"):
-            stripe.InvoiceItem.create(
-                customer=customer.stripe_customer_id,
-                invoice=stripe_invoice.id,
-                currency=currency,
-                description=f"{item.product.sku} - {item.product.name}",
-                unit_amount=int(item.unit_price * 100),
-                quantity=item.quantity,
-            )
-        if invoice.shipping_total > 0:
-            description = "Shipping"
-            if invoice.shipping_carrier or invoice.shipping_service:
-                description = f"Shipping ({invoice.shipping_carrier} {invoice.shipping_service})".strip()
-            stripe.InvoiceItem.create(
-                customer=customer.stripe_customer_id,
-                invoice=stripe_invoice.id,
-                currency=invoice.shipping_currency or currency,
-                description=description,
-                unit_amount=int(invoice.shipping_total * 100),
-                quantity=1,
-            )
-    else:
-        adj_description = "Shipping Adjustment"
-        if invoice.invoice_kind == Invoice.InvoiceKind.ADJUSTMENT_CREDIT:
-            adj_description = "Shipping Credit Adjustment"
-        stripe.InvoiceItem.create(
-            customer=customer.stripe_customer_id,
-            invoice=stripe_invoice.id,
-            currency=invoice.shipping_currency or currency,
-            description=adj_description,
-            unit_amount=int(invoice.total * 100),
-            quantity=1,
-        )
-
-    stripe_invoice = stripe.Invoice.finalize_invoice(stripe_invoice.id)
-    stripe_invoice = stripe.Invoice.send_invoice(stripe_invoice.id)
-
-    invoice.stripe_invoice_id = stripe_invoice.id
-    invoice.stripe_hosted_invoice_url = stripe_invoice.hosted_invoice_url or ""
-    invoice.stripe_invoice_pdf = stripe_invoice.invoice_pdf or ""
-    invoice.status = InvoiceStatus.SENT
-    invoice.save(
-        update_fields=[
-            "stripe_invoice_id",
-            "stripe_hosted_invoice_url",
-            "stripe_invoice_pdf",
-            "status",
-        ]
-    )
     return invoice
 
 
-def _easypost_enabled():
+def _shipping_enabled():
+    provider = str(getattr(settings, "SHIPPING_PROVIDER", "none")).lower()
+    if provider in {"shopify", "easypost"}:
+        return True
     return bool(getattr(settings, "EASYPOST_ENABLED", False) and settings.EASYPOST_API_KEY)
 
 
 def get_approval_shipping_estimate(order):
-    if _easypost_enabled():
+    if _shipping_enabled():
         try:
             quote = quote_shipping_for_order(order)
             return {
@@ -200,7 +142,7 @@ def get_approval_shipping_estimate(order):
         "amount": Decimal("0.00"),
         "quote": None,
         "source": Invoice.ShippingInputSource.FALLBACK_ZERO,
-        "reason": "EasyPost disabled.",
+        "reason": "Shipping provider disabled.",
     }
 
 
@@ -225,7 +167,7 @@ def create_and_send_primary_invoice(order, shipping_override=None):
     if estimate["reason"] and source != Invoice.ShippingInputSource.MANUAL_OVERRIDE:
         invoice.shipping_quote_reason = estimate["reason"][:1000]
         invoice.save(update_fields=["shipping_quote_reason"])
-    send_invoice_to_stripe(invoice)
+    send_invoice_to_provider(invoice)
     return invoice
 
 
@@ -258,12 +200,12 @@ def create_shipping_adjustment_invoice(order, parent_invoice, delta_amount):
         total=delta_amount,
         status=InvoiceStatus.DRAFT,
         due_date=due_date,
-        shipping_currency=parent_invoice.shipping_currency or settings.STRIPE_CURRENCY,
+        shipping_currency=parent_invoice.shipping_currency or _default_currency(),
         shipping_quote_status=ShippingQuoteStatus.NOT_QUOTED,
         shipping_input_source=Invoice.ShippingInputSource.ESTIMATED_API,
     )
     render_invoice_pdf(invoice)
-    send_invoice_to_stripe(invoice)
+    send_invoice_to_provider(invoice)
     return invoice
 
 
@@ -279,7 +221,7 @@ def reconcile_shipping_after_ship(order, actual_shipping_quote=None):
 
     if actual_shipping_quote is not None:
         actual_shipping = Decimal(str(actual_shipping_quote.amount)).quantize(Decimal("0.01"))
-    elif _easypost_enabled():
+    elif _shipping_enabled():
         try:
             quote = quote_shipping_for_order(order)
             actual_shipping = Decimal(str(quote.amount)).quantize(Decimal("0.01"))

@@ -63,11 +63,11 @@
         {% if invoice.pdf_file %}
           <a class="btn primary block" href="{{ invoice.pdf_file.url }}" target="_blank">Branded Invoice</a>
         {% endif %}
-        {% if invoice.stripe_hosted_invoice_url %}
-          <a class="btn gold block" href="{{ invoice.stripe_hosted_invoice_url }}" target="_blank">Stripe Hosted Invoice</a>
+        {% if invoice.hosted_invoice_url %}
+          <a class="btn gold block" href="{{ invoice.hosted_invoice_url }}" target="_blank">Shopify Invoice</a>
         {% endif %}
-        {% if invoice.stripe_invoice_pdf %}
-          <a class="btn block" href="{{ invoice.stripe_invoice_pdf }}" target="_blank">Stripe PDF</a>
+        {% if invoice.external_invoice_pdf_url %}
+          <a class="btn block" href="{{ invoice.external_invoice_pdf_url }}" target="_blank">Provider PDF</a>
         {% endif %}
       </div>
     </div>

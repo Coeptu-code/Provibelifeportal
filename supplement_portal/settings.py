@@ -1,4 +1,5 @@
 import os
+import sys
 from pathlib import Path
 
 import dj_database_url
@@ -109,7 +110,13 @@ STATICFILES_DIRS = [BASE_DIR / "static", BASE_DIR / "public"]
 STATIC_ROOT = BASE_DIR / "staticfiles"
 STORAGES = {
     "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
-    "staticfiles": {"BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage"},
+    "staticfiles": {
+        "BACKEND": (
+            "django.contrib.staticfiles.storage.StaticFilesStorage"
+            if DEBUG or "test" in sys.argv
+            else "whitenoise.storage.CompressedManifestStaticFilesStorage"
+        )
+    },
 }
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
@@ -136,6 +143,26 @@ SHIP_FROM_STATE = os.getenv("SHIP_FROM_STATE", "")
 SHIP_FROM_ZIP = os.getenv("SHIP_FROM_ZIP", "")
 SHIP_FROM_COUNTRY = os.getenv("SHIP_FROM_COUNTRY", "US")
 SHIP_FROM_PHONE = os.getenv("SHIP_FROM_PHONE", "")
+
+SHOPIFY_ENABLED = env_bool("SHOPIFY_ENABLED", False)
+SHOPIFY_SHOP = os.getenv("SHOPIFY_SHOP", os.getenv("SHOPIFY_SHOP_DOMAIN", "")).strip()
+SHOPIFY_CLIENT_ID = os.getenv("SHOPIFY_CLIENT_ID", os.getenv("SHOPIFY_API_KEY", "")).strip()
+SHOPIFY_CLIENT_SECRET = os.getenv(
+    "SHOPIFY_CLIENT_SECRET", os.getenv("SHOPIFY_API_SECRET", "")
+).strip()
+SHOPIFY_API_VERSION = os.getenv("SHOPIFY_API_VERSION", "2026-04").strip()
+SHOPIFY_REDIRECT_URI = os.getenv("SHOPIFY_REDIRECT_URI", "").strip()
+SHOPIFY_ACCESS_TOKEN = os.getenv("SHOPIFY_ACCESS_TOKEN", "").strip()
+SHOPIFY_WEBHOOK_SECRET = os.getenv("SHOPIFY_WEBHOOK_SECRET", "").strip()
+SHOPIFY_APP_SCOPES = env_list("SHOPIFY_APP_SCOPES", "")
+SHOPIFY_APP_URL = os.getenv("SHOPIFY_APP_URL", "").strip()
+SHOPIFY_CARRIER_SERVICE_ENABLED = env_bool("SHOPIFY_CARRIER_SERVICE_ENABLED", True)
+SHOPIFY_CARRIER_SERVICE_NAME = os.getenv(
+    "SHOPIFY_CARRIER_SERVICE_NAME", "Pro Vibe Live Rates"
+).strip()
+SHOPIFY_CARRIER_CALLBACK_URL = os.getenv("SHOPIFY_CARRIER_CALLBACK_URL", "").strip()
+SHOPIFY_READ_ALL_ORDERS = env_bool("SHOPIFY_READ_ALL_ORDERS", False)
+SHOPIFY_DEFAULT_CURRENCY = os.getenv("SHOPIFY_DEFAULT_CURRENCY", STRIPE_CURRENCY or "usd").strip()
 
 if not DEBUG:
     if SECRET_KEY == "django-insecure-local-dev-key":

@@ -42,6 +42,11 @@ class User(AbstractUser):
             raise ValidationError("Only customer users may be linked to a customer account.")
 
     def _sync_role_flags(self):
+        if self.role == self.Role.ADMIN and self.customer_id and self.is_customer_user:
+            self.role = self.Role.CUSTOMER_USER
+        elif self.role == self.Role.ADMIN and self.is_warehouse_staff:
+            self.role = self.Role.WAREHOUSE_STAFF
+
         self.is_customer_user = self.role == self.Role.CUSTOMER_USER
         self.is_warehouse_staff = self.role == self.Role.WAREHOUSE_STAFF
         self.is_ops_user = self.role in {self.Role.WAREHOUSE_STAFF, self.Role.ADMIN}

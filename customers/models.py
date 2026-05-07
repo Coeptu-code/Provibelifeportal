@@ -26,6 +26,7 @@ class Customer(models.Model):
     credit_limit = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     is_active = models.BooleanField(default=True)
     stripe_customer_id = models.CharField(max_length=255, blank=True)
+    shopify_customer_id = models.CharField(max_length=255, blank=True)
     preferred_carrier = models.CharField(
         max_length=20,
         choices=CarrierPreference.choices,
@@ -42,6 +43,10 @@ class Customer(models.Model):
 
     def __str__(self):
         return self.name
+
+    @property
+    def external_customer_id(self):
+        return self.shopify_customer_id or self.stripe_customer_id
 
 
 class ShippingAddress(models.Model):

@@ -14,6 +14,8 @@ class Shipment(models.Model):
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name="shipments")
     carrier = models.CharField(max_length=100, blank=True)
     tracking_number = models.CharField(max_length=255, blank=True)
+    shopify_fulfillment_id = models.CharField(max_length=255, blank=True)
+    shopify_fulfillment_order_id = models.CharField(max_length=255, blank=True)
     shipped_at = models.DateTimeField(null=True, blank=True)
     status = models.CharField(
         max_length=50, choices=ShipmentStatus.choices, default=ShipmentStatus.PENDING

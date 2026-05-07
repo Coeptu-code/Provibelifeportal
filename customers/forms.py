@@ -28,6 +28,7 @@ class CustomerForm(forms.ModelForm):
             "preferred_carrier",
             "credit_limit",
             "is_active",
+            "shopify_customer_id",
             "stripe_customer_id",
         ]
 
