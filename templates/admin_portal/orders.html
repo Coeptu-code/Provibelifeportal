@@ -4,12 +4,19 @@
   <div>
     <h1>Orders</h1>
   </div>
+  <div class="right">
+    {% if show_archived %}
+      <a class="btn sm" href="{% url 'admin_portal:orders' %}">Hide Archived</a>
+    {% else %}
+      <a class="btn sm ghost" href="{% url 'admin_portal:orders' %}?archived=1">Show Archived</a>
+    {% endif %}
+  </div>
 </div>
 
 <div class="card flush">
   <div class="tbl-wrap">
     <table class="tbl">
-      <thead><tr><th>ID</th><th>Customer</th><th>Status</th><th>Submitted</th><th class="num">Total</th><th></th></tr></thead>
+      <thead><tr><th>ID</th><th>Customer</th><th>Status</th><th>Submitted</th><th class="num">Total</th><th></th><th></th></tr></thead>
       <tbody>
         {% for order in orders %}
         <tr>
@@ -19,9 +26,17 @@
           <td>{{ order.submitted_at|date:"M d, Y"|default:'-' }}</td>
           <td class="num strong">${{ order.total }}</td>
           <td><a class="btn sm" href="{% url 'admin_portal:order_detail' order.id %}">Open</a></td>
+          <td>
+            <form method="post" action="{% url 'admin_portal:order_archive' order.id %}" style="margin:0;">
+              {% csrf_token %}
+              <button type="submit" class="btn sm {% if order.archived_at %}ghost{% else %}danger{% endif %}" onclick="return confirm('{% if order.archived_at %}Unarchive{% else %}Archive{% endif %} order #{{ order.id }}?');">
+                {% if order.archived_at %}Unarchive{% else %}Archive{% endif %}
+              </button>
+            </form>
+          </td>
         </tr>
         {% empty %}
-        <tr><td colspan="6" class="text-secondary">No orders found.</td></tr>
+        <tr><td colspan="7" class="text-secondary">No orders found.</td></tr>
         {% endfor %}
       </tbody>
     </table>

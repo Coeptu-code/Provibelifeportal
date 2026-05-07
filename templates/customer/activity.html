@@ -1,0 +1,33 @@
+{% extends "customer/base.html" %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Your Activity</h1>
+    <div class="lede">Recent actions on your account</div>
+  </div>
+</div>
+
+<div class="card flush">
+  {% if activities %}
+    <div class="tbl-wrap">
+      <table class="tbl">
+        <thead><tr><th>Date & Time</th><th>Action</th><th>Detail</th></tr></thead>
+        <tbody>
+          {% for log in activities %}
+          <tr>
+            <td class="mono" style="font-size: 12px;">{{ log.created_at|date:"M d, Y H:i" }}</td>
+            <td><span class="pill gold">{{ log.action }}</span></td>
+            <td>{{ log.detail|truncatewords:10 }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div class="empty">
+      <div class="glyph">📋</div>
+      <p>No activity yet.</p>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

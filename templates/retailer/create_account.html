@@ -1,0 +1,84 @@
+{% extends "registration/login.html" %}
+{% load static %}
+{% block content %}
+<div class="login-shell">
+  <div class="login-art">
+    <div class="marble"></div>
+    <div class="top">
+      <img src="{% static 'PVL/assets/pvl-logo-lockup.png' %}" alt="Pro Vibe Life" style="height:160px; margin-right: auto;">
+    </div>
+    <div class="pitch">
+      <div class="eyebrow">Retailer Portal</div>
+      <p>Create your retailer account to request wholesale pricing and access the portal.</p>
+    </div>
+    <div class="meta">
+      <span>Secure Link</span>
+      <span>Expires</span>
+    </div>
+  </div>
+
+  <div class="login-form">
+    <div class="inner">
+      {% if error %}
+        <div class="note red mb-3">{{ error }}</div>
+        <a class="btn ghost block lg" href="{% url 'login' %}">Go To Sign In</a>
+      {% else %}
+        <h1 style="font-size: 28px; margin-bottom: 8px; color: var(--pvl-text);">Create Retailer Account</h1>
+        <p style="color: var(--pvl-text-mute); margin-bottom: 24px;">
+          This link is unique to <strong>{{ lead.email }}</strong>.
+        </p>
+
+        <form method="post" class="card" style="border: none; box-shadow: none; padding: 0;">
+          {% csrf_token %}
+
+          {% if form.non_field_errors %}
+            <div class="note red mb-3">
+              {% for err in form.non_field_errors %}<div>{{ err }}</div>{% endfor %}
+            </div>
+          {% endif %}
+
+          <div class="field mb-3">
+            <label for="{{ form.store_name.id_for_label }}" class="label">{{ form.store_name.label }}</label>
+            {{ form.store_name }}
+            {% if form.store_name.errors %}<div class="text-danger">{{ form.store_name.errors|join:", " }}</div>{% endif %}
+          </div>
+
+          <div class="field mb-3">
+            <label for="{{ form.username.id_for_label }}" class="label">Username</label>
+            {{ form.username }}
+            {% if form.username.errors %}<div class="text-danger">{{ form.username.errors|join:", " }}</div>{% endif %}
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+            <div class="field mb-3">
+              <label for="{{ form.first_name.id_for_label }}" class="label">First Name</label>
+              {{ form.first_name }}
+              {% if form.first_name.errors %}<div class="text-danger">{{ form.first_name.errors|join:", " }}</div>{% endif %}
+            </div>
+            <div class="field mb-3">
+              <label for="{{ form.last_name.id_for_label }}" class="label">Last Name</label>
+              {{ form.last_name }}
+              {% if form.last_name.errors %}<div class="text-danger">{{ form.last_name.errors|join:", " }}</div>{% endif %}
+            </div>
+          </div>
+
+          <div class="field mb-3">
+            <label for="{{ form.password1.id_for_label }}" class="label">Password</label>
+            {{ form.password1 }}
+            {% if form.password1.errors %}<div class="text-danger">{{ form.password1.errors|join:", " }}</div>{% endif %}
+          </div>
+
+          <div class="field mb-4">
+            <label for="{{ form.password2.id_for_label }}" class="label">Confirm Password</label>
+            {{ form.password2 }}
+            {% if form.password2.errors %}<div class="text-danger">{{ form.password2.errors|join:", " }}</div>{% endif %}
+          </div>
+
+          <button class="btn primary block lg" type="submit">Create Account</button>
+        </form>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}
+

@@ -1,7 +1,7 @@
 from django.contrib import messages
 from django.shortcuts import get_object_or_404, redirect, render
 
-from accounts.decorators import customer_required, ops_required
+from accounts.decorators import admin_required, customer_required, ops_required, sales_required
 from accounts.models import User
 from customers.forms import AdminShippingAddressForm, CustomerForm, ShippingAddressForm
 from customers.models import Customer, ShippingAddress
@@ -46,19 +46,25 @@ def shipping_address_new(request):
 
 
 @customer_required
+def activity(request):
+    activities = request.user.activity_logs.all()[:100]
+    return render(request, "customer/activity.html", {"activities": activities})
+
+
+@customer_required
 def account(request):
     return render(request, "customer/account.html")
 
 
-@ops_required
+@sales_required
 def admin_customers(request):
-    customers = Customer.objects.all().order_by("name")
+    customers = request.user.get_accessible_customers().order_by("name")
     return render(request, "admin_portal/customers.html", {"customers": customers})
 
 
-@ops_required
+@sales_required
 def admin_customer_detail(request, pk):
-    customer = get_object_or_404(Customer, pk=pk)
+    customer = get_object_or_404(request.user.get_accessible_customers(), pk=pk)
     customer_products = CustomerProduct.objects.filter(customer=customer).select_related("product")
     customer_prices = CustomerPrice.objects.filter(customer=customer).select_related("product")
     return render(
@@ -76,7 +82,7 @@ def admin_customer_detail(request, pk):
     )
 
 
-@ops_required
+@admin_required
 def admin_customer_create(request):
     if request.method == "POST":
         form = CustomerForm(request.POST)

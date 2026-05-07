@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.db import models
 
 
@@ -32,6 +33,14 @@ class Customer(models.Model):
         choices=CarrierPreference.choices,
         default=CarrierPreference.AUTO,
         blank=True,
+    )
+    sales_rep = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="owned_customers",
+        limit_choices_to={"role__in": ["sales_rep", "sales_lead"]},
     )
 
     class Meta:

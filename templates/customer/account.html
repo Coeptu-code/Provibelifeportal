@@ -44,7 +44,17 @@
         <div class="k">Preferred Carrier</div>
         <div class="v">{{ request.user.customer.get_preferred_carrier_display|default:'-' }}</div>
       </div>
+      {% if request.user.invited_by %}
+      <div class="kv" style="margin-top: 16px;">
+        <div class="k">Account Created By</div>
+        <div class="v">{{ request.user.invited_by.get_full_name|default:request.user.invited_by.username }}</div>
+      </div>
+      {% endif %}
     </div>
   </div>
+</div>
+
+<div style="margin-top: 28px;">
+  <a href="{% url 'customers:activity' %}" class="btn primary">View Activity Log</a>
 </div>
 {% endblock %}

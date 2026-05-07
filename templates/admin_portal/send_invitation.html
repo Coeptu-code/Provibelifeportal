@@ -1,0 +1,39 @@
+{% extends "admin_portal/base.html" %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Invite Customer User</h1>
+  </div>
+</div>
+
+<div style="max-width: 600px;">
+  <form method="post" class="card">
+    {% csrf_token %}
+
+    {% if form.non_field_errors %}
+      <div class="card-body note red" style="padding: 22px;">
+        {% for err in form.non_field_errors %}<div>{{ err }}</div>{% endfor %}
+      </div>
+    {% endif %}
+
+    <div class="card-body">
+      <div class="field">
+        <label for="{{ form.email.id_for_label }}" class="label">{{ form.email.label }}</label>
+        {{ form.email }}
+        {% if form.email.errors %}<div class="text-danger">{{ form.email.errors|join:", " }}</div>{% endif %}
+      </div>
+
+      <div class="field">
+        <label for="{{ form.customer.id_for_label }}" class="label">{{ form.customer.label }}</label>
+        {{ form.customer }}
+        {% if form.customer.errors %}<div class="text-danger">{{ form.customer.errors|join:", " }}</div>{% endif %}
+      </div>
+    </div>
+
+    <div class="card-body" style="border-top: 1px dashed var(--pvl-paper-3); padding: 18px 22px; display: flex; gap: 10px; justify-content: flex-end;">
+      <a href="{% url 'admin_portal:customers' %}" class="btn ghost">Cancel</a>
+      <button type="submit" class="btn primary">Send Invitation</button>
+    </div>
+  </form>
+</div>
+{% endblock %}

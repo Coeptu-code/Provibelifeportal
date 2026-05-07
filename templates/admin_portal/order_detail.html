@@ -6,6 +6,12 @@
   </div>
   <div class="right">
     <span class="pill status-{{ order.status }}">{{ order.status }}</span>
+    <form method="post" action="{% url 'admin_portal:order_archive' order.id %}" style="margin: 0; display: inline;">
+      {% csrf_token %}
+      <button type="submit" class="btn sm {% if order.archived_at %}ghost{% else %}danger{% endif %}" style="margin-left: 10px;" onclick="return confirm('{% if order.archived_at %}Unarchive{% else %}Archive{% endif %} order #{{ order.id }}?');">
+        {% if order.archived_at %}Unarchive{% else %}Archive{% endif %}
+      </button>
+    </form>
   </div>
 </div>
 

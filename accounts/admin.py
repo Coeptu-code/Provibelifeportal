@@ -10,8 +10,8 @@ class PortalUserAdmin(UserAdmin):
     list_filter = ("role", "is_active", "is_staff", "is_superuser")
     search_fields = ("username", "email")
     fieldsets = UserAdmin.fieldsets + (
-        ("Portal Role", {"fields": ("role", "customer")}),
+        ("Portal Role", {"fields": ("role", "customer", "manager")}),
     )
     add_fieldsets = UserAdmin.add_fieldsets + (
-        ("Portal Role", {"fields": ("role", "customer")}),
+        ("Portal Role", {"fields": ("role", "customer", "manager")}),
     )

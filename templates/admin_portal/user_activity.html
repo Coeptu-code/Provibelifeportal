@@ -1,0 +1,34 @@
+{% extends "admin_portal/base.html" %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Activity Log — {{ user.get_full_name|default:user.username }}</h1>
+    <div class="lede">Recent actions</div>
+  </div>
+</div>
+
+<div class="card flush">
+  {% if activities %}
+    <div class="tbl-wrap">
+      <table class="tbl">
+        <thead><tr><th>Date & Time</th><th>Action</th><th>Detail</th><th>IP Address</th></tr></thead>
+        <tbody>
+          {% for log in activities %}
+          <tr>
+            <td class="mono" style="font-size: 12px;">{{ log.created_at|date:"M d, Y H:i:s" }}</td>
+            <td><span class="pill gold">{{ log.action }}</span></td>
+            <td>{{ log.detail|truncatewords:10 }}</td>
+            <td class="mono" style="font-size: 12px;">{{ log.ip_address|default:"-" }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div class="empty">
+      <div class="glyph">📋</div>
+      <p>No activity yet.</p>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

@@ -9,6 +9,7 @@
   <link href="{% static 'css/portal.css' %}" rel="stylesheet">
 </head>
 <body style="background: var(--pvl-paper);">
+  {% block content %}
   <div class="login-shell">
     <div class="login-art">
       <div class="marble"></div>
@@ -78,9 +79,14 @@
 
           <button class="btn primary block lg" type="submit">Sign In</button>
         </form>
+
+        <p style="text-align: center; margin-top: 20px;">
+          <a href="{% url 'password_reset' %}" style="color: var(--pvl-accent); text-decoration: none; font-size: 14px;">Forgot your password?</a>
+        </p>
       </div>
     </div>
   </div>
+  {% endblock %}
 
   <script>
     document.querySelectorAll('input:not([type=checkbox]):not([type=radio]):not([type=hidden]):not([type=submit]), select, textarea').forEach(el => {

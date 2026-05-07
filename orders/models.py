@@ -33,6 +33,7 @@ class Order(models.Model):
     total = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     shopify_order_id = models.CharField(max_length=255, blank=True)
     shopify_order_name = models.CharField(max_length=100, blank=True)
+    archived_at = models.DateTimeField(null=True, blank=True)
     submitted_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -52,6 +53,10 @@ class Order(models.Model):
 
     def __str__(self):
         return f"Order {self.pk} - {self.customer.name}"
+
+    @property
+    def is_archived(self):
+        return bool(self.archived_at)
 
 
 class OrderItem(models.Model):

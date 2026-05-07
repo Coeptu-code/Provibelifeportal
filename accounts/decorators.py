@@ -24,3 +24,36 @@ def ops_required(view_func):
         return view_func(request, *args, **kwargs)
 
     return _wrapped
+
+
+def admin_required(view_func):
+    @wraps(view_func)
+    @login_required
+    def _wrapped(request, *args, **kwargs):
+        if request.user.role != "admin":
+            raise PermissionDenied("Admin access required.")
+        return view_func(request, *args, **kwargs)
+
+    return _wrapped
+
+
+def sales_required(view_func):
+    @wraps(view_func)
+    @login_required
+    def _wrapped(request, *args, **kwargs):
+        if request.user.role not in ("admin", "sales_lead", "sales_rep"):
+            raise PermissionDenied("Sales access required.")
+        return view_func(request, *args, **kwargs)
+
+    return _wrapped
+
+
+def warehouse_required(view_func):
+    @wraps(view_func)
+    @login_required
+    def _wrapped(request, *args, **kwargs):
+        if request.user.role not in ("admin", "warehouse_staff"):
+            raise PermissionDenied("Warehouse access required.")
+        return view_func(request, *args, **kwargs)
+
+    return _wrapped

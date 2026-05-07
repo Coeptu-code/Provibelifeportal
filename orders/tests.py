@@ -342,6 +342,18 @@ class AdminOrderWorkflowTests(TestCase):
         self.assertEqual(Shipment.objects.count(), 0)
         self.assertEqual(Invoice.objects.count(), 0)
 
+    def test_archive_hides_order_from_list_by_default(self):
+        self.client.login(username="ops-workflow", password="pass1234")
+        self.client.post(reverse("admin_portal:order_archive", args=[self.order.id]))
+
+        response = self.client.get(reverse("admin_portal:orders"))
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, f"#{self.order.id}")
+
+        response = self.client.get(reverse("admin_portal:orders") + "?archived=1")
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, f"#{self.order.id}")
+
     def test_happy_path_to_shipped_creates_shipment_and_invoice(self):
         self.client.login(username="ops-workflow", password="pass1234")
         actions = ["under_review", "approve", "release", "picking", "packed", "ship_full"]

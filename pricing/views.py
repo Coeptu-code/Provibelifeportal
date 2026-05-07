@@ -1,20 +1,22 @@
 from django.contrib import messages
 from django.shortcuts import get_object_or_404, redirect, render
 
-from accounts.decorators import ops_required
+from accounts.decorators import ops_required, sales_required
 from pricing.forms import CustomerPriceForm, CustomerProductForm
 from pricing.models import CustomerPrice
 
 
-@ops_required
+@sales_required
 def admin_pricing(request):
     prices = CustomerPrice.objects.select_related("customer", "product").order_by(
         "customer__name", "product__sku", "-effective_date"
     )
+    if request.user.role in ("sales_rep", "sales_lead"):
+        prices = prices.filter(customer__in=request.user.get_accessible_customers())
     return render(request, "admin_portal/pricing.html", {"prices": prices})
 
 
-@ops_required
+@sales_required
 def admin_customer_product_create(request):
     customer_id = request.GET.get("customer")
     if request.method == "POST":
@@ -30,7 +32,7 @@ def admin_customer_product_create(request):
     return render(request, "admin_portal/customer_product_form.html", {"form": form})
 
 
-@ops_required
+@sales_required
 def admin_customer_price_create(request):
     customer_id = request.GET.get("customer")
     if request.method == "POST":
@@ -51,7 +53,7 @@ def admin_customer_price_create(request):
     })
 
 
-@ops_required
+@sales_required
 def admin_customer_price_edit(request, pk):
     price = get_object_or_404(CustomerPrice, pk=pk)
     if request.method == "POST":

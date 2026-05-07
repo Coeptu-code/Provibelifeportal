@@ -1,0 +1,42 @@
+{% extends "admin_portal/base.html" %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Internal Users</h1>
+  </div>
+  <div class="right">
+    <a class="btn primary sm" href="{% url 'admin_portal:internal_user_create' %}">Create User</a>
+  </div>
+</div>
+
+<div class="card flush">
+  <div class="tbl-wrap">
+    <table class="tbl">
+      <thead><tr><th>Username</th><th>Name</th><th>Role</th><th>Status</th><th></th></tr></thead>
+      <tbody>
+        {% for user in users %}
+        <tr>
+          <td class="strong">{{ user.username }}</td>
+          <td>{{ user.get_full_name|default:user.email }}</td>
+          <td>
+            {% if user.role == "sales_rep" %}
+              <span class="pill ink">Sales Rep</span>
+            {% elif user.role == "sales_lead" %}
+              <span class="pill blue">Sales Lead</span>
+            {% elif user.role == "warehouse_staff" %}
+              <span class="pill gold">Warehouse</span>
+            {% else %}
+              {{ user.get_role_display }}
+            {% endif %}
+          </td>
+          <td><span class="pill {% if user.is_active %}green{% else %}red{% endif %}">{{ user.is_active|yesno:"Active,Inactive" }}</span></td>
+          <td><a class="btn sm" href="{% url 'admin_portal:internal_user_edit' user.id %}">Edit</a></td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="5" class="text-secondary">No internal users yet. Use "Create User".</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

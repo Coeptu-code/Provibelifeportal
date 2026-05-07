@@ -30,6 +30,7 @@ class CustomerForm(forms.ModelForm):
             "is_active",
             "shopify_customer_id",
             "stripe_customer_id",
+            "sales_rep",
         ]
 
 

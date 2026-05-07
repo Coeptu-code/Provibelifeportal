@@ -164,6 +164,11 @@ SHOPIFY_CARRIER_CALLBACK_URL = os.getenv("SHOPIFY_CARRIER_CALLBACK_URL", "").str
 SHOPIFY_READ_ALL_ORDERS = env_bool("SHOPIFY_READ_ALL_ORDERS", False)
 SHOPIFY_DEFAULT_CURRENCY = os.getenv("SHOPIFY_DEFAULT_CURRENCY", STRIPE_CURRENCY or "usd").strip()
 
+RESEND_API_KEY = os.getenv("RESEND_API_KEY", "")
+EMAIL_FROM = os.getenv("EMAIL_FROM", "noreply@provibelife.com")
+RESEND_ENABLED = env_bool("RESEND_ENABLED", False)
+SITE_URL = os.getenv("SITE_URL", "http://localhost:8000")
+
 if not DEBUG:
     if SECRET_KEY == "django-insecure-local-dev-key":
         raise ValueError("DJANGO_SECRET_KEY must be set in production.")

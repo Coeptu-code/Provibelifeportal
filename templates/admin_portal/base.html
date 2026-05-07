@@ -30,6 +30,7 @@
           <span>Shipments</span>
         </a>
 
+        {% if request.user.role == "admin" or request.user.role == "sales_lead" or request.user.role == "sales_rep" %}
         <div class="nav-section">Finance</div>
         <a href="{% url 'admin_portal:invoices' %}" class="nav-item {% if 'invoices' in request.resolver_match.url_name %}active{% endif %}">
           <span>Invoices</span>
@@ -42,15 +43,28 @@
         <a href="{% url 'admin_portal:customers' %}" class="nav-item {% if 'customers' in request.resolver_match.url_name %}active{% endif %}">
           <span>Customers</span>
         </a>
-        <a href="{% url 'admin_portal:products' %}" class="nav-item {% if 'products' in request.resolver_match.url_name %}active{% endif %}">
-          <span>Products</span>
-        </a>
         <a href="{% url 'admin_portal:pricing' %}" class="nav-item {% if 'pricing' in request.resolver_match.url_name %}active{% endif %}">
           <span>Pricing</span>
         </a>
+
+        <div class="nav-section">Marketing</div>
+        <a href="{% url 'admin_portal:marketing_email_shilajit' %}" class="nav-item {% if 'marketing_email' in request.resolver_match.url_name %}active{% endif %}">
+          <span>Marketing Emails</span>
+        </a>
+        {% endif %}
+
+        <a href="{% url 'admin_portal:products' %}" class="nav-item {% if 'products' in request.resolver_match.url_name %}active{% endif %}">
+          <span>Products</span>
+        </a>
+
+        {% if request.user.role == "admin" %}
         <a href="{% url 'admin_portal:reports' %}" class="nav-item {% if 'reports' in request.resolver_match.url_name %}active{% endif %}">
           <span>Reports</span>
         </a>
+        <a href="{% url 'admin_portal:internal_users' %}" class="nav-item {% if 'internal_users' in request.resolver_match.url_name %}active{% endif %}">
+          <span>Users</span>
+        </a>
+        {% endif %}
       </nav>
 
       <div class="footer">

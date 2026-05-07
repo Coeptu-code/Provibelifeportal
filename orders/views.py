@@ -8,7 +8,8 @@ from decimal import Decimal
 from uuid import uuid4
 
 from django.conf import settings
-from accounts.decorators import customer_required, ops_required
+from accounts.activity import log_activity
+from accounts.decorators import customer_required, ops_required, sales_required, warehouse_required
 from customers.models import ShippingAddress
 from fulfillment.shipping_quote import (
     ShippingQuoteError,
@@ -309,6 +310,7 @@ def order_new(request):
                 submit_order(order)
             _pop_order_draft(request, draft_token)
             messages.success(request, "Order submitted.")
+            log_activity(request.user, "order_submitted", f"Order #{order.pk}", request)
             return redirect("customers:order_detail", pk=order.pk)
 
         form = CustomerOrderForm(request.POST, customer=customer)
@@ -440,13 +442,27 @@ def order_review(request, pk):
 
 @ops_required
 def admin_orders(request):
+    show_archived = request.GET.get("archived", "").strip() in {"1", "true", "yes", "on"}
     orders = Order.objects.select_related("customer").order_by("-created_at")
-    return render(request, "admin_portal/orders.html", {"orders": orders})
+    if not show_archived:
+        orders = orders.filter(archived_at__isnull=True)
+
+    if request.user.role in ("sales_rep", "sales_lead"):
+        orders = orders.filter(customer__in=request.user.get_accessible_customers())
+
+    return render(
+        request,
+        "admin_portal/orders.html",
+        {"orders": orders, "show_archived": show_archived},
+    )
 
 
 @ops_required
 def admin_order_detail(request, pk):
-    order = get_object_or_404(Order.objects.select_related("customer", "shipping_address"), pk=pk)
+    queryset = Order.objects.select_related("customer", "shipping_address")
+    if request.user.role in ("sales_rep", "sales_lead"):
+        queryset = queryset.filter(customer__in=request.user.get_accessible_customers())
+    order = get_object_or_404(queryset, pk=pk)
     estimate = get_approval_shipping_estimate(order)
     return render(
         request,
@@ -461,15 +477,40 @@ def admin_order_detail(request, pk):
 
 
 @ops_required
-def admin_order_action(request, pk):
+def admin_order_archive(request, pk):
     if request.method != "POST":
         return redirect("admin_portal:order_detail", pk=pk)
 
     order = get_object_or_404(Order, pk=pk)
+    if order.archived_at:
+        order.archived_at = None
+        order.save(update_fields=["archived_at", "updated_at"])
+        messages.success(request, "Order unarchived.")
+    else:
+        order.archived_at = timezone.now()
+        order.save(update_fields=["archived_at", "updated_at"])
+        messages.success(request, "Order archived.")
+    return redirect("admin_portal:orders")
+
+
+def admin_order_action(request, pk):
+    if request.method != "POST":
+        return redirect("admin_portal:order_detail", pk=pk)
+
+    queryset = Order.objects.all()
+    if request.user.role in ("sales_rep", "sales_lead"):
+        queryset = queryset.filter(customer__in=request.user.get_accessible_customers())
+    order = get_object_or_404(queryset, pk=pk)
+
     action = request.POST.get("action")
     target_status = ADMIN_ACTION_TO_STATUS.get(action)
     if not target_status:
         messages.error(request, "Unknown action.")
+        return redirect("admin_portal:order_detail", pk=pk)
+
+    financial_actions = {OrderStatus.APPROVED}
+    if target_status in financial_actions and request.user.role == "warehouse_staff":
+        messages.error(request, "You do not have permission to approve orders.")
         return redirect("admin_portal:order_detail", pk=pk)
 
     try:
@@ -497,6 +538,7 @@ def admin_order_action(request, pk):
                     request,
                     f"Order moved to {target_status}. Invoice {invoice.invoice_number} sent automatically.",
                 )
+            log_activity(request.user, "order_action", f"Order #{pk} → {action}", request)
             return redirect("admin_portal:order_detail", pk=pk)
 
         if target_status in {OrderStatus.PARTIALLY_SHIPPED, OrderStatus.SHIPPED}:
@@ -521,8 +563,10 @@ def admin_order_action(request, pk):
                 )
             else:
                 messages.success(request, f"Order moved to {target_status}.")
+            log_activity(request.user, "order_action", f"Order #{pk} → {action}", request)
             return redirect("admin_portal:order_detail", pk=pk)
         messages.success(request, f"Order moved to {target_status}.")
+        log_activity(request.user, "order_action", f"Order #{pk} → {action}", request)
     except (ValidationError, ValueError) as exc:
         messages.error(request, str(exc))
     return redirect("admin_portal:order_detail", pk=pk)

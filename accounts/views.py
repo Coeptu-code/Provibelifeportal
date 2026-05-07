@@ -1,11 +1,29 @@
 from django.contrib import messages
-from django.contrib.auth import get_user_model
+from django.contrib.auth import get_user_model, login
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.tokens import default_token_generator
+from django.contrib.auth.views import PasswordResetConfirmView
+from django.conf import settings
 from django.core.exceptions import ValidationError
+from django.db import transaction
 from django.shortcuts import get_object_or_404, redirect, render
+from django.utils.encoding import force_str
+from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
+from django.utils.decorators import method_decorator
+from django.utils import timezone
+from django.urls import reverse
+import uuid
 
-from accounts.decorators import ops_required
-from accounts.forms import CustomerUserCreateForm, CustomerUserUpdateForm
+from accounts.decorators import admin_required, customer_required, sales_required
+from accounts.activity import log_activity
+from accounts.email_service import send_invitation_email, send_password_reset_email, send_retailer_shilajit_info_email
+from accounts.forms import (
+    AcceptInvitationForm, CustomPasswordResetForm, CustomerUserCreateForm, CustomerUserUpdateForm,
+    InternalUserCreateForm, InternalUserUpdateForm, SendInvitationForm, MarketingShilajitEmailForm,
+    RetailerAccountCreateForm,
+)
+from accounts.models import CustomerInvitation, RetailerLead, RetailerAccountCreationToken
+from customers.models import Customer
 
 User = get_user_model()
 
@@ -18,33 +36,278 @@ def root_redirect(request):
     return render(request, "registration/no_role.html")
 
 
-@ops_required
-def admin_customer_user_create(request):
+@sales_required
+def admin_send_invitation(request):
     customer_id = request.GET.get("customer")
     if request.method == "POST":
-        form = CustomerUserCreateForm(request.POST)
+        form = SendInvitationForm(request.POST)
         if form.is_valid():
-            try:
-                user = form.save()
-                messages.success(request, "Customer user created.")
-                if user.customer_id:
-                    return redirect("admin_portal:customer_detail", pk=user.customer_id)
-                return redirect("admin_portal:customers")
-            except ValidationError as e:
-                form.add_error(None, e)
+            email = form.cleaned_data["email"]
+            customer = form.cleaned_data["customer"]
+
+            invitation = CustomerInvitation.objects.create(
+                email=email,
+                customer=customer,
+                invited_by=request.user,
+            )
+
+            accept_url = f"{request.build_absolute_uri('/')[:-1]}/accounts/invite/{invitation.token}/"
+            send_invitation_email(invitation, accept_url)
+            log_activity(request.user, "invitation_sent", f"Invited {email} to {customer.name}", request)
+
+            messages.success(request, f"Invitation sent to {email}")
+            return redirect("admin_portal:customer_detail", pk=customer.id)
     else:
-        form = CustomerUserCreateForm()
+        form = SendInvitationForm()
         if customer_id:
             form.fields["customer"].initial = int(customer_id)
 
+    return render(request, "admin_portal/send_invitation.html", {"form": form, "customer_id": customer_id})
+
+
+def invitation_accept(request, token):
+    try:
+        invitation = get_object_or_404(CustomerInvitation, token=token)
+        if not invitation.is_valid:
+            context = {"error": "This invitation has expired or been used."}
+            return render(request, "registration/accept_invitation.html", context)
+    except CustomerInvitation.DoesNotExist:
+        context = {"error": "Invalid invitation link."}
+        return render(request, "registration/accept_invitation.html", context)
+
+    if request.method == "POST":
+        form = AcceptInvitationForm(request.POST)
+        if form.is_valid():
+            with transaction.atomic():
+                user = User.objects.create_user(
+                    username=form.cleaned_data["username"],
+                    email=invitation.email,
+                    first_name=form.cleaned_data["first_name"],
+                    last_name=form.cleaned_data["last_name"],
+                    password=form.cleaned_data["password1"],
+                    role=User.Role.CUSTOMER_USER,
+                    customer=invitation.customer,
+                    invited_by=invitation.invited_by,
+                    is_active=True,
+                )
+                invitation.accepted_at = timezone.now()
+                invitation.save()
+                log_activity(user, "account_created", f"Account created from invitation", request)
+
+            login(request, user, backend="django.contrib.auth.backends.ModelBackend")
+            messages.success(request, "Your account has been created!")
+            return redirect("customers:dashboard")
+    else:
+        form = AcceptInvitationForm()
+
     return render(
         request,
-        "admin_portal/customer_user_form.html",
-        {"form": form, "form_title": "Add Customer User", "submit_label": "Create User"},
+        "registration/accept_invitation.html",
+        {
+            "form": form,
+            "invitation": invitation,
+            "invited_by_name": invitation.invited_by.get_full_name() or invitation.invited_by.username,
+        },
     )
 
 
-@ops_required
+@sales_required
+def admin_marketing_email_shilajit(request):
+    if request.method == "POST":
+        form = MarketingShilajitEmailForm(request.POST)
+        if form.is_valid():
+            email = form.cleaned_data["email"].strip().lower()
+            store_name = (form.cleaned_data.get("store_name") or "").strip()
+            first_name = (form.cleaned_data.get("first_name") or "").strip()
+            last_name = (form.cleaned_data.get("last_name") or "").strip()
+
+            with transaction.atomic():
+                lead, _created = RetailerLead.objects.update_or_create(
+                    email=email,
+                    defaults={
+                        "store_name": store_name,
+                        "first_name": first_name,
+                        "last_name": last_name,
+                        "created_by": request.user,
+                    },
+                )
+                token = RetailerAccountCreationToken.objects.create(
+                    lead=lead,
+                    created_by=request.user,
+                )
+
+            account_creation_url = (
+                settings.SITE_URL.rstrip("/")
+                + reverse("retailer_create_account")
+                + f"?token={token.token}"
+            )
+            send_retailer_shilajit_info_email(to=email, account_creation_url=account_creation_url)
+            log_activity(
+                request.user,
+                "marketing_email_sent",
+                f"Sent Shilajit retailer info email to {email}",
+                request,
+            )
+            messages.success(request, f"Shilajit retailer info email sent to {email}")
+            return redirect("admin_portal:marketing_email_shilajit")
+    else:
+        form = MarketingShilajitEmailForm()
+
+    return render(
+        request,
+        "admin_portal/marketing_email_shilajit.html",
+        {"form": form},
+    )
+
+
+def _derive_customer_name_from_email(email: str) -> str:
+    local = (email.split("@", 1)[0] if email and "@" in email else email).strip()
+    if not local:
+        return "Retailer"
+    return local.replace(".", " ").replace("_", " ").strip().title() or "Retailer"
+
+
+def _unique_customer_name(base_name: str) -> str:
+    base_name = (base_name or "").strip() or "Retailer"
+    candidate = base_name
+    i = 2
+    while Customer.objects.filter(name=candidate).exists():
+        candidate = f"{base_name} ({i})"
+        i += 1
+    return candidate
+
+
+def retailer_create_account(request):
+    token_raw = (request.GET.get("token") or "").strip()
+    try:
+        token_uuid = uuid.UUID(token_raw)
+    except Exception:
+        return render(
+            request,
+            "retailer/create_account.html",
+            {"error": "Invalid or missing account creation link."},
+        )
+
+    token_obj = RetailerAccountCreationToken.objects.filter(token=token_uuid).select_related("lead").first()
+    if not token_obj or not token_obj.is_valid:
+        return render(
+            request,
+            "retailer/create_account.html",
+            {"error": "This account creation link has expired or been used."},
+        )
+
+    lead = token_obj.lead
+    existing_user = User.objects.filter(email__iexact=lead.email).first()
+    if existing_user:
+        # Don't allow creating a second user for the same email; push them to login/reset.
+        return render(
+            request,
+            "retailer/create_account.html",
+            {
+                "error": (
+                    "An account already exists for this email. Please sign in, or use password reset if needed."
+                )
+            },
+        )
+
+    if request.method == "POST":
+        form = RetailerAccountCreateForm(request.POST)
+        if form.is_valid():
+            with transaction.atomic():
+                # Re-check validity inside the transaction for idempotency under retries.
+                token_obj = (
+                    RetailerAccountCreationToken.objects.select_for_update()
+                    .select_related("lead")
+                    .filter(token=token_uuid)
+                    .first()
+                )
+                if not token_obj or not token_obj.is_valid:
+                    return render(
+                        request,
+                        "retailer/create_account.html",
+                        {"error": "This account creation link has expired or been used."},
+                    )
+                lead = token_obj.lead
+
+                if User.objects.filter(email__iexact=lead.email).exists():
+                    return render(
+                        request,
+                        "retailer/create_account.html",
+                        {
+                            "error": (
+                                "An account already exists for this email. Please sign in, or use password reset if needed."
+                            )
+                        },
+                    )
+
+                store_name = (form.cleaned_data.get("store_name") or lead.store_name or "").strip()
+                customer_name = _unique_customer_name(store_name or _derive_customer_name_from_email(lead.email))
+                customer = Customer.objects.create(
+                    name=customer_name,
+                    is_active=True,
+                )
+                user = User.objects.create_user(
+                    username=form.cleaned_data["username"],
+                    email=lead.email,
+                    first_name=form.cleaned_data.get("first_name") or lead.first_name,
+                    last_name=form.cleaned_data.get("last_name") or lead.last_name,
+                    password=form.cleaned_data["password1"],
+                    role=User.Role.CUSTOMER_USER,
+                    customer=customer,
+                    is_active=True,
+                )
+
+                token_obj.used_at = timezone.now()
+                token_obj.save()
+                lead.created_customer = customer
+                lead.store_name = store_name or lead.store_name
+                lead.first_name = user.first_name or lead.first_name
+                lead.last_name = user.last_name or lead.last_name
+                lead.save(update_fields=["created_customer", "store_name", "first_name", "last_name", "updated_at"])
+
+                log_activity(user, "retailer_account_created", "Retailer account created via marketing link", request)
+
+            login(request, user, backend="django.contrib.auth.backends.ModelBackend")
+            messages.success(request, "Your retailer account has been created!")
+            return redirect("customers:dashboard")
+    else:
+        form = RetailerAccountCreateForm(
+            initial={
+                "store_name": lead.store_name,
+                "first_name": lead.first_name,
+                "last_name": lead.last_name,
+            }
+        )
+
+    return render(
+        request,
+        "retailer/create_account.html",
+        {"form": form, "lead": lead},
+    )
+
+
+def custom_password_reset(request):
+    if request.method == "POST":
+        form = CustomPasswordResetForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect("password_reset_done")
+    else:
+        form = CustomPasswordResetForm()
+    return render(request, "registration/password_reset_form.html", {"form": form})
+
+
+class CustomPasswordResetConfirmView(PasswordResetConfirmView):
+    template_name = "registration/password_reset_confirm.html"
+    success_url = "/accounts/reset/done/"
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        log_activity(self.user, "password_reset_completed", request=self.request)
+        return response
+
+
+@sales_required
 def admin_customer_user_edit(request, pk):
     user = get_object_or_404(User, pk=pk, is_customer_user=True)
     if request.method == "POST":
@@ -66,3 +329,73 @@ def admin_customer_user_edit(request, pk):
         "admin_portal/customer_user_form.html",
         {"form": form, "form_title": "Edit Customer User", "submit_label": "Save User"},
     )
+
+
+@admin_required
+def admin_internal_users(request):
+    internal_users = User.objects.filter(
+        role__in=("sales_rep", "sales_lead", "warehouse_staff")
+    ).order_by("role", "username")
+    return render(request, "admin_portal/internal_users.html", {"users": internal_users})
+
+
+@admin_required
+def admin_internal_user_create(request):
+    if request.method == "POST":
+        form = InternalUserCreateForm(request.POST)
+        if form.is_valid():
+            try:
+                user = form.save()
+                messages.success(request, f"{user.get_role_display()} user created.")
+                return redirect("admin_portal:internal_users")
+            except ValidationError as e:
+                form.add_error(None, e)
+    else:
+        form = InternalUserCreateForm()
+
+    return render(
+        request,
+        "admin_portal/internal_user_form.html",
+        {"form": form, "form_title": "Create Internal User", "submit_label": "Create User"},
+    )
+
+
+@admin_required
+def admin_internal_user_edit(request, pk):
+    user = get_object_or_404(
+        User, pk=pk, role__in=("sales_rep", "sales_lead", "warehouse_staff")
+    )
+    if request.method == "POST":
+        form = InternalUserUpdateForm(request.POST, instance=user)
+        if form.is_valid():
+            try:
+                updated_user = form.save()
+                messages.success(request, f"{updated_user.get_role_display()} user updated.")
+                return redirect("admin_portal:internal_users")
+            except ValidationError as e:
+                form.add_error(None, e)
+    else:
+        form = InternalUserUpdateForm(instance=user)
+
+    return render(
+        request,
+        "admin_portal/internal_user_form.html",
+        {"form": form, "form_title": f"Edit {user.get_role_display()}", "submit_label": "Save User"},
+    )
+
+
+@admin_required
+def admin_user_activity(request, pk):
+    user = get_object_or_404(User, pk=pk)
+    activities = user.activity_logs.all()[:100]
+    return render(
+        request,
+        "admin_portal/user_activity.html",
+        {"user": user, "activities": activities},
+    )
+
+
+@customer_required
+def customer_activity(request):
+    activities = request.user.activity_logs.all()[:100]
+    return render(request, "customer/activity.html", {"activities": activities})
