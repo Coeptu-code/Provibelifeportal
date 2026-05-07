@@ -13,6 +13,7 @@ urlpatterns = [
     path("sw.js", pwa_views.service_worker, name="pwa_service_worker"),
     path("retailer-app/mobile", pwa_views.retailer_mobile_entry, name="retailer_mobile_entry"),
     path("retailer-app/mobile/", pwa_views.retailer_mobile_entry),
+    path("shopify-test/", pwa_views.retailer_mobile_entry, name="shopify_test_home"),
     re_path(r"^PVL/(?P<path>.*)$", pwa_views.pvl_static, name="pvl_static"),
     re_path(r"^hooks/(?P<path>.*)$", pwa_views.hooks_static, name="hooks_static"),
     re_path(r"^components/(?P<path>.*)$", pwa_views.components_static, name="components_static"),
@@ -25,6 +26,10 @@ urlpatterns = [
     path("accounts/reset/done/", TemplateView.as_view(template_name="registration/password_reset_complete.html"), name="password_reset_complete"),
     path("retailer/create-account/", account_views.retailer_create_account, name="retailer_create_account"),
     path("", include("shopify_integration.urls")),
+    path(
+        "shopify-test/",
+        include(("shopify_integration.urls", "shopify_integration_test"), namespace="shopify_integration_test"),
+    ),
     path("customer/", include("customers.urls")),
     path("admin-portal/", include("supplement_portal.admin_portal_urls")),
     path("webhooks/", include("payments.urls")),

@@ -25,7 +25,13 @@
                 <td class="strong">{{ user.username }}</td>
                 <td>{{ user.get_full_name|default:'-' }}</td>
                 <td class="d-mobile-none">{{ user.email|default:"-" }}</td>
-                <td class="d-mobile-none">{{ user.invited_by.get_full_name|default:user.invited_by.username|default:"-" }}</td>
+                <td class="d-mobile-none">
+                  {% if user.invited_by %}
+                    {{ user.invited_by.get_full_name|default:user.invited_by.username }}
+                  {% else %}
+                    -
+                  {% endif %}
+                </td>
                 <td style="display: flex; gap: 6px;"><a class="btn sm ghost" href="{% url 'admin_portal:user_activity' user.id %}">Activity</a><a class="btn sm" href="{% url 'admin_portal:customer_user_edit' user.id %}">Edit</a></td>
               </tr>
               {% endfor %}
