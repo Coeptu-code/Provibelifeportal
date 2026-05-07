@@ -1,28 +1,23 @@
 from django.contrib import messages
 from django.contrib.auth import get_user_model, login
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.tokens import default_token_generator
 from django.contrib.auth.views import PasswordResetConfirmView
-from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.template.loader import render_to_string
-from django.utils.encoding import force_str
-from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
-from django.utils.decorators import method_decorator
 from django.utils import timezone
-from django.urls import reverse
 import uuid
 
 from accounts.decorators import admin_required, customer_required, sales_required
 from accounts.activity import log_activity
 from accounts.email_service import (
-    send_invitation_email, send_password_reset_email,
+    send_invitation_email,
     send_retailer_shilajit_info_email, send_retailer_app_invite_email,
     send_retailer_vitali_t_info_email, MOBILE_APP_DOWNLOAD_URL,
 )
+from accounts.url_utils import absolute_view_url
 from accounts.forms import (
     AcceptInvitationForm, CustomPasswordResetForm, CustomerUserCreateForm, CustomerUserUpdateForm,
     InternalUserCreateForm, InternalUserUpdateForm, SendInvitationForm, MarketingShilajitEmailForm,
@@ -57,7 +52,11 @@ def admin_send_invitation(request):
                 invited_by=request.user,
             )
 
-            accept_url = f"{request.build_absolute_uri('/')[:-1]}/accounts/invite/{invitation.token}/"
+            accept_url = absolute_view_url(
+                "invitation_accept",
+                request=request,
+                kwargs={"token": invitation.token},
+            )
             send_invitation_email(invitation, accept_url)
             log_activity(request.user, "invitation_sent", f"Invited {email} to {customer.name}", request)
 
@@ -149,10 +148,10 @@ def admin_marketing_email_shilajit(request):
                     created_by=request.user,
                 )
 
-            account_creation_url = (
-                settings.SITE_URL.rstrip("/")
-                + reverse("retailer_create_account")
-                + f"?token={token.token}"
+            account_creation_url = absolute_view_url(
+                "retailer_create_account",
+                request=request,
+                query={"token": str(token.token)},
             )
             send_retailer_shilajit_info_email(to=email, account_creation_url=account_creation_url)
             log_activity(
@@ -203,10 +202,10 @@ def admin_marketing_email_app_invite(request):
                     created_by=request.user,
                 )
 
-            account_creation_url = (
-                settings.SITE_URL.rstrip("/")
-                + reverse("retailer_create_account")
-                + f"?token={token.token}"
+            account_creation_url = absolute_view_url(
+                "retailer_create_account",
+                request=request,
+                query={"token": str(token.token)},
             )
             send_retailer_app_invite_email(to=email, account_creation_url=account_creation_url)
             log_activity(
@@ -252,10 +251,10 @@ def admin_marketing_email_vitali_t(request):
                     created_by=request.user,
                 )
 
-            account_creation_url = (
-                settings.SITE_URL.rstrip("/")
-                + reverse("retailer_create_account")
-                + f"?token={token.token}"
+            account_creation_url = absolute_view_url(
+                "retailer_create_account",
+                request=request,
+                query={"token": str(token.token)},
             )
             send_retailer_vitali_t_info_email(to=email, account_creation_url=account_creation_url)
             log_activity(
@@ -278,7 +277,11 @@ def admin_marketing_email_vitali_t(request):
 
 @sales_required
 def admin_marketing_email_preview(request, slug):
-    sample_url = "#preview-link"
+    sample_url = absolute_view_url(
+        "retailer_create_account",
+        request=request,
+        query={"token": "preview-token"},
+    )
     templates = {
         "shilajit": ("emails/retailer_shilajit_info.html", {"account_creation_url": sample_url}),
         "app-invite": ("emails/retailer_app_invite.html", {"account_creation_url": sample_url, "mobile_app_download_url": MOBILE_APP_DOWNLOAD_URL}),

@@ -169,10 +169,10 @@ class AcceptInvitationForm(forms.Form):
 class CustomPasswordResetForm(PasswordResetForm):
     def save(self, **kwargs):
         from accounts.email_service import send_password_reset_email
+        from accounts.url_utils import absolute_view_url
         from django.contrib.auth.tokens import default_token_generator
-        from django.utils.http import urlsafe_base64_encode
         from django.utils.encoding import force_bytes
-        from django.conf import settings
+        from django.utils.http import urlsafe_base64_encode
 
         email = self.cleaned_data["email"]
         users = User.objects.filter(email__iexact=email, is_active=True)
@@ -180,10 +180,15 @@ class CustomPasswordResetForm(PasswordResetForm):
         for user in users:
             uid = urlsafe_base64_encode(force_bytes(user.pk))
             token = default_token_generator.make_token(user)
-            reset_url = f"{settings.SITE_URL}/accounts/reset/{uid}/{token}/"
+            reset_url = absolute_view_url(
+                "password_reset_confirm",
+                kwargs={"uidb64": uid, "token": token},
+            )
             send_password_reset_email(user, reset_url)
 
-        return super().save(**kwargs)
+        # We intentionally bypass Django's default email sender because this
+        # project uses Resend via send_password_reset_email above.
+        return None
 
 
 class MarketingShilajitEmailForm(forms.Form):

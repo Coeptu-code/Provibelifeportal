@@ -2,6 +2,8 @@ import requests
 from django.conf import settings
 from django.template.loader import render_to_string
 
+from accounts.url_utils import mobile_app_download_url
+
 
 def send_email(to: str, subject: str, html: str) -> None:
     if not settings.RESEND_ENABLED:
@@ -14,8 +16,8 @@ def send_email(to: str, subject: str, html: str) -> None:
             json={"from": settings.EMAIL_FROM, "to": [to], "subject": subject, "html": html},
             timeout=10,
         )
-    except Exception as e:
-        print(f"[EMAIL ERROR] Failed to send email to {to}: {e}")
+    except Exception as exc:
+        print(f"[EMAIL ERROR] Failed to send email to {to}: {exc}")
 
 
 def send_invitation_email(invitation, accept_url: str) -> None:
@@ -57,11 +59,11 @@ def send_retailer_shilajit_info_email(*, to: str, account_creation_url: str) -> 
     send_email(to, subject, html)
 
 
-MOBILE_APP_DOWNLOAD_URL = "https://portal.provibelife.com/retailer-app/mobile"
+MOBILE_APP_DOWNLOAD_URL = mobile_app_download_url()
 
 
 def send_retailer_vitali_t_info_email(*, to: str, account_creation_url: str) -> None:
-    subject = "Pro Vibe Life Vitali-T — Retailer Product Information"
+    subject = "Pro Vibe Life Vitali-T - Retailer Product Information"
     html = render_to_string(
         "emails/retailer_vitali_t_info.html",
         {"account_creation_url": account_creation_url},
@@ -70,12 +72,12 @@ def send_retailer_vitali_t_info_email(*, to: str, account_creation_url: str) -> 
 
 
 def send_retailer_app_invite_email(*, to: str, account_creation_url: str) -> None:
-    subject = "You're invited — Pro Vibe Life Retail Portal + Mobile App"
+    subject = "You're invited - Pro Vibe Life Retail Portal + Mobile App"
     html = render_to_string(
         "emails/retailer_app_invite.html",
         {
             "account_creation_url": account_creation_url,
-            "mobile_app_download_url": MOBILE_APP_DOWNLOAD_URL,
+            "mobile_app_download_url": mobile_app_download_url(),
         },
     )
     send_email(to, subject, html)

@@ -31,8 +31,6 @@ class CustomerUserAdminPortalTests(TestCase):
             },
             )
         self.assertEqual(response.status_code, 302)
-        from accounts.models import CustomerInvitation
-
         invitation = CustomerInvitation.objects.get(email="acme1@example.com", customer=self.customer)
         self.assertTrue(invitation.is_valid)
 
@@ -152,3 +150,57 @@ class MarketingEmailTokenFlowTests(TestCase):
 
         resp2 = self.client.get(f"/retailer/create-account/?token={token.token}")
         self.assertContains(resp2, "expired or been used")
+
+
+@override_settings(SITE_URL="https://portal.provibelife.com")
+class AbsoluteLinkTests(TestCase):
+    def setUp(self):
+        user_model = get_user_model()
+        self.ops = user_model.objects.create_user(
+            username="ops2",
+            password="pass1234",
+            role=user_model.Role.SALES_REP,
+            is_active=True,
+        )
+        self.customer = Customer.objects.create(name="Bravo", payment_terms="NET_30")
+
+    def test_invitation_email_uses_absolute_domain(self):
+        self.client.login(username="ops2", password="pass1234")
+        captured = {}
+
+        def _capture_send_email(to, subject, html):
+            captured["to"] = to
+            captured["subject"] = subject
+            captured["html"] = html
+
+        with patch("accounts.email_service.send_email", side_effect=_capture_send_email):
+            response = self.client.post(
+                reverse("admin_portal:customer_user_create"),
+                {"email": "bravo@example.com", "customer": self.customer.id},
+            )
+
+        self.assertEqual(response.status_code, 302)
+        self.assertIn("https://portal.provibelife.com/accounts/invite/", captured["html"])
+
+    def test_password_reset_email_uses_absolute_domain(self):
+        user_model = get_user_model()
+        user_model.objects.create_user(
+            username="resetuser",
+            email="reset@example.com",
+            password="pass1234",
+            role=user_model.Role.CUSTOMER_USER,
+            customer=self.customer,
+            is_active=True,
+        )
+        captured = {}
+
+        def _capture_send_email(to, subject, html):
+            captured["to"] = to
+            captured["subject"] = subject
+            captured["html"] = html
+
+        with patch("accounts.email_service.send_email", side_effect=_capture_send_email):
+            response = self.client.post(reverse("password_reset"), {"email": "reset@example.com"})
+
+        self.assertEqual(response.status_code, 302)
+        self.assertIn("https://portal.provibelife.com/accounts/reset/", captured["html"])
