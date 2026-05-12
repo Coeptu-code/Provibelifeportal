@@ -1,3 +1,4 @@
+import time
 from decimal import Decimal
 
 from django.db import transaction
@@ -225,11 +226,22 @@ def send_invoice_to_shopify(invoice: Invoice) -> Invoice:
         invoice.shopify_order_id = _parse_numeric_id(draft_order.get("order_id"))
 
     email = customer_contact_email(invoice.customer)
-    admin_rest(
-        "POST",
-        f"draft_orders/{invoice.shopify_draft_order_id}/send_invoice.json",
-        payload={"draft_order_invoice": {"to": email}},
-    )
+
+    max_retries = 3
+    for attempt in range(max_retries):
+        try:
+            admin_rest(
+                "POST",
+                f"draft_orders/{invoice.shopify_draft_order_id}/send_invoice.json",
+                payload={"draft_order_invoice": {"to": email}},
+            )
+            break
+        except ShopifyError as exc:
+            if "422" in str(exc) and attempt < max_retries - 1:
+                time.sleep(10)
+                continue
+            raise
+
     invoice.status = InvoiceStatus.SENT
     invoice.save(
         update_fields=[

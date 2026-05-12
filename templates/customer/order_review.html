@@ -149,15 +149,27 @@
           <div class="v">${{ estimated_total }}</div>
         </div>
 
-        <form method="post" style="margin-top: 22px; display: flex; flex-direction: column; gap: 10px;">
+        <form method="post" style="margin-top: 22px; display: flex; flex-direction: column; gap: 10px;" id="orderForm">
           {% csrf_token %}
           <input type="hidden" name="action" value="confirm">
           <input type="hidden" name="draft_token" value="{{ draft_token }}">
-          <button type="submit" class="btn gold block">Submit Order</button>
+          <button type="submit" class="btn gold block" id="submitBtn">Submit Order</button>
           <a href="{% url 'customers:order_new' %}" class="btn ghost block" style="text-align: center;">Back</a>
         </form>
+
+        <div id="loadingState" style="display: none; margin-top: 22px; padding: 20px; text-align: center; background: var(--pvl-paper-2); border-radius: 8px;">
+          <div style="font-size: 48px; margin-bottom: 12px;">⏳</div>
+          <div style="font-size: 16px; font-weight: 600;">Processing your order...</div>
+          <div style="font-size: 14px; color: var(--pvl-text-mute); margin-top: 8px;">Stay on this page while we send your invoice to Shopify.</div>
+        </div>
       </div>
     </div>
   </div>
 {% endif %}
+<script>
+document.getElementById('orderForm')?.addEventListener('submit', function() {
+  document.getElementById('submitBtn').disabled = true;
+  document.getElementById('loadingState').style.display = 'block';
+});
+</script>
 {% endblock %}
