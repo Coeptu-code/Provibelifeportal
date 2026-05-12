@@ -181,7 +181,6 @@ def _estimate_quote_from_weight(total_weight_oz: Decimal, parcel_count: int, pre
 
 
 def _quote_via_shopify(order) -> ShippingQuote:
-    _ship_from_address()
     _ship_to_address(order)
     parcels = _build_parcels(order)
     for item in order.items.select_related("product"):
