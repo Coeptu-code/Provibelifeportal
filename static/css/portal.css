@@ -359,9 +359,9 @@ html.pwa-standalone .more-sheet {
     background: #000;
     padding: 10px 0;
     height: auto;
-    /* bleed to edges of topbar padding */
-    margin: -12px -16px 8px;
-    width: calc(100% + 32px);
+    /* bleed to viewport edges */
+    margin: -12px -32px 8px;
+    width: calc(100% + 64px);
   }
 
   .mobile-brand-bar img {
