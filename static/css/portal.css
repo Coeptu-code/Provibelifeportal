@@ -336,18 +336,21 @@ html.pwa-standalone .more-sheet {
   justify-content: flex-end;
 }
 
-/* Mobile brand banner — hidden on desktop where sidebar shows the logo */
+/* Mobile brand banner — hidden on desktop, only visible on mobile */
 .mobile-brand-bar {
-  display: none;
+  display: none !important;
+  height: 0;
+  overflow: hidden;
 }
 
 @media (max-width: 899px) {
   .mobile-brand-bar {
-    display: flex;
+    display: flex !important;
     justify-content: center;
     align-items: center;
     background: #000;
     padding: 10px 0;
+    height: auto;
     /* bleed to edges of topbar padding */
     margin: -12px -16px 8px;
     width: calc(100% + 32px);
@@ -356,6 +359,15 @@ html.pwa-standalone .more-sheet {
   .mobile-brand-bar img {
     height: 36px;
     width: auto;
+  }
+
+  /* Hide watermark backgrounds on mobile to reduce clutter */
+  .page::before,
+  .page::after,
+  .main::before,
+  .main::after,
+  .page {
+    background-image: none !important;
   }
 
   /* Quick Action "Submit New Order" spans full width on mobile */
