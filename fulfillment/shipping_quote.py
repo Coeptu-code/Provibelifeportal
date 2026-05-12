@@ -4,8 +4,6 @@ from decimal import Decimal, ROUND_HALF_UP
 import requests
 from django.conf import settings
 
-from shopify_integration.services import ShopifySyncError, ensure_shopify_product_mapping
-
 
 class ShippingQuoteError(Exception):
     pass
@@ -183,12 +181,6 @@ def _estimate_quote_from_weight(total_weight_oz: Decimal, parcel_count: int, pre
 def _quote_via_shopify(order) -> ShippingQuote:
     _ship_to_address(order)
     parcels = _build_parcels(order)
-    for item in order.items.select_related("product"):
-        try:
-            ensure_shopify_product_mapping(item.product)
-        except ShopifySyncError as exc:
-            raise ShippingQuoteError(str(exc)) from exc
-
     total_weight = sum((parcel["weight_oz"] for parcel in parcels), Decimal("0.00"))
     return _estimate_quote_from_weight(total_weight, len(parcels), getattr(order.customer, "preferred_carrier", ""))
 
