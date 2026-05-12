@@ -156,14 +156,24 @@ def _draft_order_payload(invoice: Invoice) -> dict:
     if invoice.invoice_kind == Invoice.InvoiceKind.PRIMARY:
         line_items = []
         for item in invoice.order.items.select_related("product"):
-            variant_id = ensure_shopify_product_mapping(item.product)
-            line_items.append(
-                {
-                    "variant_id": int(variant_id),
-                    "quantity": item.quantity,
-                    "price": f"{item.unit_price:.2f}",
-                }
-            )
+            try:
+                variant_id = ensure_shopify_product_mapping(item.product)
+                line_items.append(
+                    {
+                        "variant_id": int(variant_id),
+                        "quantity": item.quantity,
+                        "price": f"{item.unit_price:.2f}",
+                    }
+                )
+            except (ShopifyError, ShopifySyncError):
+                line_items.append(
+                    {
+                        "title": f"{item.product.sku} - {item.product.name}",
+                        "quantity": item.quantity,
+                        "price": f"{item.unit_price:.2f}",
+                        "taxable": True,
+                    }
+                )
     else:
         title = "Shipping Adjustment"
         if invoice.invoice_kind == Invoice.InvoiceKind.ADJUSTMENT_CREDIT:
