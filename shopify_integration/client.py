@@ -19,7 +19,10 @@ def _normalized_shop(shop: str | None = None) -> str:
     value = (shop or settings.SHOPIFY_SHOP or "").strip().lower()
     value = re.sub(r"^https?://", "", value)
     if not value.endswith(".myshopify.com"):
-        raise ShopifyError("SHOPIFY_SHOP must be a valid .myshopify.com domain.")
+        if "." not in value:
+            value = f"{value}.myshopify.com"
+        else:
+            raise ShopifyError("SHOPIFY_SHOP must be a valid .myshopify.com domain.")
     return value
 
 
@@ -32,7 +35,15 @@ def shop_admin_url(path: str, shop: str | None = None) -> str:
 def _headers(access_token: str | None = None) -> dict[str, str]:
     token = (access_token or settings.SHOPIFY_ACCESS_TOKEN or "").strip()
     if not token:
-        raise ShopifyError("SHOPIFY_ACCESS_TOKEN is not configured.")
+        try:
+            from shopify_integration.models import ShopifyToken
+            obj = ShopifyToken.objects.filter(shop=_normalized_shop()).first()
+            if obj:
+                token = obj.access_token
+        except Exception:
+            pass
+    if not token:
+        raise ShopifyError("SHOPIFY_ACCESS_TOKEN is not configured. Visit /auth/shopify/install/ to complete OAuth.")
     return {
         "Content-Type": "application/json",
         "Accept": "application/json",
@@ -164,3 +175,13 @@ def persist_access_token(access_token: str, shop: str | None = None, scopes: str
         os.environ["SHOPIFY_SHOP"] = _normalized_shop(shop)
     if scopes:
         os.environ["SHOPIFY_APP_SCOPES"] = scopes
+
+    try:
+        from shopify_integration.models import ShopifyToken
+        normalized = _normalized_shop(shop)
+        ShopifyToken.objects.update_or_create(
+            shop=normalized,
+            defaults={"access_token": access_token, "scopes": scopes or ""},
+        )
+    except Exception:
+        pass

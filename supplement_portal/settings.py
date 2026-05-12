@@ -22,7 +22,7 @@ def env_list(name: str, default: str = "") -> list[str]:
 
 
 SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "django-insecure-local-dev-key")
-DEBUG = True  # TEMPORARY - for debugging 500 error
+DEBUG = env_bool("DJANGO_DEBUG", True)
 ALLOWED_HOSTS = env_list("DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1")
 CSRF_TRUSTED_ORIGINS = env_list("CSRF_TRUSTED_ORIGINS", "")
 
@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     "payments",
     "warehouse",
     "reports",
+    "shopify_integration",
 ]
 
 MIDDLEWARE = [
