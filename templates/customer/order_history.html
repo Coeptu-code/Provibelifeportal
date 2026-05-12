@@ -15,7 +15,7 @@
         <tr>
           <td class="strong">#{{ order.id }}</td>
           <td><span class="pill status-{{ order.status }}">{{ order.status }}</span></td>
-          <td class="d-mobile-none">{{ order.submitted_at|date:"M d, Y"|default:'-' }}</td>
+          <td class="d-mobile-none">{{ order.submitted_at|date:"m/d/Y"|default:'-' }}</td>
           <td class="num strong">${{ order.total }}</td>
           <td><a class="btn sm" href="{% url 'customers:order_detail' order.id %}">View</a></td>
         </tr>

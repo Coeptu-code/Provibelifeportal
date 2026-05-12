@@ -23,7 +23,7 @@
           <td class="strong">#{{ order.id }}</td>
           <td>{{ order.customer.name }}</td>
           <td><span class="pill status-{{ order.status }}">{{ order.status }}</span></td>
-          <td class="d-mobile-none">{{ order.submitted_at|date:"M d, Y"|default:'-' }}</td>
+          <td class="d-mobile-none">{{ order.submitted_at|date:"m/d/Y"|default:'-' }}</td>
           <td class="num d-mobile-none strong">${{ order.total }}</td>
           <td><a class="btn sm" href="{% url 'admin_portal:order_detail' order.id %}">Open</a></td>
           <td>

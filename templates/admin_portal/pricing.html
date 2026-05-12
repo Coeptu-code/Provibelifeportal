@@ -21,8 +21,8 @@
           <td class="mono">{{ price.product.sku }}</td>
           <td class="num">${{ price.unit_price }}</td>
           <td class="num d-mobile-none">{{ price.minimum_quantity }}</td>
-          <td class="d-mobile-none">{{ price.effective_date|date:"M d, Y"|default:'-' }}</td>
-          <td>{{ price.expiration_date|date:"M d, Y"|default:"Open" }}</td>
+          <td class="d-mobile-none">{{ price.effective_date|date:"m/d/Y"|default:'-' }}</td>
+          <td>{{ price.expiration_date|date:"m/d/Y"|default:"Open" }}</td>
         </tr>
         {% empty %}
         <tr><td colspan="6" class="text-secondary">No pricing contracts yet.</td></tr>

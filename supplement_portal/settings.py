@@ -168,7 +168,7 @@ SHOPIFY_DEFAULT_CURRENCY = os.getenv("SHOPIFY_DEFAULT_CURRENCY", STRIPE_CURRENCY
 RESEND_API_KEY = os.getenv("RESEND_API_KEY", "")
 EMAIL_FROM = os.getenv("EMAIL_FROM", "noreply@provibelife.com")
 RESEND_ENABLED = env_bool("RESEND_ENABLED", False)
-SITE_URL = os.getenv("SITE_URL", "http://localhost:8000")
+SITE_URL = os.getenv("SITE_URL", "https://portal.provibelife.com" if not DEBUG else "http://localhost:8000")
 
 if not DEBUG:
     if SECRET_KEY == "django-insecure-local-dev-key":

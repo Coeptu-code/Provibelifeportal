@@ -335,3 +335,37 @@ html.pwa-standalone .more-sheet {
   gap: 8px;
   justify-content: flex-end;
 }
+
+/* Mobile brand banner — hidden on desktop where sidebar shows the logo */
+.mobile-brand-bar {
+  display: none;
+}
+
+@media (max-width: 899px) {
+  .mobile-brand-bar {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: #000;
+    padding: 10px 0;
+    /* bleed to edges of topbar padding */
+    margin: -12px -16px 8px;
+    width: calc(100% + 32px);
+  }
+
+  .mobile-brand-bar img {
+    height: 36px;
+    width: auto;
+  }
+
+  /* Quick Action "Submit New Order" spans full width on mobile */
+  .stat.feature {
+    grid-column: 1 / -1;
+  }
+
+  .stat.feature .btn {
+    display: block;
+    width: 100%;
+    text-align: center;
+  }
+}

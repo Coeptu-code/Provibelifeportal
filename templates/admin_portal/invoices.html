@@ -18,7 +18,7 @@
           <td>{{ invoice.customer.name }}</td>
           <td><span class="pill status-{{ invoice.status }}">{{ invoice.status }}</span></td>
           <td class="num strong">${{ invoice.total }}</td>
-          <td class="d-mobile-none">{{ invoice.due_date|date:"M d, Y"|default:'-' }}</td>
+          <td class="d-mobile-none">{{ invoice.due_date|date:"m/d/Y"|default:'-' }}</td>
         </tr>
         {% empty %}
         <tr><td colspan="6" class="text-secondary">No invoices generated.</td></tr>

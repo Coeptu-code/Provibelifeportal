@@ -15,7 +15,7 @@
         <tbody>
           {% for log in activities %}
           <tr>
-            <td class="mono" style="font-size: 12px;">{{ log.created_at|date:"M d, Y H:i:s" }}</td>
+            <td class="mono" style="font-size: 12px;">{{ log.created_at|date:"m/d/Y H:i:s" }}</td>
             <td><span class="pill gold">{{ log.action }}</span></td>
             <td>{{ log.detail|truncatewords:10 }}</td>
             <td class="mono d-mobile-none" style="font-size: 12px;">{{ log.ip_address|default:"-" }}</td>

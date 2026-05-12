@@ -19,7 +19,7 @@
           <td class="d-mobile-none">{{ s.carrier|default:'-' }}</td>
           <td class="mono">{{ s.tracking_number|default:'-' }}</td>
           <td><span class="pill status-{{ s.status }}">{{ s.status }}</span></td>
-          <td class="d-mobile-none">{{ s.shipped_at|date:"M d, Y"|default:'-' }}</td>
+          <td class="d-mobile-none">{{ s.shipped_at|date:"m/d/Y"|default:'-' }}</td>
         </tr>
         {% empty %}
         <tr><td colspan="7" class="text-secondary">No shipments yet.</td></tr>

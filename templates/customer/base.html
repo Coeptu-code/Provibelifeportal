@@ -35,9 +35,6 @@
         <a href="{% url 'customers:invoices' %}" class="nav-item {% if 'invoices' in request.resolver_match.url_name %}active{% endif %}">
           <span>Invoices</span>
         </a>
-        <a href="{% url 'customers:shipping_addresses' %}" class="nav-item {% if 'shipping_addresses' in request.resolver_match.url_name %}active{% endif %}">
-          <span>Shipping</span>
-        </a>
         <a href="{% url 'customers:account' %}" class="nav-item {% if 'account' in request.resolver_match.url_name %}active{% endif %}">
           <span>Account</span>
         </a>
@@ -58,6 +55,9 @@
     <div class="main">
       <header class="topbar">
         {% block topbar_left %}{% endblock %}
+        <div class="mobile-brand-bar">
+          <img src="{% static 'PVL/assets/pvl-logo-lockup.png' %}" alt="Pro Vibe Life">
+        </div>
         <div class="crumb"><span class="crumb-mobile">Portal</span></div>
       </header>
 

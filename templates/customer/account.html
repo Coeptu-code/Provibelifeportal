@@ -54,7 +54,11 @@
   </div>
 </div>
 
-<div style="margin-top: 28px;">
+<div style="margin-top: 28px; display: flex; gap: 10px; flex-direction: column;">
   <a href="{% url 'customers:activity' %}" class="btn primary">View Activity Log</a>
+  <form method="post" action="{% url 'logout' %}" style="margin: 0;">
+    {% csrf_token %}
+    <button type="submit" class="btn danger block" style="width: 100%;">Logout</button>
+  </form>
 </div>
 {% endblock %}

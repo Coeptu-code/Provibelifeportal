@@ -27,11 +27,11 @@
         </div>
         <div class="kv" style="margin-top: 16px;">
           <div class="k">Requested Date</div>
-          <div class="v">{{ order.requested_ship_date|date:"M d, Y"|default:'-' }}</div>
+          <div class="v">{{ order.requested_ship_date|date:"m/d/Y"|default:'-' }}</div>
         </div>
         <div class="kv" style="margin-top: 16px;">
           <div class="k">Submitted</div>
-          <div class="v">{{ order.submitted_at|date:"M d, Y H:i"|default:'-' }}</div>
+          <div class="v">{{ order.submitted_at|date:"m/d/Y H:i"|default:'-' }}</div>
         </div>
       </div>
     </div>
