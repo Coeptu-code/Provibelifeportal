@@ -359,9 +359,12 @@ html.pwa-standalone .more-sheet {
     background: #000;
     padding: 10px 0;
     height: auto;
-    /* bleed to viewport edges */
-    margin: -12px -32px 8px;
-    width: calc(100% + 64px);
+    position: fixed;
+    left: 0;
+    right: 0;
+    width: 100vw;
+    margin: -12px 0 8px 0;
+    z-index: 100;
   }
 
   .mobile-brand-bar img {

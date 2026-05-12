@@ -1,0 +1,227 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Pro Vibe Life | Free Shilajit Sample</title>
+  <style>
+    .pv-sample-page{background:#070707;color:#fff;font-family:-apple-system,BlinkMacSystemFont,sans-serif;overflow:hidden;}
+    .pv-sample-page *{box-sizing:border-box;}
+    .pv-hero{padding:46px 18px 70px;background:radial-gradient(circle at top left,rgba(212,175,55,.22),transparent 34%),radial-gradient(circle at bottom right,rgba(212,175,55,.14),transparent 38%),#070707;}
+    .pv-wrap{max-width:1120px;margin:0 auto;}
+    .pv-logo{display:flex;justify-content:center;margin-bottom:34px;}
+    .pv-logo img{max-width:180px;height:auto;}
+    .pv-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:44px;align-items:center;}
+    @media(max-width:850px){.pv-grid{grid-template-columns:1fr;}}
+    .pv-kicker{color:#d4af37!important;text-transform:uppercase;letter-spacing:.16em;font-size:12px;font-weight:950;margin-bottom:12px;}
+    .pv-title{color:#fff!important;font-size:clamp(40px,6vw,72px);line-height:.98;font-weight:950;letter-spacing:-.06em;margin:0 0 18px;}
+    .pv-title span{background:linear-gradient(120deg,#a77a14,#d4af37,#fff1a6,#d4af37,#8f6a12);background-size:260% auto;-webkit-background-clip:text;background-clip:text;color:transparent;animation:pvGoldShine 5.5s linear infinite;}
+    @keyframes pvGoldShine{0%{background-position:260% center;}100%{background-position:-260% center;}}
+    .pv-sub{color:rgba(255,255,255,.84)!important;font-size:18px;line-height:1.6;max-width:620px;margin-bottom:26px;}
+    .pv-flash-btn{display:inline-flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#8f6a12,#d4af37,#f3d36a);color:#080808!important;text-decoration:none;font-weight:950;font-size:18px;padding:18px 34px;border-radius:999px;box-shadow:0 0 34px rgba(212,175,55,.40);animation:pvPulse 1.8s ease-in-out infinite;}
+    @keyframes pvPulse{0%,100%{transform:scale(1);box-shadow:0 0 28px rgba(212,175,55,.35);}50%{transform:scale(1.04);box-shadow:0 0 48px rgba(212,175,55,.65);}}
+    .pv-hero-img{border-radius:28px;overflow:hidden;border:1px solid rgba(212,175,55,.25);box-shadow:0 24px 70px rgba(0,0,0,.45);background:#111;}
+    .pv-hero-img img{width:100%;height:auto;display:block;}
+    .pv-pills{display:flex;flex-wrap:wrap;gap:10px;margin-top:24px;}
+    .pv-pill{border:1px solid rgba(212,175,55,.28);color:#d4af37!important;background:rgba(212,175,55,.08);border-radius:999px;padding:8px 12px;font-size:13px;font-weight:850;}
+    .pv-section{padding:70px 18px;background:#fff;color:#111;}
+    .pv-section.dark{background:#0b0b0b;color:#fff;}
+    .pv-section-title{text-align:center;font-size:clamp(32px,5vw,54px);line-height:1.05;font-weight:950;letter-spacing:-.045em;margin:0 0 14px;}
+    .pv-section-title span{color:#d4af37;}
+    .pv-video-title{color:#fff!important;}
+    .pv-video-title .pv-video-white{color:#fff!important;background:none!important;-webkit-background-clip:initial!important;background-clip:initial!important;animation:none!important;}
+    .pv-video-title .pv-video-gold{color:#d4af37!important;}
+    .pv-section-sub{max-width:760px;margin:0 auto 38px;text-align:center;color:#666;font-size:17px;line-height:1.6;}
+    .dark .pv-section-sub{color:rgba(255,255,255,.72);}
+    .pv-card-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;}
+    @media(max-width:850px){.pv-card-grid{grid-template-columns:1fr;}}
+    .pv-card{background:#fff;border:1px solid #eee;border-radius:22px;padding:24px;box-shadow:0 14px 36px rgba(0,0,0,.06);}
+    .pv-card h3{margin:0 0 10px;font-size:20px;font-weight:950;}
+    .pv-card p{margin:0;color:#555;font-size:15.5px;line-height:1.6;}
+    .pv-icon{width:48px;height:48px;border-radius:14px;background:linear-gradient(135deg,#8f6a12,#d4af37,#f3d36a);display:flex;align-items:center;justify-content:center;margin-bottom:16px;}
+    .pv-icon svg{width:23px;height:23px;stroke:#111;fill:none;stroke-width:2.4;}
+    .pv-product-showcase{display:grid;grid-template-columns:.9fr 1.1fr;gap:34px;align-items:center;}
+    @media(max-width:850px){.pv-product-showcase{grid-template-columns:1fr;}}
+    .pv-product-img{border-radius:26px;overflow:hidden;box-shadow:0 18px 55px rgba(0,0,0,.12);border:1px solid #eee;}
+    .pv-product-img img{width:100%;display:block;}
+    .pv-product-copy h2{font-size:clamp(30px,4vw,48px);line-height:1.05;font-weight:950;letter-spacing:-.04em;margin:0 0 14px;}
+    .pv-product-copy p{font-size:17px;line-height:1.6;color:#555;margin:0 0 16px;}
+    .pv-check{display:flex;gap:10px;align-items:flex-start;margin:10px 0;font-weight:800;}
+    .pv-check span{color:#b88917;font-weight:950;}
+    .pv-video-slider{display:flex;gap:18px;overflow-x:auto;scroll-snap-type:x mandatory;padding:4px 0 18px;-webkit-overflow-scrolling:touch;}
+    .pv-video-slider::-webkit-scrollbar{display:none;}
+    .pv-video-card{flex:0 0 320px;scroll-snap-align:center;border-radius:24px;overflow:hidden;border:1px solid rgba(212,175,55,.32);background:#111;box-shadow:0 18px 50px rgba(0,0,0,.35);}
+    .pv-video-card video{width:100%;height:460px;object-fit:cover;display:block;background:#111;}
+    @media(max-width:640px){.pv-video-card{flex-basis:82%;}.pv-video-card video{height:420px;}}
+    .pv-process{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;}
+    @media(max-width:850px){.pv-process{grid-template-columns:1fr 1fr;}}
+    .pv-step{background:#fff;border:1px solid rgba(212,175,55,.22);border-radius:20px;padding:20px;text-align:center;box-shadow:0 12px 30px rgba(0,0,0,.045);}
+    .pv-step-num{width:38px;height:38px;border-radius:999px;background:linear-gradient(135deg,#8f6a12,#d4af37,#f3d36a);color:#111;font-weight:950;display:flex;align-items:center;justify-content:center;margin:0 auto 12px;}
+    .pv-step h3{margin:0 0 8px;font-size:17px;font-weight:950;}
+    .pv-step p{margin:0;color:#555;font-size:14px;line-height:1.5;}
+    .pv-form-wrap{max-width:760px;margin:0 auto;background:#fff;color:#111;border-radius:28px;padding:30px;box-shadow:0 24px 70px rgba(0,0,0,.25);border:1px solid rgba(212,175,55,.28);}
+    .pv-form-title{font-size:32px;font-weight:950;letter-spacing:-.04em;margin:0 0 10px;text-align:center;}
+    .pv-form-sub{color:#555;text-align:center;font-size:16px;line-height:1.55;margin:0 0 24px;}
+    .pv-field-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+    @media(max-width:700px){.pv-field-grid{grid-template-columns:1fr;}}
+    .pv-field{display:flex;flex-direction:column;gap:6px;}
+    .pv-field.full{grid-column:1/-1;}
+    .pv-field label{font-weight:850;font-size:13px;color:#222;}
+    .pv-field input,.pv-field textarea{width:100%;border:1px solid #ddd;border-radius:14px;padding:13px 14px;font-size:15px;font-family:inherit;}
+    .pv-field textarea{min-height:90px;resize:vertical;}
+    .pv-submit{width:100%;margin-top:18px;border:none;border-radius:999px;padding:17px 24px;background:linear-gradient(135deg,#8f6a12,#d4af37,#f3d36a);color:#111;font-size:18px;font-weight:950;cursor:pointer;box-shadow:0 14px 34px rgba(212,175,55,.30);}
+    .pv-disclaimer{margin-top:14px;text-align:center;color:#777;font-size:12px;line-height:1.45;}
+    .pv-alert{margin:0 auto 18px;max-width:760px;padding:14px;border-radius:14px;font-size:14px;line-height:1.5;}
+    .pv-alert.success{background:#e8f8ef;color:#135b34;border:1px solid #9ad7b2;}
+  </style>
+</head>
+<body>
+<div class="pv-sample-page">
+  <section class="pv-hero">
+    <div class="pv-wrap">
+      <div class="pv-logo">
+        <img src="https://provibelife.com/cdn/shop/files/PVL-LogoLockUp-4k_23aea92a-5a10-4e80-8421-66254bb1deb8.png?v=1680144840&width=450" alt="Pro Vibe Life">
+      </div>
+
+      <div class="pv-grid">
+        <div>
+          <div class="pv-kicker">Wholesale Sample Program</div>
+          <h1 class="pv-title">Redeem Your <span>Free Shilajit Sample</span></h1>
+          <p class="pv-sub">Experience Pro Vibe Life's lab-tested shilajit tablets before placing a wholesale or private-label order. Built for brands, clinics, retailers, and distributors looking for a premium, high-potency shilajit product.</p>
+          <a href="#sample-form" class="pv-flash-btn">Redeem Free Sample ?</a>
+          <div class="pv-pills">
+            <span class="pv-pill">Lab Tested</span>
+            <span class="pv-pill">Wholesale Ready</span>
+            <span class="pv-pill">Private Label Available</span>
+            <span class="pv-pill">Harvest-to-Wholesale Network</span>
+          </div>
+        </div>
+
+        <div class="pv-hero-img">
+          <img src="https://cdn.shopify.com/s/files/1/0739/1205/8148/files/E999B1DE-83C8-44A7-9C83-DE7B87C9142B.png?v=1778605309" alt="Raw harvested shilajit">
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="pv-section">
+    <div class="pv-wrap">
+      <div class="pv-product-showcase">
+        <div class="pv-product-img">
+          <img src="https://cdn.shopify.com/s/files/1/0739/1205/8148/files/Kaching-Bundles-IMG_4701_0fb509ea-5f2f-44d8-869e-b3c1c13621e6.png?v=1773981193" alt="Pro Vibe Shilajit tablets and box">
+        </div>
+        <div class="pv-product-copy">
+          <h2>Premium Shilajit Tablets Ready For Wholesale.</h2>
+          <p>Our tablet format makes shilajit easier to use, easier to package, and easier to scale for retail, clinic, private-label, and wholesale partners.</p>
+          <div class="pv-check"><span>?</span> Purified resin tablet format</div>
+          <div class="pv-check"><span>?</span> Bulk wholesale supply available</div>
+          <div class="pv-check"><span>?</span> Private label packaging available</div>
+          <div class="pv-check"><span>?</span> Lab testing available for purity and potency</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="pv-section">
+    <div class="pv-wrap">
+      <h2 class="pv-section-title">Why Brands Choose <span>Pro Vibe Life</span></h2>
+      <p class="pv-section-sub">We are not just reselling random shilajit. Our network is built around harvest, purification, packaging, testing, and wholesale distribution.</p>
+
+      <div class="pv-card-grid">
+        <div class="pv-card"><div class="pv-icon"><svg viewBox="0 0 24 24"><path d="M12 2v20"/><path d="M4 12h16"/></svg></div><h3>Integrated Supply Network</h3><p>Our partners help manage the process from raw harvest to purification, finished packaging, and wholesale distribution.</p></div>
+        <div class="pv-card"><div class="pv-icon"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg></div><h3>Lab Tested Quality</h3><p>Every batch can be supported with lab testing for purity, potency, heavy metals, microbial safety, and active compounds.</p></div>
+        <div class="pv-card"><div class="pv-icon"><svg viewBox="0 0 24 24"><path d="M12 2l7 4v6c0 5-3.5 8-7 10-3.5-2-7-5-7-10V6l7-4z"/></svg></div><h3>Wholesale + Private Label</h3><p>We can support bulk tablet orders, custom packaging, private-label opportunities, and scalable B2B supply.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="pv-section dark">
+    <div class="pv-wrap">
+      <h2 class="pv-section-title pv-video-title"><span class="pv-video-white">From Harvest To</span> <span class="pv-video-gold">Wholesale</span></h2>
+      <p class="pv-section-sub">See the raw material, the source environment, and the process behind our shilajit supply network.</p>
+
+      <div class="pv-video-slider">
+        <div class="pv-video-card"><video autoplay muted loop playsinline preload="auto"><source src="https://cdn.shopify.com/videos/c/o/v/c7ab727751904034a6e8550045d49181.mov" type="video/mp4"></video></div>
+        <div class="pv-video-card"><video autoplay muted loop playsinline preload="auto"><source src="https://cdn.shopify.com/videos/c/o/v/ea3e0b806873472da26109d30d1ad99b.mp4" type="video/mp4"></video></div>
+        <div class="pv-video-card"><video autoplay muted loop playsinline preload="auto"><source src="https://cdn.shopify.com/videos/c/o/v/aa6bbec4c5f54f73bab8c8354286ebff.mov" type="video/mp4"></video></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="pv-section">
+    <div class="pv-wrap">
+      <h2 class="pv-section-title">Our Process</h2>
+      <div class="pv-process">
+        <div class="pv-step"><div class="pv-step-num">1</div><h3>Harvest</h3><p>Raw shilajit is sourced through our trusted partner network.</p></div>
+        <div class="pv-step"><div class="pv-step-num">2</div><h3>Purify</h3><p>Material is purified and prepared through a controlled process.</p></div>
+        <div class="pv-step"><div class="pv-step-num">3</div><h3>Package</h3><p>Finished tablets are packaged for retail, wholesale, or private label.</p></div>
+        <div class="pv-step"><div class="pv-step-num">4</div><h3>Distribute</h3><p>We support wholesale orders, brand partners, clinics, and retailers.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="pv-section dark" id="sample-form">
+    <div class="pv-wrap">
+      {% if submission_success %}
+        <div class="pv-alert success">Sample request submitted. Our team will review and contact you.</div>
+      {% endif %}
+      <div class="pv-form-wrap">
+        <h2 class="pv-form-title">Redeem Your Free Sample</h2>
+        <p class="pv-form-sub">Fill out your shipping details below and our team will review your request.</p>
+
+        <form method="post" action="">
+          {% csrf_token %}
+          <input type="hidden" name="token" value="{{ token.token }}">
+
+          <div class="pv-field-grid">
+            <div class="pv-field"><label>First Name</label><input type="text" name="contact[first_name]" value="{{ lead.first_name }}" required></div>
+            <div class="pv-field"><label>Last Name</label><input type="text" name="contact[last_name]" value="{{ lead.last_name }}" required></div>
+            <div class="pv-field"><label>Email</label><input type="email" name="contact[email]" value="{{ lead.email }}" required></div>
+            <div class="pv-field"><label>Phone Number</label><input type="tel" name="contact[phone]" value="{{ lead.phone }}" required></div>
+            <div class="pv-field full"><label>Business Name</label><input type="text" name="contact[business_name]" value="{{ lead.store_name }}" required></div>
+            <div class="pv-field full"><label>Shipping Address</label><textarea name="contact[shipping_address]" required placeholder="Street address, city, state, ZIP, country"></textarea></div>
+            <div class="pv-field full"><label>What type of business are you?</label><input type="text" name="contact[business_type]" placeholder="Clinic, retailer, distributor, brand, wellness center, etc."></div>
+          </div>
+
+          <button type="submit" class="pv-submit">Claim My Free Sample ?</button>
+          <div class="pv-disclaimer">Free samples are intended for qualified wholesale, private-label, retail, clinic, and distribution partners. Limited availability.</div>
+        </form>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+(function(){
+  function playPVVideos(){
+    document.querySelectorAll('.pv-video-card video').forEach(function(video){
+      video.muted = true;
+      video.defaultMuted = true;
+      video.loop = true;
+      video.playsInline = true;
+      video.setAttribute('muted', '');
+      video.setAttribute('playsinline', '');
+      video.setAttribute('webkit-playsinline', '');
+      video.setAttribute('autoplay', '');
+      video.setAttribute('loop', '');
+      video.preload = 'auto';
+      const playPromise = video.play();
+      if(playPromise !== undefined){
+        playPromise.catch(function(){
+          video.addEventListener('canplay', function(){
+            video.play().catch(function(){});
+          }, { once:true });
+        });
+      }
+    });
+  }
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', playPVVideos);
+  } else {
+    playPVVideos();
+  }
+})();
+</script>
+</body>
+</html>
+

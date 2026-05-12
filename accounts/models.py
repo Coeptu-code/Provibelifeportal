@@ -143,6 +143,7 @@ class RetailerLead(models.Model):
     store_name = models.CharField(max_length=255, blank=True)
     first_name = models.CharField(max_length=150, blank=True)
     last_name = models.CharField(max_length=150, blank=True)
+    phone = models.CharField(max_length=50, blank=True)
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         null=True,
@@ -202,6 +203,76 @@ class RetailerAccountCreationToken(models.Model):
     @property
     def is_valid(self) -> bool:
         return not self.used_at and timezone.now() < self.expires_at
+
+
+class RetailerMarketingPageToken(models.Model):
+    class PageSlug(models.TextChoices):
+        FREE_SAMPLE = "free-sample", "Free Sample"
+
+    lead = models.ForeignKey(
+        RetailerLead,
+        on_delete=models.CASCADE,
+        related_name="marketing_page_tokens",
+    )
+    page_slug = models.CharField(
+        max_length=64,
+        choices=PageSlug.choices,
+        default=PageSlug.FREE_SAMPLE,
+    )
+    source = models.CharField(
+        max_length=120,
+        blank=True,
+        help_text="Optional campaign/template source label.",
+    )
+    token = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="created_marketing_page_tokens",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField()
+    first_clicked_at = models.DateTimeField(null=True, blank=True)
+    last_clicked_at = models.DateTimeField(null=True, blank=True)
+    click_count = models.PositiveIntegerField(default=0)
+    last_click_ip = models.GenericIPAddressField(null=True, blank=True)
+    last_click_user_agent = models.TextField(blank=True)
+
+    class Meta:
+        indexes = [
+            Index(fields=["token"]),
+            Index(fields=["page_slug", "created_at"]),
+            Index(fields=["last_clicked_at"]),
+        ]
+
+    def save(self, *args, **kwargs):
+        if not self.expires_at:
+            self.expires_at = timezone.now() + timezone.timedelta(days=30)
+        super().save(*args, **kwargs)
+
+    @property
+    def is_valid(self) -> bool:
+        return timezone.now() < self.expires_at
+
+    def mark_clicked(self, *, ip_address: str | None, user_agent: str | None) -> None:
+        now = timezone.now()
+        if not self.first_clicked_at:
+            self.first_clicked_at = now
+        self.last_clicked_at = now
+        self.click_count = (self.click_count or 0) + 1
+        self.last_click_ip = ip_address or None
+        self.last_click_user_agent = (user_agent or "")[:2000]
+        self.save(
+            update_fields=[
+                "first_clicked_at",
+                "last_clicked_at",
+                "click_count",
+                "last_click_ip",
+                "last_click_user_agent",
+            ]
+        )
 
 
 class ActivityLog(models.Model):

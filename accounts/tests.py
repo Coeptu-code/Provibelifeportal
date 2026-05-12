@@ -7,7 +7,12 @@ from django.contrib.auth import get_user_model
 from django.utils import timezone
 
 from customers.models import Customer
-from accounts.models import CustomerInvitation, RetailerLead, RetailerAccountCreationToken
+from accounts.models import (
+    CustomerInvitation,
+    RetailerLead,
+    RetailerAccountCreationToken,
+    RetailerMarketingPageToken,
+)
 
 
 class CustomerUserAdminPortalTests(TestCase):
@@ -68,7 +73,7 @@ class MarketingEmailTokenFlowTests(TestCase):
         with patch("accounts.email_service.send_email", side_effect=_capture_send_email):
             resp = self.client.post(
                 reverse("admin_portal:marketing_email_shilajit"),
-                {"email": "healthstore@example.com", "store_name": "Health Store"},
+                {"email": "healthstore@example.com", "store_name": "Health Store", "phone": "+1-555-1212"},
             )
 
         self.assertEqual(resp.status_code, 302)
@@ -78,6 +83,7 @@ class MarketingEmailTokenFlowTests(TestCase):
         self.assertNotIn("{{ account_creation_url }}", captured["html"])
 
         lead = RetailerLead.objects.get(email="healthstore@example.com")
+        self.assertEqual(lead.phone, "+1-555-1212")
         token = RetailerAccountCreationToken.objects.get(lead=lead)
         self.assertTrue(str(token.token) in captured["html"])
 
@@ -204,3 +210,54 @@ class AbsoluteLinkTests(TestCase):
 
         self.assertEqual(response.status_code, 302)
         self.assertIn("https://portal.provibelife.com/accounts/reset/", captured["html"])
+
+
+@override_settings(SITE_URL="https://portal.provibelife.com")
+class FreeSampleTokenFlowTests(TestCase):
+    def setUp(self):
+        user_model = get_user_model()
+        self.admin = user_model.objects.create_user(
+            username="admin_free_sample",
+            password="pass1234",
+            role=user_model.Role.ADMIN,
+            is_active=True,
+        )
+
+    def test_tokenized_page_click_tracking(self):
+        lead = RetailerLead.objects.create(
+            email="lead@example.com",
+            phone="+1-222-333-4444",
+            created_by=self.admin,
+        )
+        token = RetailerMarketingPageToken.objects.create(
+            lead=lead,
+            created_by=self.admin,
+        )
+        resp = self.client.get(f"/pages/free-sample/?token={token.token}")
+        self.assertEqual(resp.status_code, 200)
+        token.refresh_from_db()
+        self.assertEqual(token.click_count, 1)
+        self.assertIsNotNone(token.last_clicked_at)
+
+    def test_invalid_free_sample_token_returns_404(self):
+        resp = self.client.get("/pages/free-sample/?token=invalid")
+        self.assertEqual(resp.status_code, 404)
+
+    def test_click_report_contains_phone(self):
+        lead = RetailerLead.objects.create(
+            email="phonelead@example.com",
+            phone="+1-999-888-7777",
+            created_by=self.admin,
+        )
+        token = RetailerMarketingPageToken.objects.create(
+            lead=lead,
+            created_by=self.admin,
+            source="test-campaign",
+        )
+        self.client.get(f"/pages/free-sample/?token={token.token}")
+
+        self.client.login(username="admin_free_sample", password="pass1234")
+        resp = self.client.get(reverse("admin_portal:marketing_free_sample_clicks"))
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, "phonelead@example.com")
+        self.assertContains(resp, "+1-999-888-7777")

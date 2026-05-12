@@ -35,6 +35,12 @@
         {% if form.store_name.errors %}<div class="text-danger">{{ form.store_name.errors|join:", " }}</div>{% endif %}
       </div>
 
+      <div class="field">
+        <label for="{{ form.phone.id_for_label }}" class="label">{{ form.phone.label }}</label>
+        {{ form.phone }}
+        {% if form.phone.errors %}<div class="text-danger">{{ form.phone.errors|join:", " }}</div>{% endif %}
+      </div>
+
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
         <div class="field">
           <label for="{{ form.first_name.id_for_label }}" class="label">{{ form.first_name.label }}</label>

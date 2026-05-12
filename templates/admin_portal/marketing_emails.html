@@ -54,6 +54,21 @@
     </div>
   </a>
 
+  <a href="{% url 'admin_portal:marketing_free_sample_links' %}" class="card" style="text-decoration: none; color: inherit; display: block; cursor: pointer; transition: box-shadow 0.15s, transform 0.12s;">
+    <div style="background: #040404; border-radius: 12px 12px 0 0; padding: 18px 20px 14px; border-bottom: 3px solid #d8c27a;">
+      <div style="font-size: 10px; letter-spacing: 2px; color: #d8c27a; font-weight: 700; text-transform: uppercase; margin-bottom: 6px;">Tokenized Landing Page</div>
+      <div style="font-size: 20px; font-weight: 900; color: #fff; line-height: 1.15;">Free Sample Page</div>
+      <div style="font-size: 13px; color: #bba96a; margin-top: 4px;">Build Link + Track Clicks</div>
+    </div>
+    <div style="padding: 16px 20px;">
+      <div style="font-size: 13px; color: var(--pvl-text-mute); line-height: 1.6; margin-bottom: 14px;">Generates unique tokenized links for <code>/pages/free-sample/</code> and tracks lead-level clicks with phone numbers for reporting.</div>
+      <div style="display: flex; gap: 8px;">
+        <span class="btn sm primary" style="pointer-events:none;">Generate Links</span>
+        <a href="{% url 'admin_portal:marketing_free_sample_clicks' %}" class="btn sm ghost" onclick="event.stopPropagation()">Click Report</a>
+      </div>
+    </div>
+  </a>
+
 </div>
 
 <style>

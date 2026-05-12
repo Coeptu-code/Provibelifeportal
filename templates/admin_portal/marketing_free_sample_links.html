@@ -1,0 +1,95 @@
+{% extends "admin_portal/base.html" %}
+{% block topbar_left %}<button class="icon-btn" id="backBtn" onclick="history.back()" style="display:none;">?</button>{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Free Sample Link Builder</h1>
+    <div class="muted">Generate a tokenized link for <code>/pages/free-sample/</code> to place in campaign emails.</div>
+  </div>
+  <div class="right">
+    <a href="{% url 'admin_portal:marketing_free_sample_clicks' %}" class="btn ghost">View Click Report</a>
+    <a href="{% url 'admin_portal:marketing_emails' %}" class="btn ghost">? All Emails</a>
+  </div>
+</div>
+
+<div style="max-width: 920px; display:grid; grid-template-columns: 1fr; gap:16px;">
+  <form method="post" class="card">
+    {% csrf_token %}
+    <div class="card-body" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <div class="field" style="grid-column:1 / -1;">
+        <label for="{{ form.email.id_for_label }}" class="label">{{ form.email.label }}</label>
+        {{ form.email }}
+      </div>
+      <div class="field">
+        <label for="{{ form.store_name.id_for_label }}" class="label">{{ form.store_name.label }}</label>
+        {{ form.store_name }}
+      </div>
+      <div class="field">
+        <label for="{{ form.phone.id_for_label }}" class="label">{{ form.phone.label }}</label>
+        {{ form.phone }}
+      </div>
+      <div class="field">
+        <label for="{{ form.first_name.id_for_label }}" class="label">{{ form.first_name.label }}</label>
+        {{ form.first_name }}
+      </div>
+      <div class="field">
+        <label for="{{ form.last_name.id_for_label }}" class="label">{{ form.last_name.label }}</label>
+        {{ form.last_name }}
+      </div>
+      <div class="field" style="grid-column:1 / -1;">
+        <label for="{{ form.source.id_for_label }}" class="label">{{ form.source.label }}</label>
+        {{ form.source }}
+        <div class="muted" style="font-size:12px;">Optional campaign label for reporting (e.g. <code>may-2026-shilajit-blast</code>).</div>
+      </div>
+    </div>
+    <div class="card-body" style="border-top: 1px dashed var(--pvl-paper-3); padding: 18px 22px; display: flex; justify-content: flex-end;">
+      <button type="submit" class="btn primary">Generate Token Link</button>
+    </div>
+  </form>
+
+  {% if generated_link %}
+    <div class="card">
+      <div class="card-body">
+        <div style="font-weight:900;margin-bottom:8px;">Generated URL</div>
+        <input value="{{ generated_link }}" readonly class="input" style="width:100%;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;">
+        <div class="muted" style="margin-top:8px;">Token: <code>{{ generated_token.token }}</code></div>
+      </div>
+    </div>
+  {% endif %}
+
+  <div class="card">
+    <div class="card-body" style="display:flex;justify-content:space-between;align-items:center;">
+      <div style="font-weight:900;">Recent Free-Sample Tokens</div>
+      <a href="{% url 'admin_portal:marketing_free_sample_clicks' %}" class="btn sm ghost">Open Full Report</a>
+    </div>
+    <div style="overflow:auto;">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Email</th>
+            <th>Phone</th>
+            <th>Source</th>
+            <th>Clicks</th>
+            <th>Last Click</th>
+            <th>Expires</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for t in recent_tokens %}
+            <tr>
+              <td>{{ t.lead.email }}</td>
+              <td>{{ t.lead.phone|default:"-" }}</td>
+              <td>{{ t.source|default:"-" }}</td>
+              <td>{{ t.click_count }}</td>
+              <td>{{ t.last_clicked_at|default:"-" }}</td>
+              <td>{{ t.expires_at }}</td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="6" class="muted">No tokens generated yet.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

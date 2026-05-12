@@ -196,6 +196,16 @@ class MarketingShilajitEmailForm(forms.Form):
     store_name = forms.CharField(label="Store Name", max_length=255, required=False)
     first_name = forms.CharField(label="First Name", max_length=150, required=False)
     last_name = forms.CharField(label="Last Name", max_length=150, required=False)
+    phone = forms.CharField(label="Phone Number", max_length=50, required=False)
+
+
+class MarketingFreeSampleLinkForm(MarketingShilajitEmailForm):
+    source = forms.CharField(
+        label="Campaign Source",
+        max_length=120,
+        required=False,
+        help_text="Optional label like `may-2026-shilajit-blast` for reporting.",
+    )
 
 
 class RetailerAccountCreateForm(forms.Form):

@@ -4,7 +4,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import PasswordResetConfirmView
 from django.core.exceptions import ValidationError
 from django.db import transaction
-from django.http import HttpResponse
+from django.http import Http404, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.template.loader import render_to_string
 from django.utils import timezone
@@ -17,13 +17,19 @@ from accounts.email_service import (
     send_retailer_shilajit_info_email, send_retailer_app_invite_email,
     send_retailer_vitali_t_info_email, MOBILE_APP_DOWNLOAD_URL,
 )
-from accounts.url_utils import absolute_view_url
+from accounts.url_utils import absolute_path, absolute_view_url
 from accounts.forms import (
     AcceptInvitationForm, CustomPasswordResetForm, CustomerUserCreateForm, CustomerUserUpdateForm,
     InternalUserCreateForm, InternalUserUpdateForm, SendInvitationForm, MarketingShilajitEmailForm,
+    MarketingFreeSampleLinkForm,
     RetailerAccountCreateForm,
 )
-from accounts.models import CustomerInvitation, RetailerLead, RetailerAccountCreationToken
+from accounts.models import (
+    CustomerInvitation,
+    RetailerLead,
+    RetailerAccountCreationToken,
+    RetailerMarketingPageToken,
+)
 from customers.models import Customer
 
 User = get_user_model()
@@ -132,6 +138,7 @@ def admin_marketing_email_shilajit(request):
             store_name = (form.cleaned_data.get("store_name") or "").strip()
             first_name = (form.cleaned_data.get("first_name") or "").strip()
             last_name = (form.cleaned_data.get("last_name") or "").strip()
+            phone = (form.cleaned_data.get("phone") or "").strip()
 
             with transaction.atomic():
                 lead, _created = RetailerLead.objects.update_or_create(
@@ -140,6 +147,7 @@ def admin_marketing_email_shilajit(request):
                         "store_name": store_name,
                         "first_name": first_name,
                         "last_name": last_name,
+                        "phone": phone,
                         "created_by": request.user,
                     },
                 )
@@ -186,6 +194,7 @@ def admin_marketing_email_app_invite(request):
             store_name = (form.cleaned_data.get("store_name") or "").strip()
             first_name = (form.cleaned_data.get("first_name") or "").strip()
             last_name = (form.cleaned_data.get("last_name") or "").strip()
+            phone = (form.cleaned_data.get("phone") or "").strip()
 
             with transaction.atomic():
                 lead, _created = RetailerLead.objects.update_or_create(
@@ -194,6 +203,7 @@ def admin_marketing_email_app_invite(request):
                         "store_name": store_name,
                         "first_name": first_name,
                         "last_name": last_name,
+                        "phone": phone,
                         "created_by": request.user,
                     },
                 )
@@ -235,6 +245,7 @@ def admin_marketing_email_vitali_t(request):
             store_name = (form.cleaned_data.get("store_name") or "").strip()
             first_name = (form.cleaned_data.get("first_name") or "").strip()
             last_name = (form.cleaned_data.get("last_name") or "").strip()
+            phone = (form.cleaned_data.get("phone") or "").strip()
 
             with transaction.atomic():
                 lead, _created = RetailerLead.objects.update_or_create(
@@ -243,6 +254,7 @@ def admin_marketing_email_vitali_t(request):
                         "store_name": store_name,
                         "first_name": first_name,
                         "last_name": last_name,
+                        "phone": phone,
                         "created_by": request.user,
                     },
                 )
@@ -309,6 +321,157 @@ def _unique_customer_name(base_name: str) -> str:
         candidate = f"{base_name} ({i})"
         i += 1
     return candidate
+
+
+def _upsert_retailer_lead_from_form(*, form, user):
+    email = form.cleaned_data["email"].strip().lower()
+    store_name = (form.cleaned_data.get("store_name") or "").strip()
+    first_name = (form.cleaned_data.get("first_name") or "").strip()
+    last_name = (form.cleaned_data.get("last_name") or "").strip()
+    phone = (form.cleaned_data.get("phone") or "").strip()
+    lead, _created = RetailerLead.objects.update_or_create(
+        email=email,
+        defaults={
+            "store_name": store_name,
+            "first_name": first_name,
+            "last_name": last_name,
+            "phone": phone,
+            "created_by": user,
+        },
+    )
+    return lead
+
+
+def _new_free_sample_token(*, lead, request, created_by=None, source=""):
+    token = RetailerMarketingPageToken.objects.create(
+        lead=lead,
+        page_slug=RetailerMarketingPageToken.PageSlug.FREE_SAMPLE,
+        source=(source or "").strip(),
+        created_by=created_by,
+    )
+    token_url = absolute_path("/pages/free-sample/", request=request, query={"token": str(token.token)})
+    return token, token_url
+
+
+def _client_ip(request) -> str | None:
+    x_forwarded_for = (request.META.get("HTTP_X_FORWARDED_FOR") or "").strip()
+    if x_forwarded_for:
+        return x_forwarded_for.split(",")[0].strip() or None
+    return (request.META.get("REMOTE_ADDR") or "").strip() or None
+
+
+def free_sample_page(request):
+    token_raw = (request.GET.get("token") or request.GET.get("t") or "").strip()
+    try:
+        token_uuid = uuid.UUID(token_raw)
+    except Exception:
+        raise Http404("Invalid or missing token")
+
+    token_obj = (
+        RetailerMarketingPageToken.objects.select_related("lead")
+        .filter(
+            token=token_uuid,
+            page_slug=RetailerMarketingPageToken.PageSlug.FREE_SAMPLE,
+        )
+        .first()
+    )
+    if not token_obj or not token_obj.is_valid:
+        raise Http404("Token is invalid or expired")
+
+    token_obj.mark_clicked(
+        ip_address=_client_ip(request),
+        user_agent=request.META.get("HTTP_USER_AGENT", ""),
+    )
+    lead = token_obj.lead
+
+    submission_success = False
+    if request.method == "POST":
+        submission_success = True
+        actor = token_obj.created_by or lead.created_by
+        if actor:
+            log_activity(
+                actor,
+                "free_sample_form_submitted",
+                f"Free sample form submitted for lead {lead.email}",
+                request,
+            )
+
+    return render(
+        request,
+        "public/free_sample.html",
+        {
+            "lead": lead,
+            "token": token_obj,
+            "submission_success": submission_success,
+        },
+    )
+
+
+@sales_required
+def admin_marketing_free_sample_links(request):
+    generated_link = ""
+    generated_token = None
+
+    if request.method == "POST":
+        form = MarketingFreeSampleLinkForm(request.POST)
+        if form.is_valid():
+            with transaction.atomic():
+                lead = _upsert_retailer_lead_from_form(form=form, user=request.user)
+                generated_token, generated_link = _new_free_sample_token(
+                    lead=lead,
+                    request=request,
+                    created_by=request.user,
+                    source=(form.cleaned_data.get("source") or "").strip(),
+                )
+            log_activity(
+                request.user,
+                "free_sample_token_generated",
+                f"Generated free-sample token for {lead.email}",
+                request,
+            )
+            messages.success(request, "Tokenized free-sample link generated.")
+    else:
+        form = MarketingFreeSampleLinkForm()
+
+    recent_tokens = (
+        RetailerMarketingPageToken.objects.select_related("lead", "created_by")
+        .filter(page_slug=RetailerMarketingPageToken.PageSlug.FREE_SAMPLE)
+        .order_by("-created_at")[:25]
+    )
+
+    return render(
+        request,
+        "admin_portal/marketing_free_sample_links.html",
+        {
+            "form": form,
+            "generated_link": generated_link,
+            "generated_token": generated_token,
+            "recent_tokens": recent_tokens,
+        },
+    )
+
+
+@sales_required
+def admin_marketing_free_sample_clicks(request):
+    tokens = (
+        RetailerMarketingPageToken.objects.select_related("lead", "created_by")
+        .filter(page_slug=RetailerMarketingPageToken.PageSlug.FREE_SAMPLE)
+        .order_by("-last_clicked_at", "-created_at")
+    )
+    total = tokens.count()
+    clicked = tokens.filter(click_count__gt=0).count()
+    total_clicks = sum(t.click_count for t in tokens[:5000])
+
+    return render(
+        request,
+        "admin_portal/marketing_free_sample_clicks.html",
+        {
+            "tokens": tokens,
+            "total": total,
+            "clicked": clicked,
+            "total_clicks": total_clicks,
+        },
+    )
 
 
 def retailer_create_account(request):

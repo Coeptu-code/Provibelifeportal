@@ -1,18 +1,18 @@
-{% extends “admin_portal/base.html” %}
-{% block topbar_left %}<button class=”icon-btn” id=”backBtn” onclick=”history.back()” style=”display:none;”>←</button>{% endblock %}
+{% extends "admin_portal/base.html" %}
+{% block topbar_left %}<button class="icon-btn" id="backBtn" onclick="history.back()" style="display:none;">?</button>{% endblock %}
 {% block content %}
-<div class=”page-head”>
+<div class="page-head">
   <div>
     <h1>Shilajit Retailer Info</h1>
-    <div class=”muted”>Sends the Shilajit product info email with a secure account-creation link.</div>
+    <div class="muted">Sends the Shilajit product info email with a secure account-creation link.</div>
   </div>
-  <div class=”right”>
-    <a href=”{% url 'admin_portal:marketing_email_preview' 'shilajit' %}” target=”_blank” class=”btn ghost”>Preview Email</a>
-    <a href=”{% url 'admin_portal:marketing_emails' %}” class=”btn ghost”>← All Emails</a>
+  <div class="right">
+    <a href="{% url 'admin_portal:marketing_email_preview' 'shilajit' %}" target="_blank" class="btn ghost">Preview Email</a>
+    <a href="{% url 'admin_portal:marketing_emails' %}" class="btn ghost">? All Emails</a>
   </div>
 </div>
 
-<div style=”max-width: 720px;”>
+<div style="max-width: 720px;">
 
   <form method="post" class="card">
     {% csrf_token %}
@@ -36,6 +36,12 @@
         {% if form.store_name.errors %}<div class="text-danger">{{ form.store_name.errors|join:", " }}</div>{% endif %}
       </div>
 
+      <div class="field">
+        <label for="{{ form.phone.id_for_label }}" class="label">{{ form.phone.label }}</label>
+        {{ form.phone }}
+        {% if form.phone.errors %}<div class="text-danger">{{ form.phone.errors|join:", " }}</div>{% endif %}
+      </div>
+
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
         <div class="field">
           <label for="{{ form.first_name.id_for_label }}" class="label">{{ form.first_name.label }}</label>
@@ -56,4 +62,3 @@
   </form>
 </div>
 {% endblock %}
-

@@ -1,0 +1,55 @@
+{% extends "admin_portal/base.html" %}
+{% block topbar_left %}<button class="icon-btn" id="backBtn" onclick="history.back()" style="display:none;">?</button>{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Free Sample Click Report</h1>
+    <div class="muted">Track who clicked tokenized free-sample links, including lead phone numbers.</div>
+  </div>
+  <div class="right">
+    <a href="{% url 'admin_portal:marketing_free_sample_links' %}" class="btn ghost">Generate Links</a>
+    <a href="{% url 'admin_portal:marketing_emails' %}" class="btn ghost">? All Emails</a>
+  </div>
+</div>
+
+<div class="grid-3" style="margin-bottom:16px;">
+  <div class="card"><div class="card-body"><div class="muted">Tokens</div><div style="font-size:28px;font-weight:900;">{{ total }}</div></div></div>
+  <div class="card"><div class="card-body"><div class="muted">Clicked Tokens</div><div style="font-size:28px;font-weight:900;">{{ clicked }}</div></div></div>
+  <div class="card"><div class="card-body"><div class="muted">Total Clicks</div><div style="font-size:28px;font-weight:900;">{{ total_clicks }}</div></div></div>
+</div>
+
+<div class="card" style="overflow:auto;">
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Email</th>
+        <th>Phone</th>
+        <th>Store</th>
+        <th>Source</th>
+        <th>Clicks</th>
+        <th>First Click</th>
+        <th>Last Click</th>
+        <th>Expires</th>
+        <th>Token</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for t in tokens %}
+      <tr>
+        <td>{{ t.lead.email }}</td>
+        <td>{{ t.lead.phone|default:"-" }}</td>
+        <td>{{ t.lead.store_name|default:"-" }}</td>
+        <td>{{ t.source|default:"-" }}</td>
+        <td>{{ t.click_count }}</td>
+        <td>{{ t.first_clicked_at|default:"-" }}</td>
+        <td>{{ t.last_clicked_at|default:"-" }}</td>
+        <td>{{ t.expires_at }}</td>
+        <td class="mono">{{ t.token }}</td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="9" class="muted">No free-sample tokens yet.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}
