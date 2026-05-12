@@ -89,6 +89,9 @@
     <div class="main">
       <header class="topbar">
         {% block topbar_left %}{% endblock %}
+        <div class="mobile-brand-bar">
+          <img src="{% static 'PVL/assets/pvl-logo-lockup.png' %}" alt="Pro Vibe Life">
+        </div>
         <div class="crumb"><span class="crumb-mobile">Admin</span></div>
       </header>
 
@@ -129,6 +132,13 @@
       <svg class="ico" viewBox="0 0 24 24" fill="currentColor"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/></svg>
       <span>Reports</span>
     </a>
+    <form method="post" action="{% url 'logout' %}" style="margin:0; display:contents;">
+      {% csrf_token %}
+      <button type="submit" class="more-item" style="width:100%; border:none; background:none; font-family:inherit; cursor:pointer; color:#c0392b;">
+        <svg class="ico" viewBox="0 0 24 24" fill="currentColor"><path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/></svg>
+        <span>Logout</span>
+      </button>
+    </form>
   </div>
 
   <nav class="tabbar">

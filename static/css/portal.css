@@ -1,6 +1,12 @@
 /* Pro Vibe Life Portal — Django-specific helpers
    Complements public/PVL/styles.css */
 
+/* Suppress decorative page watermark on all viewports */
+.page::before, .page::after, .main::before, .main::after {
+  background-image: none !important;
+  content: none !important;
+}
+
 /* Status pill color mapping — explicit CSS replacing @apply */
 /* DRAFT / PENDING / RELEASED_TO_WAREHOUSE / PICKING → ink */
 .pill.status-DRAFT,
