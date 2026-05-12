@@ -102,7 +102,13 @@ def ensure_shopify_customer(customer: Customer) -> str:
         customer.save(update_fields=["shopify_customer_id"])
         return customer.shopify_customer_id
 
-    first_name, last_name = _split_name(customer.name)
+    contact = customer.users.exclude(first_name="").order_by("id").first()
+    if contact:
+        first_name = contact.first_name or ""
+        last_name = contact.last_name or ""
+    else:
+        first_name, last_name = _split_name(customer.name)
+
     created = admin_rest(
         "POST",
         "customers.json",
@@ -111,6 +117,7 @@ def ensure_shopify_customer(customer: Customer) -> str:
                 "first_name": first_name,
                 "last_name": last_name,
                 "email": email,
+                "company": customer.name,
                 "tags": "provibelifeportal",
             }
         },

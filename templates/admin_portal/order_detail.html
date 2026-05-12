@@ -102,6 +102,45 @@
         {% endfor %}
       </div>
     </form>
+
+    {% if primary_invoice %}
+    <div class="card" style="margin-top: 22px;">
+      <div class="card-head" style="display: flex; justify-content: space-between; align-items: center;">
+        <h3>Invoice</h3>
+        <span class="pill status-{{ primary_invoice.status }}">{{ primary_invoice.status }}</span>
+      </div>
+      <div class="card-body">
+        <div class="kv"><div class="k">Number</div><div class="v mono">{{ primary_invoice.invoice_number }}</div></div>
+        <div class="kv" style="margin-top:12px;"><div class="k">Total</div><div class="v">${{ primary_invoice.total }}</div></div>
+        {% if primary_invoice.hosted_invoice_url %}
+        <div class="kv" style="margin-top:12px;"><div class="k">Payment Link</div><div class="v"><a href="{{ primary_invoice.hosted_invoice_url }}" target="_blank" class="link">Open Shopify Invoice ↗</a></div></div>
+        {% endif %}
+        {% if primary_invoice.shipping_quote_reason and primary_invoice.status == "DRAFT" %}
+        <div class="note red" style="margin-top:12px; padding:10px 14px; font-size:13px;">{{ primary_invoice.shipping_quote_reason }}</div>
+        {% endif %}
+      </div>
+      {% if primary_invoice.status not in "PAID,VOID" %}
+      <div class="card-body" style="border-top:1px dashed var(--pvl-paper-3); padding:14px 22px;">
+        <form method="post" action="{% url 'admin_portal:order_action' order.id %}">
+          {% csrf_token %}
+          <button name="action" value="send_invoice" type="submit" class="btn sm primary">
+            {% if primary_invoice.status == "DRAFT" %}Send Invoice{% else %}Resend Invoice{% endif %}
+          </button>
+        </form>
+      </div>
+      {% endif %}
+    </div>
+    {% elif order.status == "APPROVED" %}
+    <div class="card" style="margin-top: 22px;">
+      <div class="card-body">
+        <div class="muted" style="margin-bottom:12px;">No invoice has been sent yet.</div>
+        <form method="post" action="{% url 'admin_portal:order_action' order.id %}">
+          {% csrf_token %}
+          <button name="action" value="send_invoice" type="submit" class="btn sm primary">Send Invoice</button>
+        </form>
+      </div>
+    </div>
+    {% endif %}
   </div>
 </div>
 {% endblock %}

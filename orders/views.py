@@ -17,16 +17,19 @@ from fulfillment.shipping_quote import (
     shipping_quote_provider_enabled,
 )
 from fulfillment.models import Shipment, ShipmentStatus
+from invoicing.models import Invoice
 from invoicing.services import (
     create_and_send_primary_invoice,
     get_approval_shipping_estimate,
     reconcile_shipping_after_ship,
+    send_invoice_to_provider,
 )
 from orders.forms import CustomerOrderForm
 from orders.models import Order, OrderItem, OrderStatus
 from pricing.models import CustomerProduct
 from pricing.services import get_active_customer_price
 from products.models import Product
+from shopify_integration.client import ShopifyError
 from shopify_integration.services import ShopifySyncError, sync_shipment_to_shopify
 from orders.services import (
     ADMIN_ACTION_TO_STATUS,
@@ -308,8 +311,13 @@ def order_new(request):
                     extended_price=unit_price * quantity,
                 )
                 submit_order(order)
+                transition_order_status(order, OrderStatus.APPROVED)
+                try:
+                    invoice = create_and_send_primary_invoice(order)
+                    messages.success(request, f"Order approved. Invoice {invoice.invoice_number} sent to Shopify.")
+                except (ShopifyError, ShopifySyncError) as exc:
+                    messages.warning(request, f"Order approved but invoice could not be sent: {exc}. You can retry from the order detail page.")
             _pop_order_draft(request, draft_token)
-            messages.success(request, "Order submitted.")
             log_activity(request.user, "order_submitted", f"Order #{order.pk}", request)
             return redirect("customers:order_detail", pk=order.pk)
 
@@ -464,6 +472,7 @@ def admin_order_detail(request, pk):
         queryset = queryset.filter(customer__in=request.user.get_accessible_customers())
     order = get_object_or_404(queryset, pk=pk)
     estimate = get_approval_shipping_estimate(order)
+    primary_invoice = order.invoices.filter(invoice_kind=Invoice.InvoiceKind.PRIMARY).first()
     return render(
         request,
         "admin_portal/order_detail.html",
@@ -472,6 +481,7 @@ def admin_order_detail(request, pk):
             "available_actions": get_available_admin_actions(order),
             "approval_shipping_estimate": estimate["amount"],
             "approval_shipping_reason": estimate["reason"],
+            "primary_invoice": primary_invoice,
         },
     )
 
@@ -493,6 +503,7 @@ def admin_order_archive(request, pk):
     return redirect("admin_portal:orders")
 
 
+@ops_required
 def admin_order_action(request, pk):
     if request.method != "POST":
         return redirect("admin_portal:order_detail", pk=pk)
@@ -503,6 +514,20 @@ def admin_order_action(request, pk):
     order = get_object_or_404(queryset, pk=pk)
 
     action = request.POST.get("action")
+
+    if action == "send_invoice":
+        primary = order.invoices.filter(invoice_kind=Invoice.InvoiceKind.PRIMARY).first()
+        try:
+            if primary:
+                send_invoice_to_provider(primary)
+                messages.success(request, f"Invoice {primary.invoice_number} resent.")
+            else:
+                invoice = create_and_send_primary_invoice(order)
+                messages.success(request, f"Invoice {invoice.invoice_number} sent.")
+        except (ShopifyError, ShopifySyncError) as exc:
+            messages.error(request, f"Invoice send failed: {exc}")
+        return redirect("admin_portal:order_detail", pk=pk)
+
     target_status = ADMIN_ACTION_TO_STATUS.get(action)
     if not target_status:
         messages.error(request, "Unknown action.")
@@ -515,60 +540,66 @@ def admin_order_action(request, pk):
 
     try:
         transition_order_status(order, target_status)
-        if target_status == OrderStatus.APPROVED:
-            shipping_override_raw = request.POST.get("shipping_override", "").strip()
-            shipping_override = None
-            if shipping_override_raw:
-                try:
-                    shipping_override = Decimal(shipping_override_raw)
-                    if shipping_override < 0:
-                        raise ValueError
-                except ValueError:
-                    messages.error(request, "Shipping override must be a valid non-negative amount.")
-                    return redirect("admin_portal:order_detail", pk=pk)
+    except (ValidationError, ValueError) as exc:
+        messages.error(request, str(exc))
+        return redirect("admin_portal:order_detail", pk=pk)
 
+    if target_status == OrderStatus.APPROVED:
+        shipping_override_raw = request.POST.get("shipping_override", "").strip()
+        shipping_override = None
+        if shipping_override_raw:
+            try:
+                shipping_override = Decimal(shipping_override_raw)
+                if shipping_override < 0:
+                    raise ValueError
+            except ValueError:
+                messages.error(request, "Shipping override must be a valid non-negative amount.")
+                return redirect("admin_portal:order_detail", pk=pk)
+
+        try:
             invoice = create_and_send_primary_invoice(order, shipping_override=shipping_override)
             if shipping_override is not None:
                 messages.success(
                     request,
-                    f"Order moved to {target_status}. Invoice {invoice.invoice_number} sent with manual shipping ${invoice.shipping_total}.",
+                    f"Order approved. Invoice {invoice.invoice_number} sent with manual shipping ${invoice.shipping_total}.",
                 )
             else:
                 messages.success(
                     request,
-                    f"Order moved to {target_status}. Invoice {invoice.invoice_number} sent automatically.",
+                    f"Order approved. Invoice {invoice.invoice_number} sent.",
                 )
-            log_activity(request.user, "order_action", f"Order #{pk} → {action}", request)
-            return redirect("admin_portal:order_detail", pk=pk)
-
-        if target_status in {OrderStatus.PARTIALLY_SHIPPED, OrderStatus.SHIPPED}:
-            Shipment.objects.create(
-                order=order,
-                carrier=request.POST.get("carrier", ""),
-                tracking_number=request.POST.get("tracking_number", ""),
-                shipped_at=timezone.now(),
-                status=ShipmentStatus.SHIPPED,
-            )
-            latest_shipment = order.shipments.order_by("-created_at").first()
-            if latest_shipment:
-                try:
-                    sync_shipment_to_shopify(latest_shipment)
-                except ShopifySyncError:
-                    pass
-            adjustment = reconcile_shipping_after_ship(order)
-            if adjustment:
-                messages.success(
-                    request,
-                    f"Order moved to {target_status}. Shipping adjustment invoice {adjustment.invoice_number} sent (${adjustment.total}).",
-                )
-            else:
-                messages.success(request, f"Order moved to {target_status}.")
-            log_activity(request.user, "order_action", f"Order #{pk} → {action}", request)
-            return redirect("admin_portal:order_detail", pk=pk)
-        messages.success(request, f"Order moved to {target_status}.")
+        except (ShopifyError, ShopifySyncError) as exc:
+            messages.warning(request, f"Order approved but invoice could not be sent: {exc}. Use 'Send Invoice' to retry.")
         log_activity(request.user, "order_action", f"Order #{pk} → {action}", request)
-    except (ValidationError, ValueError) as exc:
-        messages.error(request, str(exc))
+        return redirect("admin_portal:order_detail", pk=pk)
+
+    if target_status in {OrderStatus.PARTIALLY_SHIPPED, OrderStatus.SHIPPED}:
+        Shipment.objects.create(
+            order=order,
+            carrier=request.POST.get("carrier", ""),
+            tracking_number=request.POST.get("tracking_number", ""),
+            shipped_at=timezone.now(),
+            status=ShipmentStatus.SHIPPED,
+        )
+        latest_shipment = order.shipments.order_by("-created_at").first()
+        if latest_shipment:
+            try:
+                sync_shipment_to_shopify(latest_shipment)
+            except (ShopifyError, ShopifySyncError) as exc:
+                messages.warning(request, f"Shipment recorded but Shopify sync failed: {exc}")
+        adjustment = reconcile_shipping_after_ship(order)
+        if adjustment:
+            messages.success(
+                request,
+                f"Order moved to {target_status}. Shipping adjustment invoice {adjustment.invoice_number} sent (${adjustment.total}).",
+            )
+        else:
+            messages.success(request, f"Order moved to {target_status}.")
+        log_activity(request.user, "order_action", f"Order #{pk} → {action}", request)
+        return redirect("admin_portal:order_detail", pk=pk)
+
+    messages.success(request, f"Order moved to {target_status}.")
+    log_activity(request.user, "order_action", f"Order #{pk} → {action}", request)
     return redirect("admin_portal:order_detail", pk=pk)
 
 # Create your views here.
