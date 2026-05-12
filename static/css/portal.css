@@ -2,8 +2,10 @@
    Complements public/PVL/styles.css */
 
 /* Suppress decorative page watermark on all viewports */
-.page::before, .page::after, .main::before, .main::after {
+.page, .main, .app,
+.page::before, .page::after, .main::before, .main::after, .app::before, .app::after {
   background-image: none !important;
+  background: transparent !important;
   content: none !important;
 }
 
