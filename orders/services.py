@@ -10,7 +10,7 @@ from pricing.services import get_active_customer_price
 
 ALLOWED_ORDER_TRANSITIONS = {
     OrderStatus.DRAFT: {OrderStatus.SUBMITTED, OrderStatus.CANCELLED},
-    OrderStatus.SUBMITTED: {OrderStatus.UNDER_REVIEW, OrderStatus.CANCELLED},
+    OrderStatus.SUBMITTED: {OrderStatus.UNDER_REVIEW, OrderStatus.APPROVED, OrderStatus.CANCELLED},
     OrderStatus.UNDER_REVIEW: {
         OrderStatus.APPROVED,
         OrderStatus.ON_HOLD,
