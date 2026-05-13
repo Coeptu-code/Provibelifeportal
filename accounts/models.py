@@ -224,6 +224,7 @@ class RetailerMarketingPageToken(models.Model):
         blank=True,
         help_text="Optional campaign/template source label.",
     )
+    is_test = models.BooleanField(default=False)
     token = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,

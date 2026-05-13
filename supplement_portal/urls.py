@@ -4,6 +4,7 @@ from django.conf.urls.static import static
 from django.urls import include, path, re_path
 from django.views.generic import TemplateView
 
+from accounts import mailer_api_views
 from accounts import views as account_views
 from accounts.views import root_redirect, CustomPasswordResetConfirmView
 from supplement_portal import pwa_views
@@ -25,7 +26,10 @@ urlpatterns = [
     path("accounts/reset/<uidb64>/<token>/", CustomPasswordResetConfirmView.as_view(), name="password_reset_confirm"),
     path("accounts/reset/done/", TemplateView.as_view(template_name="registration/password_reset_complete.html"), name="password_reset_complete"),
     path("retailer/create-account/", account_views.retailer_create_account, name="retailer_create_account"),
+    path("pages/free-sample/<uuid:token>/", account_views.free_sample_page, name="free_sample_page_token"),
     path("pages/free-sample/", account_views.free_sample_page, name="free_sample_page"),
+    path("api/mailer/free-sample-tokens/bulk-create/", mailer_api_views.free_sample_tokens_bulk_create, name="mailer_free_sample_tokens_bulk_create"),
+    path("api/mailer/free-sample-tokens/<str:token>/status/", mailer_api_views.free_sample_token_status, name="mailer_free_sample_token_status"),
     path("", include("shopify_integration.urls")),
     path(
         "shopify-test/",

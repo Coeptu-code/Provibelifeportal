@@ -26,6 +26,7 @@ urlpatterns = [
     path("marketing-emails/shilajit/", account_views.admin_marketing_email_shilajit, name="marketing_email_shilajit"),
     path("marketing-emails/app-invite/", account_views.admin_marketing_email_app_invite, name="marketing_email_app_invite"),
     path("marketing-emails/vitali-t/", account_views.admin_marketing_email_vitali_t, name="marketing_email_vitali_t"),
+    path("marketing-emails/token-generator/", account_views.admin_marketing_free_sample_token_generator, name="marketing_free_sample_token_generator"),
     path("marketing-emails/free-sample-links/", account_views.admin_marketing_free_sample_links, name="marketing_free_sample_links"),
     path("marketing-emails/free-sample-clicks/", account_views.admin_marketing_free_sample_clicks, name="marketing_free_sample_clicks"),
     path("marketing-emails/<slug:slug>/preview/", account_views.admin_marketing_email_preview, name="marketing_email_preview"),

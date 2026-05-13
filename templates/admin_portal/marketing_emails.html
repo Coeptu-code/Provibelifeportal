@@ -69,6 +69,21 @@
     </div>
   </a>
 
+  <a href="{% url 'admin_portal:marketing_free_sample_token_generator' %}" class="card" style="text-decoration: none; color: inherit; display: block; cursor: pointer; transition: box-shadow 0.15s, transform 0.12s;">
+    <div style="background: #040404; border-radius: 12px 12px 0 0; padding: 18px 20px 14px; border-bottom: 3px solid #d8c27a;">
+      <div style="font-size: 10px; letter-spacing: 2px; color: #d8c27a; font-weight: 700; text-transform: uppercase; margin-bottom: 6px;">Bulk Token Tool</div>
+      <div style="font-size: 20px; font-weight: 900; color: #fff; line-height: 1.15;">Token Generator</div>
+      <div style="font-size: 13px; color: #bba96a; margin-top: 4px;">Paste Leads + Export CSV</div>
+    </div>
+    <div style="padding: 16px 20px;">
+      <div style="font-size: 13px; color: var(--pvl-text-mute); line-height: 1.6; margin-bottom: 14px;">Generate one free-sample token per lead in bulk from CSV/JSON, then export tokenized rows for campaign import.</div>
+      <div style="display: flex; gap: 8px;">
+        <span class="btn sm primary" style="pointer-events:none;">Open Generator</span>
+        <a href="{% url 'admin_portal:marketing_free_sample_clicks' %}" class="btn sm ghost" onclick="event.stopPropagation()">View Clicks</a>
+      </div>
+    </div>
+  </a>
+
 </div>
 
 <style>

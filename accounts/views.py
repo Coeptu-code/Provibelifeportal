@@ -1,3 +1,6 @@
+import csv
+import io
+import json
 from django.contrib import messages
 from django.contrib.auth import get_user_model, login
 from django.contrib.auth.decorators import login_required
@@ -366,8 +369,81 @@ def _client_ip(request) -> str | None:
     return (request.META.get("REMOTE_ADDR") or "").strip() or None
 
 
-def free_sample_page(request):
-    token_raw = (request.GET.get("token") or request.GET.get("t") or "").strip()
+def _parse_bulk_leads_text(raw_text: str) -> list[dict]:
+    text = (raw_text or "").strip()
+    if not text:
+        return []
+
+    if text.startswith("[") or text.startswith("{"):
+        parsed = json.loads(text)
+        if isinstance(parsed, dict) and isinstance(parsed.get("leads"), list):
+            parsed = parsed["leads"]
+        if not isinstance(parsed, list):
+            raise ValueError("JSON must be a list or object with a leads list.")
+        return [row for row in parsed if isinstance(row, dict)]
+
+    rows: list[dict] = []
+    reader = csv.DictReader(io.StringIO(text))
+    for row in reader:
+        normalized = {str(k or "").strip(): (v or "").strip() for k, v in row.items()}
+        rows.append(normalized)
+    return rows
+
+
+def _bulk_row_email(row: dict) -> str:
+    return (
+        (row.get("email") or row.get("send_email") or row.get("primary_contact_email") or "")
+        .strip()
+        .lower()
+    )
+
+
+def _bulk_row_bool(row: dict, key: str, default=False) -> bool:
+    raw = str(row.get(key) or "").strip().lower()
+    if not raw:
+        return default
+    return raw in {"1", "true", "yes", "y"}
+
+
+def _token_csv_response(request, tokens: list[RetailerMarketingPageToken]) -> HttpResponse:
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(
+        [
+            "email",
+            "store_name",
+            "first_name",
+            "last_name",
+            "phone",
+            "source",
+            "is_test",
+            "free_sample_token",
+            "free_sample_token_url",
+        ]
+    )
+    for token_obj in tokens:
+        lead = token_obj.lead
+        writer.writerow(
+            [
+                lead.email,
+                lead.store_name,
+                lead.first_name,
+                lead.last_name,
+                lead.phone,
+                token_obj.source,
+                "true" if token_obj.is_test else "false",
+                str(token_obj.token),
+                _free_sample_token_url(token_obj=token_obj, request=request),
+            ]
+        )
+    csv_body = output.getvalue()
+    response = HttpResponse(csv_body, content_type="text/csv")
+    response["Content-Disposition"] = 'attachment; filename="free_sample_tokens.csv"'
+    return response
+
+
+def free_sample_page(request, token=None):
+    token_raw = str(token or request.GET.get("token") or request.GET.get("t") or "").strip()
     try:
         token_uuid = uuid.UUID(token_raw)
     except Exception:
@@ -491,11 +567,112 @@ def admin_marketing_free_sample_links(request):
 
 
 @sales_required
+def admin_marketing_free_sample_token_generator(request):
+    bulk_text = ""
+    source = ""
+    is_test = False
+    generated_rows = []
+    failures = []
+
+    if request.method == "POST":
+        action = (request.POST.get("action") or "generate").strip().lower()
+        if action == "download":
+            token_ids = request.session.get("free_sample_bulk_token_ids", [])
+            tokens = list(
+                RetailerMarketingPageToken.objects.select_related("lead")
+                .filter(id__in=token_ids, page_slug=RetailerMarketingPageToken.PageSlug.FREE_SAMPLE)
+                .order_by("id")
+            )
+            if not tokens:
+                messages.error(request, "No generated tokens available for download yet.")
+            else:
+                return _token_csv_response(request, tokens)
+
+        bulk_text = request.POST.get("bulk_text", "")
+        source = (request.POST.get("source") or "").strip()
+        is_test = request.POST.get("is_test") == "1"
+
+        try:
+            rows = _parse_bulk_leads_text(bulk_text)
+            if not rows:
+                raise ValueError("No lead rows found. Paste CSV/JSON rows first.")
+
+            token_ids = []
+            with transaction.atomic():
+                for idx, row in enumerate(rows):
+                    try:
+                        email = _bulk_row_email(row)
+                        if not email:
+                            raise ValueError("Missing email/send_email/primary_contact_email.")
+                        lead, _ = RetailerLead.objects.update_or_create(
+                            email=email,
+                            defaults={
+                                "store_name": (
+                                    row.get("store_name")
+                                    or row.get("name")
+                                    or row.get("business_name")
+                                    or ""
+                                ).strip(),
+                                "first_name": (row.get("first_name") or "").strip(),
+                                "last_name": (row.get("last_name") or "").strip(),
+                                "phone": (row.get("phone") or "").strip(),
+                                "created_by": request.user,
+                            },
+                        )
+                        token_obj = RetailerMarketingPageToken.objects.create(
+                            lead=lead,
+                            page_slug=RetailerMarketingPageToken.PageSlug.FREE_SAMPLE,
+                            source=source or (row.get("source") or row.get("token_source") or "").strip(),
+                            created_by=request.user,
+                            is_test=is_test or _bulk_row_bool(row, "is_test"),
+                        )
+                        token_ids.append(token_obj.id)
+                        generated_rows.append(
+                            {
+                                "email": lead.email,
+                                "token": str(token_obj.token),
+                                "source": token_obj.source,
+                                "is_test": token_obj.is_test,
+                                "url": _free_sample_token_url(token_obj=token_obj, request=request),
+                            }
+                        )
+                    except Exception as exc:
+                        failures.append({"index": idx, "error": str(exc), "row": row})
+
+            request.session["free_sample_bulk_token_ids"] = token_ids
+            messages.success(
+                request,
+                f"Generated {len(generated_rows)} token(s). Failed rows: {len(failures)}.",
+            )
+            log_activity(
+                request.user,
+                "free_sample_tokens_bulk_generated",
+                f"Bulk generated {len(generated_rows)} free-sample tokens",
+                request,
+            )
+        except Exception as exc:
+            messages.error(request, str(exc))
+
+    return render(
+        request,
+        "admin_portal/marketing_free_sample_token_generator.html",
+        {
+            "bulk_text": bulk_text,
+            "source": source,
+            "is_test": is_test,
+            "generated_rows": generated_rows,
+            "failures": failures,
+        },
+    )
+
+
+@sales_required
 def admin_marketing_free_sample_clicks(request):
     q = (request.GET.get("q") or "").strip()
     clicked = (request.GET.get("clicked") or "all").strip().lower()
     status = (request.GET.get("status") or "all").strip().lower()
     source = (request.GET.get("source") or "").strip()
+    test = (request.GET.get("is_test") or "all").strip().lower()
     page_number = request.GET.get("page") or 1
 
     base_tokens = (
@@ -513,6 +690,10 @@ def admin_marketing_free_sample_clicks(request):
         )
     if source:
         tokens = tokens.filter(source__iexact=source)
+    if test == "yes":
+        tokens = tokens.filter(is_test=True)
+    elif test == "no":
+        tokens = tokens.filter(is_test=False)
     if clicked == "yes":
         tokens = tokens.filter(click_count__gt=0)
     elif clicked == "no":
@@ -547,6 +728,7 @@ def admin_marketing_free_sample_clicks(request):
             "q": q,
             "clicked_filter": clicked,
             "status_filter": status,
+            "test_filter": test,
             "source_filter": source,
             "source_options": source_options,
             "total": total,

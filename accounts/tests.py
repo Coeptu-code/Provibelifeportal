@@ -1,4 +1,5 @@
 from datetime import timedelta
+import os
 from unittest.mock import patch
 
 from django.test import TestCase, override_settings
@@ -296,3 +297,44 @@ class FreeSampleTokenFlowTests(TestCase):
         self.assertEqual(resp.status_code, 200)
         self.assertContains(resp, "clicked@example.com")
         self.assertNotContains(resp, "notclicked@example.com")
+
+    def test_tokenized_page_click_tracking_with_path_route(self):
+        lead = RetailerLead.objects.create(email="pathlead@example.com", created_by=self.admin)
+        token = RetailerMarketingPageToken.objects.create(lead=lead, created_by=self.admin)
+        resp = self.client.get(f"/pages/free-sample/{token.token}/")
+        self.assertEqual(resp.status_code, 200)
+        token.refresh_from_db()
+        self.assertEqual(token.click_count, 1)
+
+    def test_mailer_bulk_create_api_creates_tokens(self):
+        with patch.dict(os.environ, {"PORTAL_MAILER_API_KEY": "test-key"}):
+            resp = self.client.post(
+                "/api/mailer/free-sample-tokens/bulk-create/",
+                data={
+                    "source": "campaign-1",
+                    "leads": [
+                        {"email": "bulk1@example.com", "store_name": "Bulk One"},
+                        {"email": "bulk2@example.com", "store_name": "Bulk Two", "is_test": True},
+                    ],
+                },
+                content_type="application/json",
+                HTTP_AUTHORIZATION="Bearer test-key",
+            )
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.json()["created_count"], 2)
+        self.assertEqual(RetailerLead.objects.filter(email="bulk1@example.com").count(), 1)
+        self.assertEqual(RetailerMarketingPageToken.objects.filter(lead__email="bulk2@example.com", is_test=True).count(), 1)
+
+    def test_mailer_token_status_api_returns_clicked_state(self):
+        lead = RetailerLead.objects.create(email="status@example.com", created_by=self.admin)
+        token = RetailerMarketingPageToken.objects.create(lead=lead, created_by=self.admin, is_test=True)
+        self.client.get(f"/pages/free-sample/?token={token.token}")
+        with patch.dict(os.environ, {"PORTAL_MAILER_API_KEY": "test-key"}):
+            resp = self.client.get(
+                f"/api/mailer/free-sample-tokens/{token.token}/status/",
+                HTTP_AUTHORIZATION="Bearer test-key",
+            )
+        self.assertEqual(resp.status_code, 200)
+        payload = resp.json()
+        self.assertTrue(payload["clicked"])
+        self.assertTrue(payload["is_test"])

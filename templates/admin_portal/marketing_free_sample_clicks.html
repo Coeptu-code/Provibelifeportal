@@ -19,7 +19,7 @@
 </div>
 
 <form method="get" class="card" style="margin-bottom:16px;">
-  <div class="card-body" style="display:grid;grid-template-columns:1.5fr 1fr 1fr 1fr auto;gap:10px;align-items:end;">
+  <div class="card-body" style="display:grid;grid-template-columns:1.5fr 1fr 1fr 1fr 1fr auto;gap:10px;align-items:end;">
     <label class="field" style="margin:0;">
       <span class="label">Search</span>
       <input class="input" type="text" name="q" value="{{ q }}" placeholder="email, phone, source, token">
@@ -49,6 +49,14 @@
         {% endfor %}
       </select>
     </label>
+    <label class="field" style="margin:0;">
+      <span class="label">Test Token</span>
+      <select class="input" name="is_test">
+        <option value="all" {% if test_filter == "all" %}selected{% endif %}>All</option>
+        <option value="yes" {% if test_filter == "yes" %}selected{% endif %}>Test Only</option>
+        <option value="no" {% if test_filter == "no" %}selected{% endif %}>Non-Test Only</option>
+      </select>
+    </label>
     <div style="display:flex; gap:8px;">
       <button type="submit" class="btn sm primary">Apply</button>
       <a href="{% url 'admin_portal:marketing_free_sample_clicks' %}" class="btn sm ghost">Reset</a>
@@ -69,6 +77,7 @@
         <th>Source</th>
         <th>Clicks</th>
         <th>Status</th>
+        <th>Test</th>
         <th>First Click</th>
         <th>Last Click</th>
         <th>Expires</th>
@@ -90,13 +99,14 @@
             <span class="badge" style="background:#fdecec;color:#a12323;">Expired</span>
           {% endif %}
         </td>
+        <td>{% if t.is_test %}Yes{% else %}No{% endif %}</td>
         <td>{{ t.first_clicked_at|default:"-" }}</td>
         <td>{{ t.last_clicked_at|default:"-" }}</td>
         <td>{{ t.expires_at }}</td>
         <td><a class="btn sm ghost" href="{% url 'free_sample_page' %}?token={{ t.token }}" target="_blank" rel="noopener">Open</a></td>
       </tr>
       {% empty %}
-      <tr><td colspan="10" class="muted">No matching tokens.</td></tr>
+      <tr><td colspan="11" class="muted">No matching tokens.</td></tr>
       {% endfor %}
     </tbody>
   </table>
@@ -108,10 +118,10 @@
       <span class="muted">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
       <div class="button-row">
         {% if page_obj.has_previous %}
-          <a class="btn sm ghost" href="?q={{ q|urlencode }}&clicked={{ clicked_filter|urlencode }}&status={{ status_filter|urlencode }}&source={{ source_filter|urlencode }}&page={{ page_obj.previous_page_number }}">Previous</a>
+          <a class="btn sm ghost" href="?q={{ q|urlencode }}&clicked={{ clicked_filter|urlencode }}&status={{ status_filter|urlencode }}&source={{ source_filter|urlencode }}&is_test={{ test_filter|urlencode }}&page={{ page_obj.previous_page_number }}">Previous</a>
         {% endif %}
         {% if page_obj.has_next %}
-          <a class="btn sm ghost" href="?q={{ q|urlencode }}&clicked={{ clicked_filter|urlencode }}&status={{ status_filter|urlencode }}&source={{ source_filter|urlencode }}&page={{ page_obj.next_page_number }}">Next</a>
+          <a class="btn sm ghost" href="?q={{ q|urlencode }}&clicked={{ clicked_filter|urlencode }}&status={{ status_filter|urlencode }}&source={{ source_filter|urlencode }}&is_test={{ test_filter|urlencode }}&page={{ page_obj.next_page_number }}">Next</a>
         {% endif %}
       </div>
     </div>

@@ -1,0 +1,99 @@
+{% extends "admin_portal/base.html" %}
+{% block topbar_left %}<button class="icon-btn" id="backBtn" onclick="history.back()" style="display:none;">&larr;</button>{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Token Generator</h1>
+    <div class="muted">Bulk generate <code>/pages/free-sample/&lt;token&gt;/</code> links from pasted leads and export tokenized CSV.</div>
+  </div>
+  <div class="right">
+    <a href="{% url 'admin_portal:marketing_free_sample_clicks' %}" class="btn ghost">Click Report</a>
+    <a href="{% url 'admin_portal:marketing_emails' %}" class="btn ghost">&larr; All Emails</a>
+  </div>
+</div>
+
+<div style="max-width: 1100px; display:grid; gap:16px;">
+  <form method="post" class="card">
+    {% csrf_token %}
+    <div class="card-body" style="display:grid; gap:12px;">
+      <label class="field" style="margin:0;">
+        <span class="label">Source Label (optional)</span>
+        <input class="input" type="text" name="source" value="{{ source }}" placeholder="campaign-2026-05-free-sample">
+      </label>
+      <label class="inline-check" style="margin:0;">
+        <input type="checkbox" name="is_test" value="1" {% if is_test %}checked{% endif %}>
+        Mark generated tokens as test tokens
+      </label>
+      <label class="field" style="margin:0;">
+        <span class="label">Paste Leads (JSON array/object with <code>leads</code>, or CSV with email column)</span>
+        <textarea class="input" name="bulk_text" rows="13" style="font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;">{{ bulk_text }}</textarea>
+      </label>
+      <div class="button-row" style="justify-content:flex-end;">
+        <button type="submit" name="action" value="generate" class="btn primary">Generate Tokens</button>
+        <button type="submit" name="action" value="download" class="btn ghost">Download Last CSV</button>
+      </div>
+    </div>
+  </form>
+
+  <div class="card">
+    <div class="card-body" style="display:flex;justify-content:space-between;align-items:center;">
+      <div style="font-weight:900;">Generated Tokens</div>
+      <div class="muted">Rows: {{ generated_rows|length }} | Failures: {{ failures|length }}</div>
+    </div>
+    <div style="overflow:auto;">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Email</th>
+            <th>Token</th>
+            <th>Source</th>
+            <th>Test</th>
+            <th>Link</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in generated_rows %}
+            <tr>
+              <td>{{ row.email }}</td>
+              <td class="mono">{{ row.token }}</td>
+              <td>{{ row.source|default:"-" }}</td>
+              <td>{% if row.is_test %}Yes{% else %}No{% endif %}</td>
+              <td><a href="{{ row.url }}" target="_blank" rel="noopener">Open</a></td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="5" class="muted">Generate tokens to see output.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  {% if failures %}
+    <div class="card">
+      <div class="card-body">
+        <div style="font-weight:900;margin-bottom:8px;">Failed Rows</div>
+        <div style="overflow:auto;">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Error</th>
+                <th>Row</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for failure in failures %}
+                <tr>
+                  <td>{{ failure.index }}</td>
+                  <td>{{ failure.error }}</td>
+                  <td class="mono">{{ failure.row }}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}
