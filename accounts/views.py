@@ -2,8 +2,10 @@ from django.contrib import messages
 from django.contrib.auth import get_user_model, login
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import PasswordResetConfirmView
+from django.core.paginator import Paginator
 from django.core.exceptions import ValidationError
 from django.db import transaction
+from django.db.models import Q, Sum
 from django.http import Http404, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.template.loader import render_to_string
@@ -353,6 +355,10 @@ def _new_free_sample_token(*, lead, request, created_by=None, source=""):
     return token, token_url
 
 
+def _free_sample_token_url(*, token_obj, request):
+    return absolute_path("/pages/free-sample/", request=request, query={"token": str(token_obj.token)})
+
+
 def _client_ip(request) -> str | None:
     x_forwarded_for = (request.META.get("HTTP_X_FORWARDED_FOR") or "").strip()
     if x_forwarded_for:
@@ -411,25 +417,55 @@ def free_sample_page(request):
 def admin_marketing_free_sample_links(request):
     generated_link = ""
     generated_token = None
+    reused_existing_token = False
+    reuse_active = True
 
     if request.method == "POST":
         form = MarketingFreeSampleLinkForm(request.POST)
+        reuse_active = request.POST.get("reuse_active", "1") == "1"
         if form.is_valid():
             with transaction.atomic():
                 lead = _upsert_retailer_lead_from_form(form=form, user=request.user)
-                generated_token, generated_link = _new_free_sample_token(
-                    lead=lead,
-                    request=request,
-                    created_by=request.user,
-                    source=(form.cleaned_data.get("source") or "").strip(),
-                )
+                source = (form.cleaned_data.get("source") or "").strip()
+                if reuse_active:
+                    existing_active = (
+                        RetailerMarketingPageToken.objects.filter(
+                            lead=lead,
+                            page_slug=RetailerMarketingPageToken.PageSlug.FREE_SAMPLE,
+                            source=source,
+                            expires_at__gt=timezone.now(),
+                        )
+                        .order_by("-created_at")
+                        .first()
+                    )
+                    if existing_active:
+                        generated_token = existing_active
+                        generated_link = _free_sample_token_url(token_obj=existing_active, request=request)
+                        reused_existing_token = True
+                    else:
+                        generated_token, generated_link = _new_free_sample_token(
+                            lead=lead,
+                            request=request,
+                            created_by=request.user,
+                            source=source,
+                        )
+                else:
+                    generated_token, generated_link = _new_free_sample_token(
+                        lead=lead,
+                        request=request,
+                        created_by=request.user,
+                        source=source,
+                    )
             log_activity(
                 request.user,
                 "free_sample_token_generated",
                 f"Generated free-sample token for {lead.email}",
                 request,
             )
-            messages.success(request, "Tokenized free-sample link generated.")
+            if reused_existing_token:
+                messages.success(request, "Reused active tokenized free-sample link.")
+            else:
+                messages.success(request, "Tokenized free-sample link generated.")
     else:
         form = MarketingFreeSampleLinkForm()
 
@@ -446,30 +482,78 @@ def admin_marketing_free_sample_links(request):
             "form": form,
             "generated_link": generated_link,
             "generated_token": generated_token,
+            "reused_existing_token": reused_existing_token,
+            "reuse_active": reuse_active,
             "recent_tokens": recent_tokens,
+            "now": timezone.now(),
         },
     )
 
 
 @sales_required
 def admin_marketing_free_sample_clicks(request):
-    tokens = (
+    q = (request.GET.get("q") or "").strip()
+    clicked = (request.GET.get("clicked") or "all").strip().lower()
+    status = (request.GET.get("status") or "all").strip().lower()
+    source = (request.GET.get("source") or "").strip()
+    page_number = request.GET.get("page") or 1
+
+    base_tokens = (
         RetailerMarketingPageToken.objects.select_related("lead", "created_by")
         .filter(page_slug=RetailerMarketingPageToken.PageSlug.FREE_SAMPLE)
-        .order_by("-last_clicked_at", "-created_at")
     )
-    total = tokens.count()
-    clicked = tokens.filter(click_count__gt=0).count()
-    total_clicks = sum(t.click_count for t in tokens[:5000])
+    tokens = base_tokens
+    if q:
+        tokens = tokens.filter(
+            Q(lead__email__icontains=q)
+            | Q(lead__phone__icontains=q)
+            | Q(lead__store_name__icontains=q)
+            | Q(source__icontains=q)
+            | Q(token__icontains=q)
+        )
+    if source:
+        tokens = tokens.filter(source__iexact=source)
+    if clicked == "yes":
+        tokens = tokens.filter(click_count__gt=0)
+    elif clicked == "no":
+        tokens = tokens.filter(click_count=0)
+
+    now = timezone.now()
+    if status == "active":
+        tokens = tokens.filter(expires_at__gt=now)
+    elif status == "expired":
+        tokens = tokens.filter(expires_at__lte=now)
+
+    tokens = tokens.order_by("-last_clicked_at", "-created_at")
+    paginator = Paginator(tokens, 100)
+    page_obj = paginator.get_page(page_number)
+
+    source_options = (
+        base_tokens.exclude(source="")
+        .order_by("source")
+        .values_list("source", flat=True)
+        .distinct()
+    )
+    total = base_tokens.count()
+    clicked_count = base_tokens.filter(click_count__gt=0).count()
+    total_clicks = base_tokens.aggregate(sum_clicks=Sum("click_count")).get("sum_clicks") or 0
 
     return render(
         request,
         "admin_portal/marketing_free_sample_clicks.html",
         {
-            "tokens": tokens,
+            "tokens": page_obj.object_list,
+            "page_obj": page_obj,
+            "q": q,
+            "clicked_filter": clicked,
+            "status_filter": status,
+            "source_filter": source,
+            "source_options": source_options,
             "total": total,
-            "clicked": clicked,
+            "clicked": clicked_count,
             "total_clicks": total_clicks,
+            "filtered_count": tokens.count(),
+            "now": now,
         },
     )
 

@@ -1,24 +1,32 @@
 {% extends "admin_portal/base.html" %}
-{% block topbar_left %}<button class="icon-btn" id="backBtn" onclick="history.back()" style="display:none;">?</button>{% endblock %}
+{% block topbar_left %}<button class="icon-btn" id="backBtn" onclick="history.back()" style="display:none;">&larr;</button>{% endblock %}
 {% block content %}
 <div class="page-head">
   <div>
     <h1>Free Sample Link Builder</h1>
-    <div class="muted">Generate a tokenized link for <code>/pages/free-sample/</code> to place in campaign emails.</div>
+    <div class="muted">Generate tokenized links for <code>/pages/free-sample/</code> and track clicks in portal reports.</div>
   </div>
   <div class="right">
     <a href="{% url 'admin_portal:marketing_free_sample_clicks' %}" class="btn ghost">View Click Report</a>
-    <a href="{% url 'admin_portal:marketing_emails' %}" class="btn ghost">? All Emails</a>
+    <a href="{% url 'admin_portal:marketing_emails' %}" class="btn ghost">&larr; All Emails</a>
   </div>
 </div>
 
-<div style="max-width: 920px; display:grid; grid-template-columns: 1fr; gap:16px;">
+<div style="max-width: 980px; display:grid; grid-template-columns: 1fr; gap:16px;">
   <form method="post" class="card">
     {% csrf_token %}
+
+    {% if form.non_field_errors %}
+      <div class="card-body note red" style="padding: 16px 22px;">
+        {% for err in form.non_field_errors %}<div>{{ err }}</div>{% endfor %}
+      </div>
+    {% endif %}
+
     <div class="card-body" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
       <div class="field" style="grid-column:1 / -1;">
         <label for="{{ form.email.id_for_label }}" class="label">{{ form.email.label }}</label>
         {{ form.email }}
+        {% if form.email.errors %}<div class="text-danger">{{ form.email.errors|join:", " }}</div>{% endif %}
       </div>
       <div class="field">
         <label for="{{ form.store_name.id_for_label }}" class="label">{{ form.store_name.label }}</label>
@@ -39,8 +47,12 @@
       <div class="field" style="grid-column:1 / -1;">
         <label for="{{ form.source.id_for_label }}" class="label">{{ form.source.label }}</label>
         {{ form.source }}
-        <div class="muted" style="font-size:12px;">Optional campaign label for reporting (e.g. <code>may-2026-shilajit-blast</code>).</div>
+        <div class="muted" style="font-size:12px;">Optional campaign label (e.g. <code>may-2026-shilajit-blast</code>).</div>
       </div>
+      <label class="inline-check" style="grid-column:1 / -1; align-self:flex-end; margin-top:4px;">
+        <input type="checkbox" name="reuse_active" value="1" {% if reuse_active %}checked{% endif %}>
+        Reuse latest active token for this lead + source (recommended)
+      </label>
     </div>
     <div class="card-body" style="border-top: 1px dashed var(--pvl-paper-3); padding: 18px 22px; display: flex; justify-content: flex-end;">
       <button type="submit" class="btn primary">Generate Token Link</button>
@@ -50,8 +62,19 @@
   {% if generated_link %}
     <div class="card">
       <div class="card-body">
-        <div style="font-weight:900;margin-bottom:8px;">Generated URL</div>
-        <input value="{{ generated_link }}" readonly class="input" style="width:100%;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;">
+        <div style="font-weight:900;margin-bottom:8px; display:flex; gap:10px; align-items:center;">
+          <span>Generated URL</span>
+          {% if reused_existing_token %}
+            <span class="badge" style="background:#eef4ff;color:#245ea8;">Reused Active Token</span>
+          {% else %}
+            <span class="badge badge-success">New Token</span>
+          {% endif %}
+        </div>
+        <div style="display:flex; gap:8px; align-items:center;">
+          <input id="generatedLinkInput" value="{{ generated_link }}" readonly class="input" style="width:100%;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;">
+          <button type="button" class="btn sm ghost" onclick="copyGeneratedLink()">Copy</button>
+          <a class="btn sm ghost" href="{{ generated_link }}" target="_blank" rel="noopener">Open</a>
+        </div>
         <div class="muted" style="margin-top:8px;">Token: <code>{{ generated_token.token }}</code></div>
       </div>
     </div>
@@ -70,6 +93,7 @@
             <th>Phone</th>
             <th>Source</th>
             <th>Clicks</th>
+            <th>Status</th>
             <th>Last Click</th>
             <th>Expires</th>
           </tr>
@@ -81,15 +105,32 @@
               <td>{{ t.lead.phone|default:"-" }}</td>
               <td>{{ t.source|default:"-" }}</td>
               <td>{{ t.click_count }}</td>
+              <td>
+                {% if t.expires_at > now %}
+                  <span class="badge badge-success">Active</span>
+                {% else %}
+                  <span class="badge" style="background:#fdecec;color:#a12323;">Expired</span>
+                {% endif %}
+              </td>
               <td>{{ t.last_clicked_at|default:"-" }}</td>
               <td>{{ t.expires_at }}</td>
             </tr>
           {% empty %}
-            <tr><td colspan="6" class="muted">No tokens generated yet.</td></tr>
+            <tr><td colspan="7" class="muted">No tokens generated yet.</td></tr>
           {% endfor %}
         </tbody>
       </table>
     </div>
   </div>
 </div>
+
+<script>
+function copyGeneratedLink() {
+  const input = document.getElementById("generatedLinkInput");
+  if (!input) return;
+  input.select();
+  input.setSelectionRange(0, 99999);
+  document.execCommand("copy");
+}
+</script>
 {% endblock %}

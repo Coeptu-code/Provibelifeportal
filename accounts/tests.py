@@ -261,3 +261,38 @@ class FreeSampleTokenFlowTests(TestCase):
         self.assertEqual(resp.status_code, 200)
         self.assertContains(resp, "phonelead@example.com")
         self.assertContains(resp, "+1-999-888-7777")
+
+    def test_link_builder_reuses_active_token_when_requested(self):
+        self.client.login(username="admin_free_sample", password="pass1234")
+        payload = {
+            "email": "reuse@example.com",
+            "store_name": "Reuse Store",
+            "source": "may-2026",
+            "reuse_active": "1",
+        }
+        first = self.client.post(reverse("admin_portal:marketing_free_sample_links"), payload)
+        self.assertEqual(first.status_code, 200)
+        second = self.client.post(reverse("admin_portal:marketing_free_sample_links"), payload)
+        self.assertEqual(second.status_code, 200)
+
+        lead = RetailerLead.objects.get(email="reuse@example.com")
+        tokens = RetailerMarketingPageToken.objects.filter(
+            lead=lead,
+            source="may-2026",
+            page_slug=RetailerMarketingPageToken.PageSlug.FREE_SAMPLE,
+        )
+        self.assertEqual(tokens.count(), 1)
+        self.assertContains(second, "Reused Active Token")
+
+    def test_click_report_filters_clicked_yes(self):
+        lead_clicked = RetailerLead.objects.create(email="clicked@example.com", created_by=self.admin)
+        lead_not_clicked = RetailerLead.objects.create(email="notclicked@example.com", created_by=self.admin)
+        token_clicked = RetailerMarketingPageToken.objects.create(lead=lead_clicked, created_by=self.admin)
+        RetailerMarketingPageToken.objects.create(lead=lead_not_clicked, created_by=self.admin)
+
+        self.client.get(f"/pages/free-sample/?token={token_clicked.token}")
+        self.client.login(username="admin_free_sample", password="pass1234")
+        resp = self.client.get(reverse("admin_portal:marketing_free_sample_clicks"), {"clicked": "yes"})
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, "clicked@example.com")
+        self.assertNotContains(resp, "notclicked@example.com")
