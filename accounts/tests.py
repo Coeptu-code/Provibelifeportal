@@ -338,3 +338,27 @@ class FreeSampleTokenFlowTests(TestCase):
         payload = resp.json()
         self.assertTrue(payload["clicked"])
         self.assertTrue(payload["is_test"])
+
+    def test_bulk_token_generator_download_exports_email_and_token_only(self):
+        self.client.login(username="admin_free_sample", password="pass1234")
+        generate_resp = self.client.post(
+            reverse("admin_portal:marketing_free_sample_token_generator"),
+            {
+                "action": "generate",
+                "bulk_text": "email\nbulk-export@example.com\n",
+                "source": "csv-export-test",
+            },
+        )
+        self.assertEqual(generate_resp.status_code, 200)
+
+        download_resp = self.client.post(
+            reverse("admin_portal:marketing_free_sample_token_generator"),
+            {"action": "download"},
+        )
+        self.assertEqual(download_resp.status_code, 200)
+        self.assertEqual(download_resp["Content-Type"], "text/csv")
+
+        csv_lines = download_resp.content.decode("utf-8").strip().splitlines()
+        self.assertGreaterEqual(len(csv_lines), 2)
+        self.assertEqual(csv_lines[0], "email,token")
+        self.assertIn("bulk-export@example.com,", csv_lines[1])

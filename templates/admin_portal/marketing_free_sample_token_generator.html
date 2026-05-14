@@ -4,7 +4,7 @@
 <div class="page-head">
   <div>
     <h1>Token Generator</h1>
-    <div class="muted">Bulk generate <code>/pages/free-sample/&lt;token&gt;/</code> links from pasted leads and export tokenized CSV.</div>
+    <div class="muted">Bulk generate <code>/pages/free-sample/&lt;token&gt;/</code> links from pasted leads and export Ecompiner-ready CSV (<code>email,token</code>).</div>
   </div>
   <div class="right">
     <a href="{% url 'admin_portal:marketing_free_sample_clicks' %}" class="btn ghost">Click Report</a>
@@ -30,7 +30,7 @@
       </label>
       <div class="button-row" style="justify-content:flex-end;">
         <button type="submit" name="action" value="generate" class="btn primary">Generate Tokens</button>
-        <button type="submit" name="action" value="download" class="btn ghost">Download Last CSV</button>
+        <button type="submit" name="action" value="download" class="btn ghost">Download Ecompiner CSV (email + token)</button>
       </div>
     </div>
   </form>

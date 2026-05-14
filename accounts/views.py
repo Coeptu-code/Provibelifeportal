@@ -408,34 +408,11 @@ def _bulk_row_bool(row: dict, key: str, default=False) -> bool:
 def _token_csv_response(request, tokens: list[RetailerMarketingPageToken]) -> HttpResponse:
     output = io.StringIO()
     writer = csv.writer(output)
-    writer.writerow(
-        [
-            "email",
-            "store_name",
-            "first_name",
-            "last_name",
-            "phone",
-            "source",
-            "is_test",
-            "free_sample_token",
-            "free_sample_token_url",
-        ]
-    )
+    # Lightweight export format for Ecompiner imports.
+    writer.writerow(["email", "token"])
     for token_obj in tokens:
         lead = token_obj.lead
-        writer.writerow(
-            [
-                lead.email,
-                lead.store_name,
-                lead.first_name,
-                lead.last_name,
-                lead.phone,
-                token_obj.source,
-                "true" if token_obj.is_test else "false",
-                str(token_obj.token),
-                _free_sample_token_url(token_obj=token_obj, request=request),
-            ]
-        )
+        writer.writerow([lead.email, str(token_obj.token)])
     csv_body = output.getvalue()
     response = HttpResponse(csv_body, content_type="text/csv")
     response["Content-Disposition"] = 'attachment; filename="free_sample_tokens.csv"'
