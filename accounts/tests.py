@@ -10,6 +10,7 @@ from django.utils import timezone
 from customers.models import Customer
 from accounts.models import (
     CustomerInvitation,
+    FreeSampleSubmission,
     RetailerLead,
     RetailerAccountCreationToken,
     RetailerMarketingPageToken,
@@ -244,6 +245,79 @@ class FreeSampleTokenFlowTests(TestCase):
         resp = self.client.get("/pages/free-sample/?token=invalid")
         self.assertEqual(resp.status_code, 404)
 
+    def test_free_sample_post_creates_single_submission_and_updates_lead(self):
+        lead = RetailerLead.objects.create(
+            email="submit@example.com",
+            phone="+1-100-100-1000",
+            created_by=self.admin,
+        )
+        token = RetailerMarketingPageToken.objects.create(lead=lead, created_by=self.admin, source="campaign-submit")
+
+        resp = self.client.post(
+            f"/pages/free-sample/?token={token.token}",
+            {
+                "contact[first_name]": "Sam",
+                "contact[last_name]": "Ple",
+                "contact[email]": "submit@example.com",
+                "contact[phone]": "+1-222-333-4444",
+                "contact[business_name]": "Sample Wellness",
+                "contact[shipping_address]": "123 Main St, Austin, TX 78701, US",
+                "contact[business_type]": "Retailer",
+            },
+        )
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, "Sample request submitted")
+
+        submission = FreeSampleSubmission.objects.get(lead=lead)
+        self.assertEqual(submission.source, "campaign-submit")
+        self.assertEqual(submission.first_name, "Sam")
+        self.assertEqual(submission.last_name, "Ple")
+        self.assertEqual(submission.email, "submit@example.com")
+        self.assertEqual(submission.phone, "+1-222-333-4444")
+        self.assertEqual(submission.business_name, "Sample Wellness")
+        self.assertEqual(submission.business_type, "Retailer")
+        self.assertIn("Austin", submission.shipping_address)
+
+        lead.refresh_from_db()
+        self.assertEqual(lead.first_name, "Sam")
+        self.assertEqual(lead.last_name, "Ple")
+        self.assertEqual(lead.phone, "+1-222-333-4444")
+        self.assertEqual(lead.store_name, "Sample Wellness")
+
+    def test_free_sample_post_duplicate_shows_already_submitted_and_does_not_overwrite(self):
+        lead = RetailerLead.objects.create(email="dup@example.com", created_by=self.admin)
+        token = RetailerMarketingPageToken.objects.create(lead=lead, created_by=self.admin, source="campaign-dup")
+        FreeSampleSubmission.objects.create(
+            lead=lead,
+            token=token,
+            source="campaign-dup",
+            first_name="First",
+            last_name="Submit",
+            email="dup@example.com",
+            phone="+1-111-111-1111",
+            business_name="Original Biz",
+            shipping_address="Original Address",
+            business_type="Clinic",
+        )
+
+        resp = self.client.post(
+            f"/pages/free-sample/?token={token.token}",
+            {
+                "contact[first_name]": "New",
+                "contact[last_name]": "Name",
+                "contact[email]": "dup@example.com",
+                "contact[phone]": "+1-999-999-9999",
+                "contact[business_name]": "New Biz",
+                "contact[shipping_address]": "New Address",
+                "contact[business_type]": "Distributor",
+            },
+        )
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, "already been submitted")
+        self.assertEqual(FreeSampleSubmission.objects.filter(lead=lead).count(), 1)
+        submission = FreeSampleSubmission.objects.get(lead=lead)
+        self.assertEqual(submission.business_name, "Original Biz")
+
     def test_click_report_contains_phone(self):
         lead = RetailerLead.objects.create(
             email="phonelead@example.com",
@@ -312,9 +386,96 @@ class FreeSampleTokenFlowTests(TestCase):
         self.assertContains(resp, "groupa@example.com")
         self.assertContains(resp, "groupb@example.com")
 
+    def test_click_report_shows_submission_rows_and_submitted_filter(self):
+        lead_yes = RetailerLead.objects.create(email="submitted@example.com", created_by=self.admin)
+        lead_no = RetailerLead.objects.create(email="notsubmitted@example.com", created_by=self.admin)
+        token_yes = RetailerMarketingPageToken.objects.create(lead=lead_yes, created_by=self.admin, source="campaign-submitted")
+        RetailerMarketingPageToken.objects.create(lead=lead_no, created_by=self.admin, source="campaign-submitted")
+        FreeSampleSubmission.objects.create(
+            lead=lead_yes,
+            token=token_yes,
+            source="campaign-submitted",
+            first_name="Sub",
+            last_name="Mitted",
+            email="submitted@example.com",
+            phone="+1-222-222-2222",
+            business_name="Submitted Co",
+            shipping_address="456 Road, Dallas, TX 75201, US",
+            business_type="Retailer",
+        )
+
+        self.client.login(username="admin_free_sample", password="pass1234")
+        resp = self.client.get(reverse("admin_portal:marketing_free_sample_clicks"))
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, "Submissions")
+        self.assertContains(resp, "Submitted Co")
+        self.assertContains(resp, "campaign-submitted")
+
+        resp_submitted_yes = self.client.get(
+            reverse("admin_portal:marketing_free_sample_clicks"),
+            {"submitted": "yes"},
+        )
+        self.assertEqual(resp_submitted_yes.status_code, 200)
+        self.assertContains(resp_submitted_yes, "submitted@example.com")
+        self.assertNotContains(resp_submitted_yes, "notsubmitted@example.com")
+
+    def test_click_report_can_export_submissions_csv_with_source_filter(self):
+        lead_a = RetailerLead.objects.create(email="export-a@example.com", created_by=self.admin)
+        lead_b = RetailerLead.objects.create(email="export-b@example.com", created_by=self.admin)
+        token_a = RetailerMarketingPageToken.objects.create(lead=lead_a, created_by=self.admin, source="campaign-export-a")
+        token_b = RetailerMarketingPageToken.objects.create(lead=lead_b, created_by=self.admin, source="campaign-export-b")
+        FreeSampleSubmission.objects.create(
+            lead=lead_a,
+            token=token_a,
+            source="campaign-export-a",
+            first_name="Export",
+            last_name="A",
+            email="export-a@example.com",
+            phone="+1-400-000-0001",
+            business_name="Export A LLC",
+            shipping_address="100 Export Way, Austin, TX",
+            business_type="Retailer",
+        )
+        FreeSampleSubmission.objects.create(
+            lead=lead_b,
+            token=token_b,
+            source="campaign-export-b",
+            first_name="Export",
+            last_name="B",
+            email="export-b@example.com",
+            phone="+1-400-000-0002",
+            business_name="Export B LLC",
+            shipping_address="200 Export Way, Dallas, TX",
+            business_type="Clinic",
+        )
+
+        self.client.login(username="admin_free_sample", password="pass1234")
+        resp = self.client.get(
+            reverse("admin_portal:marketing_free_sample_clicks"),
+            {"export": "submissions_csv", "source": "campaign-export-a"},
+        )
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp["Content-Type"], "text/csv")
+        body = resp.content.decode("utf-8")
+        self.assertIn("campaign_source,submitted_at,email,first_name,last_name,phone,business_name,business_type,shipping_address,token", body)
+        self.assertIn("export-a@example.com", body)
+        self.assertNotIn("export-b@example.com", body)
+
     def test_click_report_can_reset_free_sample_click_and_lead_data(self):
         lead = RetailerLead.objects.create(email="reset-me@example.com", created_by=self.admin)
-        RetailerMarketingPageToken.objects.create(lead=lead, created_by=self.admin, source="campaign-reset")
+        token = RetailerMarketingPageToken.objects.create(lead=lead, created_by=self.admin, source="campaign-reset")
+        FreeSampleSubmission.objects.create(
+            lead=lead,
+            token=token,
+            source="campaign-reset",
+            first_name="Reset",
+            last_name="Lead",
+            email="reset-me@example.com",
+            phone="+1-300-300-3000",
+            business_name="Reset Co",
+            shipping_address="789 Blvd",
+            business_type="Clinic",
+        )
 
         self.client.login(username="admin_free_sample", password="pass1234")
         resp = self.client.post(
@@ -325,6 +486,7 @@ class FreeSampleTokenFlowTests(TestCase):
         self.assertEqual(resp.status_code, 200)
         self.assertContains(resp, "Free-sample click/lead system reset")
         self.assertEqual(RetailerMarketingPageToken.objects.count(), 0)
+        self.assertEqual(FreeSampleSubmission.objects.count(), 0)
         self.assertEqual(RetailerLead.objects.filter(email="reset-me@example.com").count(), 0)
 
     def test_tokenized_page_click_tracking_with_path_route(self):

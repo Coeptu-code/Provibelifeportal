@@ -11,7 +11,7 @@
     <form method="post" style="display:inline;">
       {% csrf_token %}
       <input type="hidden" name="action" value="reset_free_sample_data">
-      <button type="submit" class="btn ghost" style="color:#a12323;border-color:#f1c7c7;" onclick="return confirm('This will delete all free-sample click/token data and orphan free-sample leads. Continue?');">Wipe Click + Lead Data</button>
+      <button type="submit" class="btn ghost" style="color:#a12323;border-color:#f1c7c7;" onclick="return confirm('This will delete all free-sample click/token/submission data and orphan free-sample leads. Continue?');">Wipe Click + Lead Data</button>
     </form>
     <a href="{% url 'admin_portal:marketing_emails' %}" class="btn ghost">&larr; Marketing</a>
   </div>
@@ -24,7 +24,7 @@
 </div>
 
 <form method="get" class="card" style="margin-bottom:16px;">
-  <div class="card-body" style="display:grid;grid-template-columns:1.5fr 1fr 1fr 1fr 1fr auto;gap:10px;align-items:end;">
+  <div class="card-body" style="display:grid;grid-template-columns:1.5fr 1fr 1fr 1fr 1fr 1fr auto;gap:10px;align-items:end;">
     <label class="field" style="margin:0;">
       <span class="label">Search</span>
       <input class="input" type="text" name="q" value="{{ q }}" placeholder="email, phone, source, token">
@@ -43,6 +43,14 @@
         <option value="all" {% if status_filter == "all" %}selected{% endif %}>All</option>
         <option value="active" {% if status_filter == "active" %}selected{% endif %}>Active</option>
         <option value="expired" {% if status_filter == "expired" %}selected{% endif %}>Expired</option>
+      </select>
+    </label>
+    <label class="field" style="margin:0;">
+      <span class="label">Submitted</span>
+      <select class="input" name="submitted">
+        <option value="all" {% if submitted_filter == "all" %}selected{% endif %}>All</option>
+        <option value="yes" {% if submitted_filter == "yes" %}selected{% endif %}>Submitted</option>
+        <option value="no" {% if submitted_filter == "no" %}selected{% endif %}>Not Submitted</option>
       </select>
     </label>
     <label class="field" style="margin:0;">
@@ -65,6 +73,7 @@
     <div style="display:flex; gap:8px;">
       <button type="submit" class="btn sm primary">Apply</button>
       <a href="{% url 'admin_portal:marketing_free_sample_clicks' %}" class="btn sm ghost">Reset</a>
+      <a href="?q={{ q|urlencode }}&clicked={{ clicked_filter|urlencode }}&submitted={{ submitted_filter|urlencode }}&status={{ status_filter|urlencode }}&source={{ source_filter|urlencode }}&is_test={{ test_filter|urlencode }}&export=submissions_csv" class="btn sm ghost">Export Submissions CSV</a>
     </div>
   </div>
 </form>
@@ -81,6 +90,7 @@
         <th>Unique Emails</th>
         <th>Tokens</th>
         <th>Clicked Tokens</th>
+        <th>Submitted Tokens</th>
         <th>Total Clicks</th>
         <th>Emails</th>
       </tr>
@@ -92,11 +102,51 @@
         <td>{{ g.email_count }}</td>
         <td>{{ g.token_count }}</td>
         <td>{{ g.clicked_tokens }}</td>
+        <td>{{ g.submitted_tokens }}</td>
         <td>{{ g.total_clicks }}</td>
         <td style="max-width:420px; white-space:normal; word-break:break-word;">{{ g.emails_csv|default:"-" }}</td>
       </tr>
       {% empty %}
-      <tr><td colspan="6" class="muted">No campaign groups found for the current filters.</td></tr>
+      <tr><td colspan="7" class="muted">No campaign groups found for the current filters.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<div class="card" style="margin-bottom:16px; overflow:auto;">
+  <div class="card-body" style="padding:12px 22px; border-bottom:1px solid var(--pvl-paper-3);">
+    <span style="font-weight:900;">Submissions</span>
+    <span class="muted" style="margin-left:8px;">Form data submitted from the free sample page</span>
+  </div>
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Campaign</th>
+        <th>Submitted At</th>
+        <th>Email</th>
+        <th>Name</th>
+        <th>Phone</th>
+        <th>Business Name</th>
+        <th>Business Type</th>
+        <th>Shipping Address</th>
+        <th>Token</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for s in submission_rows %}
+      <tr>
+        <td>{{ s.source|default:"Unlabeled" }}</td>
+        <td>{{ s.submitted_at }}</td>
+        <td>{{ s.email }}</td>
+        <td>{{ s.first_name }} {{ s.last_name }}</td>
+        <td>{{ s.phone }}</td>
+        <td>{{ s.business_name }}</td>
+        <td>{{ s.business_type }}</td>
+        <td style="max-width:320px; white-space:normal; word-break:break-word;">{{ s.shipping_address }}</td>
+        <td class="mono">{% if s.token %}{{ s.token.token }}{% else %}-{% endif %}</td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="9" class="muted">No submissions found for the current filters.</td></tr>
       {% endfor %}
     </tbody>
   </table>
@@ -114,6 +164,7 @@
         <th>Store</th>
         <th>Source</th>
         <th>Clicks</th>
+        <th>Submitted</th>
         <th>Status</th>
         <th>Test</th>
         <th>First Click</th>
@@ -131,6 +182,13 @@
         <td>{{ t.source|default:"-" }}</td>
         <td>{{ t.click_count }}</td>
         <td>
+          {% if t.lead_id in submitted_lead_ids %}
+            <span class="badge badge-success">Yes</span>
+          {% else %}
+            <span class="badge" style="background:#f6f6f6;color:#555;">No</span>
+          {% endif %}
+        </td>
+        <td>
           {% if t.expires_at > now %}
             <span class="badge badge-success">Active</span>
           {% else %}
@@ -144,7 +202,7 @@
         <td><a class="btn sm ghost" href="{% url 'free_sample_page' %}?token={{ t.token }}" target="_blank" rel="noopener">Open</a></td>
       </tr>
       {% empty %}
-      <tr><td colspan="11" class="muted">No matching tokens.</td></tr>
+      <tr><td colspan="12" class="muted">No matching tokens.</td></tr>
       {% endfor %}
     </tbody>
   </table>
@@ -156,10 +214,10 @@
       <span class="muted">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
       <div class="button-row">
         {% if page_obj.has_previous %}
-          <a class="btn sm ghost" href="?q={{ q|urlencode }}&clicked={{ clicked_filter|urlencode }}&status={{ status_filter|urlencode }}&source={{ source_filter|urlencode }}&is_test={{ test_filter|urlencode }}&page={{ page_obj.previous_page_number }}">Previous</a>
+          <a class="btn sm ghost" href="?q={{ q|urlencode }}&clicked={{ clicked_filter|urlencode }}&submitted={{ submitted_filter|urlencode }}&status={{ status_filter|urlencode }}&source={{ source_filter|urlencode }}&is_test={{ test_filter|urlencode }}&page={{ page_obj.previous_page_number }}">Previous</a>
         {% endif %}
         {% if page_obj.has_next %}
-          <a class="btn sm ghost" href="?q={{ q|urlencode }}&clicked={{ clicked_filter|urlencode }}&status={{ status_filter|urlencode }}&source={{ source_filter|urlencode }}&is_test={{ test_filter|urlencode }}&page={{ page_obj.next_page_number }}">Next</a>
+          <a class="btn sm ghost" href="?q={{ q|urlencode }}&clicked={{ clicked_filter|urlencode }}&submitted={{ submitted_filter|urlencode }}&status={{ status_filter|urlencode }}&source={{ source_filter|urlencode }}&is_test={{ test_filter|urlencode }}&page={{ page_obj.next_page_number }}">Next</a>
         {% endif %}
       </div>
     </div>

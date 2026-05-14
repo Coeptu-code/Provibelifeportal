@@ -74,6 +74,8 @@
     .pv-disclaimer{margin-top:14px;text-align:center;color:#777;font-size:12px;line-height:1.45;}
     .pv-alert{margin:0 auto 18px;max-width:760px;padding:14px;border-radius:14px;font-size:14px;line-height:1.5;}
     .pv-alert.success{background:#e8f8ef;color:#135b34;border:1px solid #9ad7b2;}
+    .pv-alert.warn{background:#fff3e6;color:#8a4b10;border:1px solid #f3c08b;}
+    .pv-alert.error{background:#fdecec;color:#a12323;border:1px solid #f2b4b4;}
   </style>
 </head>
 <body>
@@ -165,6 +167,12 @@
     <div class="pv-wrap">
       {% if submission_success %}
         <div class="pv-alert success">Sample request submitted. Our team will review and contact you.</div>
+      {% endif %}
+      {% if submission_already_exists %}
+        <div class="pv-alert warn">This sample request has already been submitted for this lead.</div>
+      {% endif %}
+      {% if submission_error %}
+        <div class="pv-alert error">{{ submission_error }}</div>
       {% endif %}
       <div class="pv-form-wrap">
         <h2 class="pv-form-title">Redeem Your Free Sample</h2>

@@ -276,6 +276,40 @@ class RetailerMarketingPageToken(models.Model):
         )
 
 
+class FreeSampleSubmission(models.Model):
+    lead = models.OneToOneField(
+        RetailerLead,
+        on_delete=models.CASCADE,
+        related_name="free_sample_submission",
+    )
+    token = models.ForeignKey(
+        RetailerMarketingPageToken,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="free_sample_submissions",
+    )
+    source = models.CharField(max_length=120, blank=True)
+    first_name = models.CharField(max_length=150)
+    last_name = models.CharField(max_length=150)
+    email = models.EmailField()
+    phone = models.CharField(max_length=50)
+    business_name = models.CharField(max_length=255)
+    shipping_address = models.TextField()
+    business_type = models.CharField(max_length=255)
+    submitted_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        indexes = [
+            Index(fields=["source"]),
+            Index(fields=["submitted_at"]),
+            Index(fields=["email"]),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.email} ({self.submitted_at.isoformat()})"
+
+
 class ActivityLog(models.Model):
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,

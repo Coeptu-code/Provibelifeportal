@@ -31,6 +31,7 @@ from accounts.forms import (
 )
 from accounts.models import (
     CustomerInvitation,
+    FreeSampleSubmission,
     RetailerLead,
     RetailerAccountCreationToken,
     RetailerMarketingPageToken,
@@ -419,6 +420,43 @@ def _token_csv_response(request, tokens: list[RetailerMarketingPageToken]) -> Ht
     return response
 
 
+def _submission_csv_response(submissions) -> HttpResponse:
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(
+        [
+            "campaign_source",
+            "submitted_at",
+            "email",
+            "first_name",
+            "last_name",
+            "phone",
+            "business_name",
+            "business_type",
+            "shipping_address",
+            "token",
+        ]
+    )
+    for submission in submissions:
+        writer.writerow(
+            [
+                submission.source,
+                submission.submitted_at.isoformat() if submission.submitted_at else "",
+                submission.email,
+                submission.first_name,
+                submission.last_name,
+                submission.phone,
+                submission.business_name,
+                submission.business_type,
+                submission.shipping_address,
+                str(submission.token.token) if submission.token else "",
+            ]
+        )
+    response = HttpResponse(output.getvalue(), content_type="text/csv")
+    response["Content-Disposition"] = 'attachment; filename="free_sample_submissions.csv"'
+    return response
+
+
 def free_sample_page(request, token=None):
     token_raw = str(token or request.GET.get("token") or request.GET.get("t") or "").strip()
     try:
@@ -442,18 +480,78 @@ def free_sample_page(request, token=None):
         user_agent=request.META.get("HTTP_USER_AGENT", ""),
     )
     lead = token_obj.lead
+    existing_submission = getattr(lead, "free_sample_submission", None)
 
     submission_success = False
+    submission_already_exists = False
+    submission_error = ""
     if request.method == "POST":
-        submission_success = True
-        actor = token_obj.created_by or lead.created_by
-        if actor:
-            log_activity(
-                actor,
-                "free_sample_form_submitted",
-                f"Free sample form submitted for lead {lead.email}",
-                request,
-            )
+        if existing_submission:
+            submission_already_exists = True
+            actor = token_obj.created_by or lead.created_by
+            if actor:
+                log_activity(
+                    actor,
+                    "free_sample_submission_duplicate_attempt",
+                    f"Duplicate free sample submission attempt for lead {lead.email}",
+                    request,
+                )
+        else:
+            first_name = (request.POST.get("contact[first_name]") or "").strip()
+            last_name = (request.POST.get("contact[last_name]") or "").strip()
+            email = (request.POST.get("contact[email]") or "").strip().lower()
+            phone = (request.POST.get("contact[phone]") or "").strip()
+            business_name = (request.POST.get("contact[business_name]") or "").strip()
+            shipping_address = (request.POST.get("contact[shipping_address]") or "").strip()
+            business_type = (request.POST.get("contact[business_type]") or "").strip()
+
+            required = {
+                "first name": first_name,
+                "last name": last_name,
+                "email": email,
+                "phone": phone,
+                "business name": business_name,
+                "shipping address": shipping_address,
+                "business type": business_type,
+            }
+            missing = [label for label, value in required.items() if not value]
+            if missing:
+                submission_error = f"Missing required field(s): {', '.join(missing)}."
+            else:
+                with transaction.atomic():
+                    # Keep lead record aligned with latest contact details where safe.
+                    lead.first_name = first_name
+                    lead.last_name = last_name
+                    lead.phone = phone
+                    lead.store_name = business_name
+                    if email and email != lead.email:
+                        email_taken = RetailerLead.objects.filter(email=email).exclude(pk=lead.pk).exists()
+                        if not email_taken:
+                            lead.email = email
+                    lead.save(update_fields=["first_name", "last_name", "phone", "store_name", "email", "updated_at"])
+
+                    existing_submission = FreeSampleSubmission.objects.create(
+                        lead=lead,
+                        token=token_obj,
+                        source=token_obj.source,
+                        first_name=first_name,
+                        last_name=last_name,
+                        email=email,
+                        phone=phone,
+                        business_name=business_name,
+                        shipping_address=shipping_address,
+                        business_type=business_type,
+                    )
+
+                submission_success = True
+                actor = token_obj.created_by or lead.created_by
+                if actor:
+                    log_activity(
+                        actor,
+                        "free_sample_submission_created",
+                        f"Free sample submission created for lead {lead.email}",
+                        request,
+                    )
 
     return render(
         request,
@@ -462,6 +560,9 @@ def free_sample_page(request, token=None):
             "lead": lead,
             "token": token_obj,
             "submission_success": submission_success,
+            "submission_already_exists": submission_already_exists,
+            "submission_error": submission_error,
+            "existing_submission": existing_submission,
         },
     )
 
@@ -654,6 +755,8 @@ def admin_marketing_free_sample_clicks(request):
                 )
                 token_count = free_sample_tokens.count()
                 lead_ids = list(free_sample_tokens.values_list("lead_id", flat=True).distinct())
+                submission_count = FreeSampleSubmission.objects.filter(lead_id__in=lead_ids).count()
+                FreeSampleSubmission.objects.filter(lead_id__in=lead_ids).delete()
                 free_sample_tokens.delete()
 
                 # Only remove leads that are now orphaned from marketing/account token flows.
@@ -672,24 +775,25 @@ def admin_marketing_free_sample_clicks(request):
             log_activity(
                 request.user,
                 "free_sample_click_and_lead_reset",
-                f"Cleared free-sample system: {token_count} token(s), {lead_count} lead(s).",
+                f"Cleared free-sample system: {token_count} token(s), {submission_count} submission(s), {lead_count} lead(s).",
                 request,
             )
             messages.success(
                 request,
-                f"Free-sample click/lead system reset. Deleted {token_count} token(s) and {lead_count} lead(s).",
+                f"Free-sample click/lead system reset. Deleted {token_count} token(s), {submission_count} submission(s), and {lead_count} lead(s).",
             )
             return redirect("admin_portal:marketing_free_sample_clicks")
 
     q = (request.GET.get("q") or "").strip()
     clicked = (request.GET.get("clicked") or "all").strip().lower()
+    submitted = (request.GET.get("submitted") or "all").strip().lower()
     status = (request.GET.get("status") or "all").strip().lower()
     source = (request.GET.get("source") or "").strip()
     test = (request.GET.get("is_test") or "all").strip().lower()
     page_number = request.GET.get("page") or 1
 
     base_tokens = (
-        RetailerMarketingPageToken.objects.select_related("lead", "created_by")
+        RetailerMarketingPageToken.objects.select_related("lead", "created_by", "lead__free_sample_submission")
         .filter(page_slug=RetailerMarketingPageToken.PageSlug.FREE_SAMPLE)
     )
     tokens = base_tokens
@@ -711,6 +815,10 @@ def admin_marketing_free_sample_clicks(request):
         tokens = tokens.filter(click_count__gt=0)
     elif clicked == "no":
         tokens = tokens.filter(click_count=0)
+    if submitted == "yes":
+        tokens = tokens.filter(lead__free_sample_submission__isnull=False)
+    elif submitted == "no":
+        tokens = tokens.filter(lead__free_sample_submission__isnull=True)
 
     now = timezone.now()
     if status == "active":
@@ -719,7 +827,7 @@ def admin_marketing_free_sample_clicks(request):
         tokens = tokens.filter(expires_at__lte=now)
 
     campaign_groups_map: dict[str, dict] = {}
-    for row in tokens.values("source", "lead__email", "click_count"):
+    for row in tokens.values("source", "lead__email", "click_count", "lead__free_sample_submission__id"):
         campaign_name = (row["source"] or "").strip() or "Unlabeled"
         group = campaign_groups_map.setdefault(
             campaign_name,
@@ -727,6 +835,7 @@ def admin_marketing_free_sample_clicks(request):
                 "campaign_name": campaign_name,
                 "token_count": 0,
                 "clicked_tokens": 0,
+                "submitted_tokens": 0,
                 "total_clicks": 0,
                 "emails": set(),
             },
@@ -734,6 +843,8 @@ def admin_marketing_free_sample_clicks(request):
         group["token_count"] += 1
         if (row.get("click_count") or 0) > 0:
             group["clicked_tokens"] += 1
+        if row.get("lead__free_sample_submission__id"):
+            group["submitted_tokens"] += 1
         group["total_clicks"] += row.get("click_count") or 0
         email = (row.get("lead__email") or "").strip().lower()
         if email:
@@ -746,6 +857,7 @@ def admin_marketing_free_sample_clicks(request):
                 "campaign_name": group["campaign_name"],
                 "token_count": group["token_count"],
                 "clicked_tokens": group["clicked_tokens"],
+                "submitted_tokens": group["submitted_tokens"],
                 "total_clicks": group["total_clicks"],
                 "email_count": len(group["emails"]),
                 "emails_csv": ", ".join(sorted(group["emails"])),
@@ -764,6 +876,18 @@ def admin_marketing_free_sample_clicks(request):
         .values_list("source", flat=True)
         .distinct()
     )
+
+    submission_rows = (
+        FreeSampleSubmission.objects.select_related("lead", "token")
+        .filter(lead_id__in=tokens.values("lead_id").distinct())
+        .order_by("-submitted_at")
+    )
+
+    if request.GET.get("export") == "submissions_csv":
+        return _submission_csv_response(submission_rows)
+
+    submitted_lead_ids = set(submission_rows.values_list("lead_id", flat=True))
+
     total = base_tokens.count()
     clicked_count = base_tokens.filter(click_count__gt=0).count()
     total_clicks = base_tokens.aggregate(sum_clicks=Sum("click_count")).get("sum_clicks") or 0
@@ -776,6 +900,7 @@ def admin_marketing_free_sample_clicks(request):
             "page_obj": page_obj,
             "q": q,
             "clicked_filter": clicked,
+            "submitted_filter": submitted,
             "status_filter": status,
             "test_filter": test,
             "source_filter": source,
@@ -785,6 +910,8 @@ def admin_marketing_free_sample_clicks(request):
             "total_clicks": total_clicks,
             "filtered_count": tokens.count(),
             "campaign_groups": campaign_groups,
+            "submission_rows": submission_rows,
+            "submitted_lead_ids": submitted_lead_ids,
             "now": now,
         },
     )
