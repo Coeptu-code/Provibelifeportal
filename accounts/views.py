@@ -8,7 +8,7 @@ from django.contrib.auth.views import PasswordResetConfirmView
 from django.core.paginator import Paginator
 from django.core.exceptions import ValidationError
 from django.db import transaction
-from django.db.models import Q, Sum
+from django.db.models import Q, Sum, Count
 from django.http import Http404, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.template.loader import render_to_string
@@ -645,6 +645,42 @@ def admin_marketing_free_sample_token_generator(request):
 
 @sales_required
 def admin_marketing_free_sample_clicks(request):
+    if request.method == "POST":
+        action = (request.POST.get("action") or "").strip().lower()
+        if action == "reset_free_sample_data":
+            with transaction.atomic():
+                free_sample_tokens = RetailerMarketingPageToken.objects.filter(
+                    page_slug=RetailerMarketingPageToken.PageSlug.FREE_SAMPLE
+                )
+                token_count = free_sample_tokens.count()
+                lead_ids = list(free_sample_tokens.values_list("lead_id", flat=True).distinct())
+                free_sample_tokens.delete()
+
+                # Only remove leads that are now orphaned from marketing/account token flows.
+                orphaned_leads = (
+                    RetailerLead.objects.filter(id__in=lead_ids)
+                    .annotate(
+                        remaining_marketing_tokens=Count("marketing_page_tokens"),
+                        remaining_account_tokens=Count("account_tokens"),
+                    )
+                    .filter(remaining_marketing_tokens=0, remaining_account_tokens=0)
+                )
+                lead_count = orphaned_leads.count()
+                orphaned_leads.delete()
+
+            request.session["free_sample_bulk_token_ids"] = []
+            log_activity(
+                request.user,
+                "free_sample_click_and_lead_reset",
+                f"Cleared free-sample system: {token_count} token(s), {lead_count} lead(s).",
+                request,
+            )
+            messages.success(
+                request,
+                f"Free-sample click/lead system reset. Deleted {token_count} token(s) and {lead_count} lead(s).",
+            )
+            return redirect("admin_portal:marketing_free_sample_clicks")
+
     q = (request.GET.get("q") or "").strip()
     clicked = (request.GET.get("clicked") or "all").strip().lower()
     status = (request.GET.get("status") or "all").strip().lower()
@@ -682,6 +718,42 @@ def admin_marketing_free_sample_clicks(request):
     elif status == "expired":
         tokens = tokens.filter(expires_at__lte=now)
 
+    campaign_groups_map: dict[str, dict] = {}
+    for row in tokens.values("source", "lead__email", "click_count"):
+        campaign_name = (row["source"] or "").strip() or "Unlabeled"
+        group = campaign_groups_map.setdefault(
+            campaign_name,
+            {
+                "campaign_name": campaign_name,
+                "token_count": 0,
+                "clicked_tokens": 0,
+                "total_clicks": 0,
+                "emails": set(),
+            },
+        )
+        group["token_count"] += 1
+        if (row.get("click_count") or 0) > 0:
+            group["clicked_tokens"] += 1
+        group["total_clicks"] += row.get("click_count") or 0
+        email = (row.get("lead__email") or "").strip().lower()
+        if email:
+            group["emails"].add(email)
+
+    campaign_groups = []
+    for group in campaign_groups_map.values():
+        campaign_groups.append(
+            {
+                "campaign_name": group["campaign_name"],
+                "token_count": group["token_count"],
+                "clicked_tokens": group["clicked_tokens"],
+                "total_clicks": group["total_clicks"],
+                "email_count": len(group["emails"]),
+                "emails_csv": ", ".join(sorted(group["emails"])),
+            }
+        )
+
+    campaign_groups.sort(key=lambda g: (g["campaign_name"] == "Unlabeled", g["campaign_name"].lower()))
+
     tokens = tokens.order_by("-last_clicked_at", "-created_at")
     paginator = Paginator(tokens, 100)
     page_obj = paginator.get_page(page_number)
@@ -712,6 +784,7 @@ def admin_marketing_free_sample_clicks(request):
             "clicked": clicked_count,
             "total_clicks": total_clicks,
             "filtered_count": tokens.count(),
+            "campaign_groups": campaign_groups,
             "now": now,
         },
     )

@@ -2,58 +2,12 @@
 {% block content %}
 <div class="page-head">
   <div>
-    <h1>Marketing Emails</h1>
-    <div class="muted">Select an email type to send. Each recipient gets a unique expiring account-creation link.</div>
+    <h1>Marketing</h1>
+    <div class="muted">Manage tokenized free-sample links and click tracking.</div>
   </div>
 </div>
 
 <div class="grid-3" style="gap: 18px;">
-
-  <a href="{% url 'admin_portal:marketing_email_shilajit' %}" class="card" style="text-decoration: none; color: inherit; display: block; cursor: pointer; transition: box-shadow 0.15s, transform 0.12s;">
-    <div style="background: #040404; border-radius: 12px 12px 0 0; padding: 18px 20px 14px; border-bottom: 3px solid #d8c27a;">
-      <div style="font-size: 10px; letter-spacing: 2px; color: #d8c27a; font-weight: 700; text-transform: uppercase; margin-bottom: 6px;">Product Info</div>
-      <div style="font-size: 20px; font-weight: 900; color: #fff; line-height: 1.15;">Shilajit</div>
-      <div style="font-size: 13px; color: #bba96a; margin-top: 4px;">Retailer Information</div>
-    </div>
-    <div style="padding: 16px 20px;">
-      <div style="font-size: 13px; color: var(--pvl-text-mute); line-height: 1.6; margin-bottom: 14px;">Sends the Shilajit product info email with a secure account-creation link. Use for outreach to health and wellness retailers.</div>
-      <div style="display: flex; gap: 8px;">
-        <span class="btn sm primary" style="pointer-events:none;">Send Email</span>
-        <a href="{% url 'admin_portal:marketing_email_preview' 'shilajit' %}" target="_blank" class="btn sm ghost" onclick="event.stopPropagation()">Preview</a>
-      </div>
-    </div>
-  </a>
-
-  <a href="{% url 'admin_portal:marketing_email_vitali_t' %}" class="card" style="text-decoration: none; color: inherit; display: block; cursor: pointer; transition: box-shadow 0.15s, transform 0.12s;">
-    <div style="background: #040404; border-radius: 12px 12px 0 0; padding: 18px 20px 14px; border-bottom: 3px solid #d8c27a;">
-      <div style="font-size: 10px; letter-spacing: 2px; color: #d8c27a; font-weight: 700; text-transform: uppercase; margin-bottom: 6px;">Product Info</div>
-      <div style="font-size: 20px; font-weight: 900; color: #fff; line-height: 1.15;">Vitali‑T</div>
-      <div style="font-size: 13px; color: #bba96a; margin-top: 4px;">Retailer Information</div>
-    </div>
-    <div style="padding: 16px 20px;">
-      <div style="font-size: 13px; color: var(--pvl-text-mute); line-height: 1.6; margin-bottom: 14px;">Sends the Vitali-T male vitality product info email with formula highlights, stats, and a secure account-creation link.</div>
-      <div style="display: flex; gap: 8px;">
-        <span class="btn sm primary" style="pointer-events:none;">Send Email</span>
-        <a href="{% url 'admin_portal:marketing_email_preview' 'vitali-t' %}" target="_blank" class="btn sm ghost" onclick="event.stopPropagation()">Preview</a>
-      </div>
-    </div>
-  </a>
-
-  <a href="{% url 'admin_portal:marketing_email_app_invite' %}" class="card" style="text-decoration: none; color: inherit; display: block; cursor: pointer; transition: box-shadow 0.15s, transform 0.12s;">
-    <div style="background: #040404; border-radius: 12px 12px 0 0; padding: 18px 20px 14px; border-bottom: 3px solid #fff;">
-      <div style="font-size: 10px; letter-spacing: 2px; color: #aaa; font-weight: 700; text-transform: uppercase; margin-bottom: 6px;">Portal Invite</div>
-      <div style="font-size: 20px; font-weight: 900; color: #fff; line-height: 1.15;">App Invite</div>
-      <div style="font-size: 13px; color: #aaa; margin-top: 4px;">Create Account + Mobile App</div>
-    </div>
-    <div style="padding: 16px 20px;">
-      <div style="font-size: 13px; color: var(--pvl-text-mute); line-height: 1.6; margin-bottom: 14px;">Two-step invite: step 1 is the secure portal account-creation link, step 2 is the mobile app install link.</div>
-      <div style="display: flex; gap: 8px;">
-        <span class="btn sm primary" style="pointer-events:none;">Send Email</span>
-        <a href="{% url 'admin_portal:marketing_email_preview' 'app-invite' %}" target="_blank" class="btn sm ghost" onclick="event.stopPropagation()">Preview</a>
-      </div>
-    </div>
-  </a>
-
   <a href="{% url 'admin_portal:marketing_free_sample_links' %}" class="card" style="text-decoration: none; color: inherit; display: block; cursor: pointer; transition: box-shadow 0.15s, transform 0.12s;">
     <div style="background: #040404; border-radius: 12px 12px 0 0; padding: 18px 20px 14px; border-bottom: 3px solid #d8c27a;">
       <div style="font-size: 10px; letter-spacing: 2px; color: #d8c27a; font-weight: 700; text-transform: uppercase; margin-bottom: 6px;">Tokenized Landing Page</div>
@@ -69,21 +23,19 @@
     </div>
   </a>
 
-  <a href="{% url 'admin_portal:marketing_free_sample_token_generator' %}" class="card" style="text-decoration: none; color: inherit; display: block; cursor: pointer; transition: box-shadow 0.15s, transform 0.12s;">
+  <a href="{% url 'admin_portal:marketing_free_sample_clicks' %}" class="card" style="text-decoration: none; color: inherit; display: block; cursor: pointer; transition: box-shadow 0.15s, transform 0.12s;">
     <div style="background: #040404; border-radius: 12px 12px 0 0; padding: 18px 20px 14px; border-bottom: 3px solid #d8c27a;">
-      <div style="font-size: 10px; letter-spacing: 2px; color: #d8c27a; font-weight: 700; text-transform: uppercase; margin-bottom: 6px;">Bulk Token Tool</div>
-      <div style="font-size: 20px; font-weight: 900; color: #fff; line-height: 1.15;">Token Generator</div>
-      <div style="font-size: 13px; color: #bba96a; margin-top: 4px;">Paste Leads + Export CSV</div>
+      <div style="font-size: 10px; letter-spacing: 2px; color: #d8c27a; font-weight: 700; text-transform: uppercase; margin-bottom: 6px;">Campaign Analytics</div>
+      <div style="font-size: 20px; font-weight: 900; color: #fff; line-height: 1.15;">Click Reports</div>
+      <div style="font-size: 13px; color: #bba96a; margin-top: 4px;">Clicks + Campaign Grouping</div>
     </div>
     <div style="padding: 16px 20px;">
-      <div style="font-size: 13px; color: var(--pvl-text-mute); line-height: 1.6; margin-bottom: 14px;">Generate one free-sample token per lead in bulk from CSV/JSON, then export tokenized rows for campaign import.</div>
+      <div style="font-size: 13px; color: var(--pvl-text-mute); line-height: 1.6; margin-bottom: 14px;">View click metrics and grouped email data by campaign/source label.</div>
       <div style="display: flex; gap: 8px;">
-        <span class="btn sm primary" style="pointer-events:none;">Open Generator</span>
-        <a href="{% url 'admin_portal:marketing_free_sample_clicks' %}" class="btn sm ghost" onclick="event.stopPropagation()">View Clicks</a>
+        <span class="btn sm primary" style="pointer-events:none;">Open Reports</span>
       </div>
     </div>
   </a>
-
 </div>
 
 <style>

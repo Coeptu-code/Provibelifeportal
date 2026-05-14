@@ -1,5 +1,5 @@
 {% extends "admin_portal/base.html" %}
-{% block topbar_left %}<button class="icon-btn" id="backBtn" onclick="history.back()" style="display:none;">?</button>{% endblock %}
+{% block topbar_left %}<button class="icon-btn" id="backBtn" onclick="history.back()" style="display:none;">&larr;</button>{% endblock %}
 {% block content %}
 <div class="page-head">
   <div>
@@ -8,7 +8,7 @@
   </div>
   <div class="right">
     <a href="{% url 'admin_portal:marketing_email_preview' 'shilajit' %}" target="_blank" class="btn ghost">Preview Email</a>
-    <a href="{% url 'admin_portal:marketing_emails' %}" class="btn ghost">? All Emails</a>
+    <a href="{% url 'admin_portal:marketing_emails' %}" class="btn ghost">&larr; Marketing</a>
   </div>
 </div>
 
@@ -62,3 +62,4 @@
   </form>
 </div>
 {% endblock %}
+

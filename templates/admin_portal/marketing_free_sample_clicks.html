@@ -8,7 +8,12 @@
   </div>
   <div class="right">
     <a href="{% url 'admin_portal:marketing_free_sample_links' %}" class="btn ghost">Generate Links</a>
-    <a href="{% url 'admin_portal:marketing_emails' %}" class="btn ghost">&larr; All Emails</a>
+    <form method="post" style="display:inline;">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="reset_free_sample_data">
+      <button type="submit" class="btn ghost" style="color:#a12323;border-color:#f1c7c7;" onclick="return confirm('This will delete all free-sample click/token data and orphan free-sample leads. Continue?');">Wipe Click + Lead Data</button>
+    </form>
+    <a href="{% url 'admin_portal:marketing_emails' %}" class="btn ghost">&larr; Marketing</a>
   </div>
 </div>
 
@@ -63,6 +68,39 @@
     </div>
   </div>
 </form>
+
+<div class="card" style="margin-bottom:16px; overflow:auto;">
+  <div class="card-body" style="padding:12px 22px; border-bottom:1px solid var(--pvl-paper-3);">
+    <span style="font-weight:900;">Campaign Groups</span>
+    <span class="muted" style="margin-left:8px;">Grouped by campaign/source label</span>
+  </div>
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Campaign</th>
+        <th>Unique Emails</th>
+        <th>Tokens</th>
+        <th>Clicked Tokens</th>
+        <th>Total Clicks</th>
+        <th>Emails</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for g in campaign_groups %}
+      <tr>
+        <td>{{ g.campaign_name }}</td>
+        <td>{{ g.email_count }}</td>
+        <td>{{ g.token_count }}</td>
+        <td>{{ g.clicked_tokens }}</td>
+        <td>{{ g.total_clicks }}</td>
+        <td style="max-width:420px; white-space:normal; word-break:break-word;">{{ g.emails_csv|default:"-" }}</td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="6" class="muted">No campaign groups found for the current filters.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
 
 <div class="card" style="overflow:auto;">
   <div class="card-body" style="padding:12px 22px; border-bottom:1px solid var(--pvl-paper-3);">
@@ -128,3 +166,4 @@
   </div>
 {% endif %}
 {% endblock %}
+

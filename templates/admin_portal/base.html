@@ -55,8 +55,8 @@
         </a>
 
         <div class="nav-section">Marketing</div>
-        <a href="{% url 'admin_portal:marketing_emails' %}" class="nav-item {% if 'marketing_email' in request.resolver_match.url_name %}active{% endif %}">
-          <span>Marketing Emails</span>
+        <a href="{% url 'admin_portal:marketing_emails' %}" class="nav-item {% if 'marketing_' in request.resolver_match.url_name %}active{% endif %}">
+          <span>Marketing</span>
         </a>
         {% endif %}
 

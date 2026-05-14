@@ -298,6 +298,35 @@ class FreeSampleTokenFlowTests(TestCase):
         self.assertContains(resp, "clicked@example.com")
         self.assertNotContains(resp, "notclicked@example.com")
 
+    def test_click_report_groups_emails_by_campaign_source(self):
+        lead_a = RetailerLead.objects.create(email="groupa@example.com", created_by=self.admin)
+        lead_b = RetailerLead.objects.create(email="groupb@example.com", created_by=self.admin)
+        RetailerMarketingPageToken.objects.create(lead=lead_a, created_by=self.admin, source="campaign-alpha")
+        RetailerMarketingPageToken.objects.create(lead=lead_b, created_by=self.admin, source="campaign-alpha")
+
+        self.client.login(username="admin_free_sample", password="pass1234")
+        resp = self.client.get(reverse("admin_portal:marketing_free_sample_clicks"))
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, "Campaign Groups")
+        self.assertContains(resp, "campaign-alpha")
+        self.assertContains(resp, "groupa@example.com")
+        self.assertContains(resp, "groupb@example.com")
+
+    def test_click_report_can_reset_free_sample_click_and_lead_data(self):
+        lead = RetailerLead.objects.create(email="reset-me@example.com", created_by=self.admin)
+        RetailerMarketingPageToken.objects.create(lead=lead, created_by=self.admin, source="campaign-reset")
+
+        self.client.login(username="admin_free_sample", password="pass1234")
+        resp = self.client.post(
+            reverse("admin_portal:marketing_free_sample_clicks"),
+            {"action": "reset_free_sample_data"},
+            follow=True,
+        )
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, "Free-sample click/lead system reset")
+        self.assertEqual(RetailerMarketingPageToken.objects.count(), 0)
+        self.assertEqual(RetailerLead.objects.filter(email="reset-me@example.com").count(), 0)
+
     def test_tokenized_page_click_tracking_with_path_route(self):
         lead = RetailerLead.objects.create(email="pathlead@example.com", created_by=self.admin)
         token = RetailerMarketingPageToken.objects.create(lead=lead, created_by=self.admin)
