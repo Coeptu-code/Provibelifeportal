@@ -1,0 +1,932 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Pro Vibe Life — White Label Partnership Program</title>
+<meta name="viewport" content="width=1920" />
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet" />
+
+<style>
+  :root{
+    --bg:        #0c0a07;
+    --bg-2:      #14110c;
+    --surface:   #1a1610;
+    --surface-2: #221d15;
+    --line:      #2c2519;
+    --line-2:    #3a3122;
+    --text:      #f1ebdb;
+    --muted:     #998a72;
+    --muted-2:   #6a604f;
+    --amber:     #d4a05a;
+    --amber-2:   #e9c180;
+    --amber-deep:#a87332;
+    --moss:      #6b8059;
+    --resin:     #3a2a17;
+  }
+  html, body { margin:0; padding:0; background: var(--bg); color: var(--text); font-family: 'Geist', system-ui, sans-serif; }
+  deck-stage:not(:defined){ visibility:hidden; }
+
+  /* ---- Slide base ---- */
+  .slide{
+    position:relative; width:100%; height:100%;
+    background: var(--bg);
+    overflow:hidden;
+    font-family:'Geist', sans-serif;
+    color: var(--text);
+  }
+  .slide-pad{ position:absolute; inset:0; padding: 84px 110px; box-sizing:border-box; }
+
+  /* Header chrome (top bar on every slide) */
+  .deck-head{
+    position:absolute; top:42px; left:110px; right:110px;
+    display:flex; align-items:center; justify-content:space-between;
+    z-index: 5;
+  }
+  .deck-head .brand{ display:flex; align-items:center; gap:14px; }
+  .deck-head .logo{ height: 34px; width:auto; opacity:.95; }
+  .deck-head .pip{ font-family:'Geist Mono', monospace; font-size:11px; letter-spacing:.22em; color:var(--muted); text-transform:uppercase;}
+  .deck-head .rt{ display:flex; align-items:center; gap:18px; font-family:'Geist Mono', monospace; font-size:11px; letter-spacing:.22em; color:var(--muted); text-transform:uppercase;}
+  .deck-head .rt .dot{ width:6px; height:6px; border-radius:50%; background:var(--amber); box-shadow:0 0 12px var(--amber); }
+
+  /* Footer chrome */
+  .deck-foot{
+    position:absolute; bottom:38px; left:110px; right:110px;
+    display:flex; justify-content:space-between; align-items:flex-end;
+    font-family:'Geist Mono', monospace; font-size:11px; letter-spacing:.22em; color:var(--muted-2); text-transform:uppercase;
+    z-index: 5;
+  }
+  .deck-foot .pn{ color:var(--amber); }
+
+  /* Subtle texture overlay */
+  .grain{
+    position:absolute; inset:0; pointer-events:none;
+    background-image:
+      radial-gradient(1200px 700px at 80% -10%, rgba(212,160,90,0.10), transparent 60%),
+      radial-gradient(900px 600px at -10% 110%, rgba(107,128,89,0.06), transparent 60%);
+    z-index:1;
+  }
+  .grain::after{
+    content:""; position:absolute; inset:0;
+    background-image: radial-gradient(rgba(255,255,255,0.025) 1px, transparent 1px);
+    background-size: 3px 3px;
+    mix-blend-mode: overlay; opacity:.6;
+  }
+
+  /* Typography */
+  .display{ font-family:'Instrument Serif', serif; font-weight:400; letter-spacing:-0.01em; line-height:.95;}
+  .display .it{ font-style:italic; color: var(--amber-2); }
+  .eyebrow{ font-family:'Geist Mono', monospace; font-size:12px; letter-spacing:.32em; text-transform:uppercase; color:var(--muted); }
+  .small-mono{ font-family:'Geist Mono', monospace; font-size:11px; letter-spacing:.22em; text-transform:uppercase; color:var(--muted-2); }
+  .lead{ font-size:20px; line-height:1.55; color:#d8cfba; font-weight:300; max-width:780px;}
+
+  /* Animations — base */
+  .fade-up{ opacity:0; transform: translateY(20px); transition: opacity .9s cubic-bezier(.2,.7,.2,1), transform .9s cubic-bezier(.2,.7,.2,1); }
+  .reveal .fade-up{ opacity:1; transform:none; }
+  .reveal .fade-up.d1{ transition-delay:.05s;} .reveal .fade-up.d2{transition-delay:.18s;} .reveal .fade-up.d3{transition-delay:.32s;}
+  .reveal .fade-up.d4{ transition-delay:.46s;} .reveal .fade-up.d5{transition-delay:.6s;} .reveal .fade-up.d6{transition-delay:.74s;}
+  .reveal .fade-up.d7{ transition-delay:.88s;} .reveal .fade-up.d8{transition-delay:1.02s;}
+
+  .draw-line{ stroke-dasharray: 1200; stroke-dashoffset: 1200; transition: stroke-dashoffset 1.6s cubic-bezier(.5,.05,.2,1); }
+  .reveal .draw-line{ stroke-dashoffset:0; }
+
+  /* =========================
+     SLIDE 1 — TITLE
+  =========================*/
+  .s1-grid{
+    position:absolute; inset: 84px 110px 110px 110px;
+    display:grid; grid-template-columns: 1.25fr 1fr; gap: 60px;
+  }
+  .s1-left{ display:flex; flex-direction:column; justify-content:flex-end; padding-bottom: 30px;}
+  .s1-eyebrow{ display:flex; align-items:center; gap:14px; margin-bottom: 36px;}
+  .s1-eyebrow .bar{ width:48px; height:1px; background: var(--amber);}
+  .s1-title{ font-size: 152px; }
+  .s1-sub{ margin-top: 36px; max-width: 720px; color:#d8cfba; font-size: 22px; line-height:1.5; font-weight:300;}
+  .s1-badges{ display:flex; gap:10px; flex-wrap:wrap; margin-top: 40px;}
+  .s1-badge{
+    padding: 9px 16px; border:1px solid var(--line-2); border-radius:999px;
+    font-family:'Geist Mono', monospace; font-size:11px; letter-spacing:.18em; text-transform:uppercase;
+    color: #cfc3a8; background: rgba(255,255,255,0.02);
+  }
+
+  .s1-right{
+    position:relative;
+    display:flex; flex-direction:column; justify-content:space-between;
+  }
+  /* Refined typographic mark (replaces resin orb) */
+  .s1-mark{
+    position:absolute; top: 168px; right: 110px;
+    width: 460px;
+    pointer-events:none;
+    z-index: 2;
+  }
+  .s1-mark-num{
+    font-family:'Instrument Serif', serif;
+    font-size: 360px; line-height: .82;
+    color: transparent;
+    -webkit-text-stroke: 1px var(--amber-deep);
+    letter-spacing: -.04em;
+    opacity:.85;
+    text-align: right;
+  }
+  .s1-mark-num .it{ font-style: italic; }
+  .s1-mark-rail{
+    margin-top: 14px;
+    display:flex; align-items:center; gap: 14px;
+    justify-content: flex-end;
+  }
+  .s1-mark-line{ flex: 1; height:1px; background: var(--amber-deep); max-width: 260px;}
+  .s1-mark-lbl{
+    font-family:'Geist Mono', monospace; font-size:11px; letter-spacing:.32em;
+    color: var(--amber); text-transform:uppercase;
+  }
+  .s1-mark-vert{
+    position:absolute; right: -8px; top: 30px;
+    transform-origin: right top;
+    transform: rotate(90deg) translateY(-100%);
+    font-family:'Geist Mono', monospace; font-size: 11px; letter-spacing:.36em;
+    color: var(--muted-2); text-transform:uppercase;
+    white-space: nowrap;
+  }
+
+  /* Legacy orb (no-op) */
+  .s1-resin{ display:none; }
+  .resin-orb{ display:none; }
+
+  .s1-stats{
+    position:relative; z-index:2;
+    display:grid; grid-template-columns: 1fr 1fr; gap: 1px;
+    background: var(--line);
+    border:1px solid var(--line);
+    margin-top: auto;
+  }
+  .s1-stat{
+    background: var(--bg);
+    padding: 24px 26px;
+    display:flex; flex-direction:column; justify-content:space-between;
+    min-height: 130px;
+  }
+  .s1-stat .v{ font-family:'Instrument Serif', serif; font-size: 64px; line-height:1; color: var(--amber-2);}
+  .s1-stat .v .unit{ font-size: 22px; color: var(--muted); margin-left: 4px; font-family:'Geist Mono', monospace; }
+  .s1-stat .k{ font-family:'Geist Mono', monospace; font-size:11px; letter-spacing:.22em; text-transform:uppercase; color:var(--muted); margin-bottom: 8px;}
+
+  .s1-byline{
+    position:absolute; left:110px; bottom: 90px;
+    display:flex; align-items:center; gap:14px;
+    font-family:'Geist Mono', monospace; font-size:11px; letter-spacing:.2em; color: var(--muted); text-transform:uppercase;
+  }
+  .s1-byline .pip{ width:6px;height:6px;border-radius:50%; background:var(--amber);}
+
+  /* =========================
+     SLIDE 2 — HOW IT WORKS
+  =========================*/
+  .s2-head{ display:grid; grid-template-columns: 1fr 1fr; gap:60px; align-items:end; margin-top: 30px;}
+  .s2-h{ font-size: 76px;}
+  .s2-lead{ color:#cfc3a8; font-size:17px; line-height:1.55; font-weight:300;}
+  .s2-grid{
+    margin-top: 40px;
+    display:grid; grid-template-columns: repeat(3, 1fr); gap: 14px;
+  }
+  .s2-card{
+    position:relative;
+    background: linear-gradient(180deg, var(--surface) 0%, var(--bg-2) 100%);
+    border:1px solid var(--line);
+    padding: 22px 24px 22px;
+    min-height: 180px;
+    overflow:hidden;
+    transition: transform .35s ease, border-color .35s ease, background .35s ease;
+  }
+  .s2-card:hover{ transform: translateY(-6px); border-color: var(--amber-deep); }
+  .s2-card .num{ font-family:'Geist Mono', monospace; font-size:11px; letter-spacing:.22em; color:var(--amber); margin-bottom: 16px; display:flex; align-items:center; justify-content:space-between;}
+  .s2-card .num .ico{
+    width: 28px; height:28px; border:1px solid var(--line-2); border-radius:50%;
+    display:flex; align-items:center; justify-content:center; color:var(--amber);
+  }
+  .s2-card h3{ font-family:'Instrument Serif', serif; font-weight:400; font-size: 28px; line-height:1.05; margin: 0 0 10px;}
+  .s2-card p{ font-size:13px; line-height:1.5; color: #b8ad94; margin:0;}
+  .s2-card::after{
+    content:""; position:absolute; left:0; right:0; bottom:0; height:2px;
+    background: linear-gradient(90deg, var(--amber), transparent);
+    transform-origin: left; transform: scaleX(0); transition: transform .5s ease;
+  }
+  .s2-card:hover::after{ transform: scaleX(1); }
+
+  .s2-foot{
+    margin-top: 24px;
+    display:flex; justify-content:space-between; align-items:center;
+    padding: 18px 26px;
+    border:1px solid var(--line-2);
+    background: rgba(212,160,90,0.05);
+  }
+  .s2-foot .big{ font-family:'Instrument Serif', serif; font-size: 28px;}
+  .s2-foot .big .it{ font-style:italic; color: var(--amber-2);}
+  .s2-foot .cta{
+    font-family:'Geist Mono', monospace; font-size:12px; letter-spacing:.24em; text-transform:uppercase;
+    color: var(--text);
+    padding: 14px 22px; border:1px solid var(--amber); background: transparent;
+    display:flex; align-items:center; gap:10px;
+  }
+
+  /* =========================
+     SLIDE 3 — PACKAGING
+  =========================*/
+  #slide-3{
+    background:
+      radial-gradient(900px 600px at 12% 110%, rgba(212,160,90,0.10), transparent 60%),
+      radial-gradient(700px 500px at 90% -10%, rgba(107,128,89,0.07), transparent 60%),
+      var(--bg);
+  }
+  .s3-head{ display:flex; align-items:end; justify-content:space-between; margin-top:24px; gap: 60px;}
+  .s3-h{ font-size: 84px; flex: 0 1 auto;}
+  .s3-lead{ max-width: 460px; color:#cfc3a8; font-size:15px; line-height:1.6; }
+  .s3-rail{
+    margin-top: 28px;
+    display:flex; align-items:center; gap: 14px;
+    font-family:'Geist Mono', monospace; font-size: 11px; letter-spacing:.28em; color: var(--muted); text-transform:uppercase;
+  }
+  .s3-rail .ln{ flex:1; height:1px; background: var(--line-2); }
+  .s3-rail .ln.lit{ background: linear-gradient(90deg, var(--amber), transparent); height:2px;}
+  .s3-tabs{
+    margin-top: 26px;
+    display:grid; grid-template-columns: 1fr 1fr 1fr; gap: 18px;
+  }
+  .s3-tab{
+    position:relative;
+    text-align:left;
+    background:
+      radial-gradient(160% 90% at 0% 0%, rgba(212,160,90,0.04), transparent 60%),
+      linear-gradient(180deg, #1f1a12 0%, #16130d 100%);
+    border:1px solid var(--line-2);
+    padding: 32px 32px 110px;
+    min-height: 500px;
+    cursor:pointer;
+    transition: background .45s ease, border-color .45s ease, transform .45s ease, box-shadow .45s ease;
+    overflow:hidden;
+    display:flex; flex-direction:column;
+    color: var(--text);
+  }
+  .s3-tab::before{
+    content:""; position:absolute; left:0; top:0; bottom:0; width: 3px;
+    background: var(--amber); transform: scaleY(0); transform-origin: top;
+    transition: transform .5s cubic-bezier(.4,.05,.1,1);
+  }
+  .s3-tab[aria-expanded="true"]{
+    background:
+      radial-gradient(120% 100% at 0% 0%, rgba(212,160,90,0.20), transparent 55%),
+      linear-gradient(180deg, #2a2114 0%, #1a1610 100%);
+    border-color: var(--amber);
+    box-shadow: 0 30px 80px -20px rgba(212,160,90,0.30), inset 0 0 0 1px rgba(212,160,90,0.06);
+    transform: translateY(-6px);
+  }
+  .s3-tab[aria-expanded="true"]::before{ transform: scaleY(1); }
+  .s3-tab .opt{ font-family:'Geist Mono', monospace; font-size:11px; letter-spacing:.32em; color: var(--amber); margin-bottom: 14px; display:flex; align-items:center; gap:10px;}
+  .s3-tab .opt .pip{ width:6px; height:6px; background: var(--amber); border-radius: 50%; box-shadow: 0 0 12px var(--amber); }
+  .s3-tab[aria-expanded="false"] .opt{ color: var(--muted); }
+  .s3-tab[aria-expanded="false"] .opt .pip{ background: var(--muted-2); box-shadow: none; }
+  .s3-tab h3{ font-family:'Instrument Serif', serif; font-weight:400; font-size: 48px; line-height: .98; margin: 0 0 12px;}
+  .s3-tab h3 .it{ font-style:italic; color: var(--amber-2);}
+  .s3-tab .desc{ color: #b8ad94; font-size: 14px; line-height:1.55; min-height: 44px;}
+  .s3-tab ul{ list-style:none; padding:0; margin: 28px 0 0; display:flex; flex-direction:column; gap:14px; }
+  .s3-tab li{ display:flex; justify-content:space-between; gap:14px; padding: 12px 0; border-bottom:1px dashed var(--line-2); font-size: 14px; color: #d2c8b0;}
+  .s3-tab li:last-child{ border-bottom:0; }
+  .s3-tab li .price{ font-family:'Geist Mono', monospace; color: var(--amber-2); }
+  .s3-tab .chev{
+    position:absolute; right:28px; top:28px;
+    width: 44px; height: 44px;
+    border:1px solid var(--line-2); border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    color: var(--amber); font-family:'Geist Mono', monospace; font-size:18px;
+    transition: transform .45s ease, border-color .45s ease, background .45s ease;
+  }
+  .s3-tab[aria-expanded="true"] .chev{
+    transform: rotate(45deg);
+    border-color: var(--amber); background: rgba(212,160,90,0.12);
+  }
+  .s3-tab .badge{
+    position:absolute; bottom:0; left:0; right:0;
+    padding: 18px 28px;
+    border-top:1px solid var(--line-2);
+    background: rgba(0,0,0,0.35);
+    font-family:'Geist Mono', monospace; font-size:11px; letter-spacing:.22em; text-transform:uppercase; color: var(--amber-2);
+    display:flex; justify-content:space-between;
+  }
+  .s3-tab[aria-expanded="true"] .badge{
+    background: linear-gradient(180deg, rgba(212,160,90,0.10), rgba(212,160,90,0.04));
+    border-top-color: rgba(212,160,90,0.4);
+  }
+
+  .s3-foot{
+    margin-top: 32px;
+    display:flex; justify-content:space-between; align-items:center;
+    font-family:'Geist Mono', monospace; font-size:11px; letter-spacing:.24em; color: var(--muted-2); text-transform:uppercase;
+  }
+  .s3-foot .pipes{ display:flex; align-items:center; gap: 18px;}
+  .s3-foot .pipes .seg{ display:flex; align-items:center; gap: 8px;}
+  .s3-foot .pipes .num{ color: var(--amber); font-family:'Instrument Serif', serif; font-style: italic; font-size: 22px; line-height:1;}
+
+  /* =========================
+     SLIDE 4 — SAFETY
+  =========================*/
+  .s4-grid{
+    display:grid; grid-template-columns: 1.05fr .95fr; gap: 70px;
+    margin-top: 30px; height: calc(100% - 90px);
+    align-items:center;
+  }
+  .s4-left .s4-h{ font-size: 92px; }
+  .s4-left .s4-lead{ margin-top: 22px; color:#cfc3a8; font-size:18px; line-height:1.6; font-weight:300; max-width: 600px;}
+  .s4-tests{ margin-top: 44px; display:grid; grid-template-columns: 1fr 1fr; gap: 14px; max-width: 620px;}
+  .s4-test{
+    border:1px solid var(--line);
+    padding: 16px 18px;
+    background: var(--bg-2);
+    display:flex; align-items:center; gap:14px;
+  }
+  .s4-test .sym{ width:36px;height:36px;border:1px solid var(--line-2); display:flex;align-items:center;justify-content:center; font-family:'Geist Mono', monospace; color: var(--amber-2); font-size: 13px;}
+  .s4-test .lbl{ font-size:13px; color: #d2c8b0; }
+  .s4-test .lbl small{ display:block; color: var(--muted-2); font-family:'Geist Mono', monospace; font-size:10px; letter-spacing:.2em; text-transform:uppercase; margin-top:4px;}
+
+  .s4-stamp{
+    position:relative;
+    width: 100%; max-width: 580px; aspect-ratio: 1/1; margin-left: auto;
+  }
+  .s4-stamp svg{ width:100%; height:100%; display:block;}
+  .stamp-ring{ fill:none; stroke: var(--amber); stroke-width: 1; }
+  .stamp-text{ fill: var(--amber); font-family:'Geist Mono', monospace; font-size: 12px; letter-spacing: 4px; }
+  .stamp-core{ fill: none; stroke: var(--amber-deep); stroke-width: 1; }
+  .stamp-spin{ transform-origin: 50% 50%; animation: spin 60s linear infinite; }
+  @keyframes spin{ to{ transform: rotate(360deg);} }
+
+  .s4-compliance{
+    position:absolute; left:50%; top:50%; transform: translate(-50%,-50%);
+    text-align:center; width: 60%;
+  }
+  .s4-compliance .num{ font-family:'Instrument Serif', serif; font-size: 96px; color: var(--amber-2); line-height:1;}
+  .s4-compliance .num .it{ font-style:italic;}
+  .s4-compliance .lbl{ font-family:'Geist Mono', monospace; font-size: 11px; letter-spacing:.28em; text-transform:uppercase; color: var(--muted); margin-top: 8px;}
+  .s4-compliance .stds{ margin-top: 28px; display:flex; gap:8px; flex-wrap:wrap; justify-content:center;}
+  .s4-compliance .stds span{ padding: 8px 12px; border:1px solid var(--line-2); border-radius:999px; font-family:'Geist Mono', monospace; font-size: 11px; letter-spacing:.18em; color: #d2c8b0;}
+
+  /* =========================
+     SLIDE 5 — PRICING
+  =========================*/
+  .s5-head{ display:flex; justify-content:space-between; align-items:end; margin-top:30px;}
+  .s5-h{ font-size: 92px; }
+  .s5-lead{ max-width:520px; color:#cfc3a8; font-size:16px; line-height:1.6;}
+  .s5-grid{
+    margin-top: 48px;
+    display:grid; grid-template-columns: 1.4fr 1fr; gap: 32px;
+  }
+
+  /* Pricing table */
+  .s5-table{ border:1px solid var(--line); background: var(--bg-2);}
+  .s5-tr{
+    display:grid; grid-template-columns: 1.2fr .7fr 1.3fr;
+    padding: 18px 24px; border-bottom: 1px solid var(--line);
+    align-items:center;
+    transition: background .35s ease, color .35s ease;
+  }
+  .s5-tr.head{
+    font-family:'Geist Mono', monospace; font-size: 11px; letter-spacing:.22em; text-transform:uppercase;
+    color: var(--muted); background: var(--surface);
+  }
+  .s5-tr:last-child{ border-bottom:0; }
+  .s5-tr .qty{ font-family:'Geist Mono', monospace; color:#d2c8b0; font-size:13px;}
+  .s5-tr .p{ font-family:'Instrument Serif', serif; font-size: 28px; color: var(--text);}
+  .s5-tr .inc{ font-size:13px; color: var(--muted);}
+  .s5-tr.active{ background: linear-gradient(90deg, rgba(212,160,90,0.12), transparent); }
+  .s5-tr.active .qty, .s5-tr.active .inc{ color: var(--text);}
+  .s5-tr.active .p{ color: var(--amber-2);}
+  .s5-tr.active::before{ content:""; }
+
+  /* Calculator card */
+  .s5-calc{
+    border:1px solid var(--amber-deep);
+    background: linear-gradient(180deg, #1f1810, #14110c);
+    padding: 28px 30px;
+    display:flex; flex-direction:column;
+    position:relative; overflow:hidden;
+  }
+  .s5-calc::before{
+    content:""; position:absolute; top:0; right:-60px; width:200px; height:200px; border-radius:50%;
+    background: radial-gradient(circle, rgba(212,160,90,0.35), transparent 60%);
+    filter: blur(20px);
+  }
+  .s5-calc .clab{ font-family:'Geist Mono', monospace; font-size: 11px; letter-spacing:.24em; color:var(--amber); text-transform:uppercase;}
+  .s5-calc .qtybig{ display:flex; align-items:baseline; gap:10px; margin-top:8px;}
+  .s5-calc .qtybig .v{ font-family:'Instrument Serif', serif; font-size: 88px; line-height:1; color: var(--text); font-feature-settings: "tnum";}
+  .s5-calc .qtybig .u{ font-family:'Geist Mono', monospace; font-size: 13px; color: var(--muted); letter-spacing:.2em; text-transform:uppercase;}
+  .s5-calc .slider-wrap{ margin-top: 22px; }
+  .s5-slider{
+    -webkit-appearance:none; appearance:none; width:100%; height: 4px;
+    background: linear-gradient(90deg, var(--amber) var(--prog,30%), var(--line-2) var(--prog,30%));
+    outline: none; border-radius:2px;
+  }
+  .s5-slider::-webkit-slider-thumb{
+    -webkit-appearance:none; appearance:none;
+    width: 24px; height:24px; border-radius:50%;
+    background: var(--amber-2); border: 3px solid var(--bg);
+    box-shadow: 0 0 0 1px var(--amber), 0 0 30px rgba(212,160,90,.5);
+    cursor: grab;
+  }
+  .s5-slider::-moz-range-thumb{
+    width: 22px; height:22px; border-radius:50%;
+    background: var(--amber-2); border: 3px solid var(--bg);
+    box-shadow: 0 0 0 1px var(--amber);
+    cursor: grab;
+  }
+  .s5-ticks{ display:flex; justify-content:space-between; margin-top: 10px;
+    font-family:'Geist Mono', monospace; font-size: 10px; letter-spacing:.18em; color: var(--muted-2); text-transform:uppercase;}
+  .s5-break{ margin-top: 26px; border-top:1px solid var(--line); padding-top: 22px; display:flex; flex-direction:column; gap:12px;}
+  .s5-row{ display:flex; justify-content:space-between; align-items:baseline; }
+  .s5-row .k{ font-family:'Geist Mono', monospace; font-size: 11px; letter-spacing:.22em; text-transform:uppercase; color:var(--muted);}
+  .s5-row .v{ font-family:'Geist Mono', monospace; font-size: 16px; color: #e8dfc7;}
+  .s5-total{ margin-top: 8px; padding-top: 14px; border-top:1px dashed var(--line-2); }
+  .s5-total .k{ color: var(--amber); }
+  .s5-total .v{ font-family:'Instrument Serif', serif; font-size: 36px; color: var(--amber-2);}
+  .s5-rev{ margin-top: 14px; padding: 14px 16px; background: rgba(107,128,89,0.08); border:1px solid rgba(107,128,89,0.3); display:flex; justify-content:space-between; align-items:baseline;}
+  .s5-rev .k{ font-family:'Geist Mono', monospace; font-size: 11px; letter-spacing:.22em; text-transform:uppercase; color:#9bb182;}
+  .s5-rev .v{ font-family:'Instrument Serif', serif; font-size: 28px; color: #b9d099;}
+
+  .s5-note{ margin-top: 26px; font-family:'Geist Mono', monospace; font-size: 11px; letter-spacing:.16em; color: var(--muted-2); line-height:1.7; text-transform:uppercase;}
+
+  /* =========================
+     SLIDE 6 — CTA
+  =========================*/
+  .s6-wrap{
+    position:absolute; inset: 84px 110px 110px 110px;
+    display:grid; grid-template-columns: 1.3fr 1fr; gap: 80px; align-items:center;
+  }
+  .s6-h{ font-size: 168px; line-height:.9;}
+  .s6-sub{ margin-top: 30px; max-width: 620px; color:#cfc3a8; font-size: 20px; line-height:1.55; font-weight:300;}
+  .s6-tags{ margin-top: 44px; display:flex; flex-wrap:wrap; gap:10px;}
+  .s6-tags .t{ padding: 10px 18px; border:1px solid var(--line-2); border-radius:999px; font-family:'Geist Mono', monospace; font-size:11px; letter-spacing:.2em; text-transform:uppercase; color:#cfc3a8;}
+
+  .s6-card{
+    background: linear-gradient(180deg, #1c1810, #14110c);
+    border:1px solid var(--amber-deep);
+    padding: 40px;
+    position:relative;
+    overflow:hidden;
+  }
+  .s6-card::before{
+    content:""; position:absolute; top:-80px; right:-80px; width:280px; height:280px; border-radius:50%;
+    background: radial-gradient(circle, rgba(212,160,90,0.35), transparent 60%);
+    filter: blur(15px);
+  }
+  .s6-card .role{ font-family:'Geist Mono', monospace; font-size: 11px; letter-spacing:.28em; text-transform:uppercase; color: var(--amber);}
+  .s6-card .name{ font-family:'Instrument Serif', serif; font-size: 64px; line-height:1; margin-top: 12px;}
+  .s6-card .org{ font-family:'Geist Mono', monospace; font-size: 12px; letter-spacing:.22em; text-transform:uppercase; color: var(--muted); margin-top: 18px;}
+  .s6-card .div{ height:1px; background: var(--line); margin: 30px 0;}
+  .s6-card .links{ display:flex; flex-direction:column; gap: 18px;}
+  .s6-card .lk{ display:flex; align-items:center; justify-content:space-between; padding: 14px 0; border-bottom: 1px solid var(--line); font-family:'Geist Mono', monospace; font-size: 13px; letter-spacing:.06em; color:#e8dfc7; text-decoration:none; transition: color .25s ease;}
+  .s6-card .lk:hover{ color: var(--amber-2); }
+  .s6-card .lk .lbl{ color: var(--muted-2); font-size: 10px; letter-spacing:.24em; text-transform:uppercase;}
+  .s6-card .lk:last-child{ border-bottom: 0;}
+  .s6-card .btn{
+    margin-top: 24px;
+    width:100%; box-sizing:border-box;
+    display:flex; align-items:center; justify-content:center; gap:14px;
+    padding: 18px;
+    background: var(--amber); color: var(--bg);
+    font-family:'Geist Mono', monospace; font-size: 12px; letter-spacing:.3em; text-transform:uppercase; font-weight:600;
+    border: 1px solid var(--amber);
+    cursor: pointer;
+    transition: background .25s ease, transform .25s ease;
+  }
+  .s6-card .btn:hover{ background: var(--amber-2); transform: translateY(-2px);}
+
+  .s6-marquee{
+    position:absolute; bottom: 0; left:0; right:0; padding: 18px 0;
+    border-top: 1px solid var(--line);
+    overflow:hidden; white-space:nowrap;
+    font-family:'Instrument Serif', serif; font-style:italic;
+    font-size: 22px; color: var(--muted);
+  }
+  .s6-marquee .track{
+    display:inline-flex; gap: 60px;
+    animation: marq 30s linear infinite;
+  }
+  .s6-marquee .track span{ display:inline-flex; align-items:center; gap: 60px;}
+  .s6-marquee .dot{ color: var(--amber); }
+  @keyframes marq{ from{ transform: translateX(0);} to{ transform: translateX(-50%);}}
+
+  /* Reduce motion */
+  @media (prefers-reduced-motion: reduce){
+    *{ animation: none !important; transition: none !important; }
+    .fade-up{ opacity:1; transform:none;}
+  }
+</style>
+</head>
+<body>
+
+<script type="application/json" id="speaker-notes">
+[]
+</script>
+
+<deck-stage width="1920" height="1080">
+
+  <!-- =========================================================
+       SLIDE 1 — TITLE / HERO
+  ========================================================== -->
+  <section data-label="01 Title" class="slide" id="slide-1">
+    <div class="grain"></div>
+
+    <div class="deck-head">
+      <div class="brand">
+        <img class="logo" src="assets/pvl-logo.png" alt="Pro Vibe Life" />
+      </div>
+      <div class="rt"><span class="dot"></span><span>2026 · White Label Program</span></div>
+    </div>
+
+    <div class="s1-mark fade-up d2">
+      <div class="s1-mark-num"><span class="it">01</span></div>
+      <div class="s1-mark-rail"><span class="s1-mark-line"></span><span class="s1-mark-lbl">Pro &middot; Vibe &middot; Life</span></div>
+    </div>
+
+    <div class="s1-grid">
+      <div class="s1-left">
+        <div class="s1-eyebrow fade-up d1"><span class="bar"></span><span class="eyebrow">Pro Vibe Life · Partnership Program</span></div>
+        <h1 class="display s1-title fade-up d2">White Label<br/><span class="it">Partnership</span> Program</h1>
+        <p class="s1-sub fade-up d3">Launch your own premium Shilajit brand with zero guesswork. We handle sourcing, purification, testing, and manufacturing — you own the brand.</p>
+        <div class="s1-badges fade-up d4">
+          <span class="s1-badge">Fully Tested</span>
+          <span class="s1-badge">Lab Certified</span>
+          <span class="s1-badge">Custom Branded</span>
+          <span class="s1-badge">Harvest to Shelf</span>
+        </div>
+      </div>
+
+      <div class="s1-right">
+        <div></div>
+        <div class="s1-stats fade-up d5">
+          <div class="s1-stat"><div class="k">Units Sold This Year</div><div class="v"><span class="counter" data-target="50000" data-suffix="+">0</span></div></div>
+          <div class="s1-stat"><div class="k">Fulvic Acid</div><div class="v"><span class="counter" data-target="60" data-suffix="">0</span><span class="unit">%</span></div></div>
+          <div class="s1-stat"><div class="k">Compliance Standards</div><div class="v"><span class="counter" data-target="5">0</span></div></div>
+          <div class="s1-stat"><div class="k">Min. Box Order</div><div class="v"><span class="counter" data-target="1000">0</span></div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="deck-foot"><span>Presented by Dane McKinney · Lead of Sales</span><span class="pn">01 / 06</span></div>
+  </section>
+
+  <!-- =========================================================
+       SLIDE 2 — HOW IT WORKS
+  ========================================================== -->
+  <section data-label="02 How It Works" class="slide" id="slide-2">
+    <div class="grain"></div>
+
+    <div class="deck-head">
+      <div class="brand"><img class="logo" src="assets/pvl-logo.png" alt="Pro Vibe Life"/></div>
+      <div class="rt"><span class="pip">Section 01</span></div>
+    </div>
+
+    <div class="slide-pad">
+      <div class="eyebrow fade-up d1">How It Works · White Label Overview</div>
+      <div class="s2-head">
+        <h2 class="display s2-h fade-up d2">From the <span class="it">harvest</span><br/>to your shelf.</h2>
+        <p class="s2-lead fade-up d3">Pro Vibe Life offers a complete white label solution for brands ready to enter the premium Shilajit market. Fully integrated harvest-to-shelf — a finished, tested, retail-ready product under your brand name.</p>
+      </div>
+
+      <div class="s2-grid">
+        <div class="s2-card fade-up d3"><div class="num"><span>01 / Product</span><span class="ico">✦</span></div><h3>100% Pure Resin Tablets</h3><p>Premium formula — ~60% fulvic acid, ~14% humic acid, 200mg per tablet, 60 tablets per box.</p></div>
+        <div class="s2-card fade-up d4"><div class="num"><span>02 / Supply</span><span class="ico">⌂</span></div><h3>Harvest-to-Shelf Integration</h3><p>Direct partnerships with harvesters and our Russian partner lab. No middlemen, full traceability.</p></div>
+        <div class="s2-card fade-up d5"><div class="num"><span>03 / Quality</span><span class="ico">⌬</span></div><h3>Independent Lab Testing</h3><p>Every batch tested for heavy metals, microbiological safety, and potency. Full COAs available.</p></div>
+        <div class="s2-card fade-up d6"><div class="num"><span>04 / Compliance</span><span class="ico">✓</span></div><h3>All Standards Met</h3><p>Prop 65, USP &lt;232&gt;, ICH Q3D, and GMP certified — ready for US retail shelves.</p></div>
+        <div class="s2-card fade-up d7"><div class="num"><span>05 / Branding</span><span class="ico">◐</span></div><h3>Your Brand, Your Product</h3><p>Sell under your own brand name. We supply the product; you own the customer relationship.</p></div>
+        <div class="s2-card fade-up d8"><div class="num"><span>06 / Scale</span><span class="ico">⤢</span></div><h3>Scalable from Day One</h3><p>Start with 1,000 units and scale to 50,000+. Same quality, better pricing at volume.</p></div>
+      </div>
+
+      <div class="s2-foot fade-up d8">
+        <div class="big"><span class="it">50,000 units</span> sold this year via white label.</div>
+        <div class="cta">Join the brands growing with us →</div>
+      </div>
+    </div>
+
+    <div class="deck-foot"><span>Pro Vibe Life · White Label Partnership</span><span class="pn">02 / 06</span></div>
+  </section>
+
+  <!-- =========================================================
+       SLIDE 3 — PACKAGING
+  ========================================================== -->
+  <section data-label="03 Packaging" class="slide" id="slide-3">
+    <div class="grain"></div>
+
+    <div class="deck-head">
+      <div class="brand"><img class="logo" src="assets/pvl-logo.png" alt="Pro Vibe Life"/></div>
+      <div class="rt"><span class="pip">Section 02</span></div>
+    </div>
+
+    <div class="slide-pad">
+      <div class="eyebrow fade-up d1">Packaging Options · Custom Branded Boxes</div>
+      <div class="s3-head">
+        <h2 class="display s3-h fade-up d2">Three tiers of <span class="it">creative control.</span></h2>
+        <p class="s3-lead fade-up d3">Every white label partner receives access to our custom packaging program. Choose your level of involvement — from fully hands-off to total creative control. Click a tier to expand.</p>
+      </div>
+
+      <div class="s3-rail fade-up d3">
+        <span>Step 02 / Packaging</span>
+        <span class="ln lit"></span>
+        <span>Choose a tier — click to expand</span>
+        <span class="ln"></span>
+        <span>3 Options</span>
+      </div>
+
+      <div class="s3-tabs">
+        <button class="s3-tab fade-up d3" aria-expanded="true" data-tab="a">
+          <div class="chev">+</div>
+          <div class="opt"><span class="pip"></span>Option A</div>
+          <h3>Full <span class="it">Service</span></h3>
+          <div class="desc">We source boxes <em>and</em> handle graphic design end-to-end.</div>
+          <ul>
+            <li><span>Box sourcing · 1K min</span><span class="price">$0.50/box</span></li>
+            <li><span>5,000 units</span><span class="price">~$0.35/box</span></li>
+            <li><span>10,000 units</span><span class="price">≤$0.20/box</span></li>
+            <li><span>Graphic design</span><span class="price">Quoted</span></li>
+          </ul>
+          <div class="badge"><span>Recommended</span><span>Hands-off</span></div>
+        </button>
+
+        <button class="s3-tab fade-up d4" aria-expanded="false" data-tab="b">
+          <div class="chev">+</div>
+          <div class="opt"><span class="pip"></span>Option B</div>
+          <h3>Design <span class="it">Only</span></h3>
+          <div class="desc">You provide design files. We source the boxes for you.</div>
+          <ul>
+            <li><span>Box pricing</span><span class="price">Same as A</span></li>
+            <li><span>Template formatting</span><span class="price">Included</span></li>
+            <li><span>Blank box template</span><span class="price">Free</span></li>
+            <li><span>Capacity per box</span><span class="price">Up to 48g</span></li>
+          </ul>
+          <div class="badge"><span>Bring Your Design</span><span>Hybrid</span></div>
+        </button>
+
+        <button class="s3-tab fade-up d5" aria-expanded="false" data-tab="c">
+          <div class="chev">+</div>
+          <div class="opt"><span class="pip"></span>Option C</div>
+          <h3>Self <span class="it">Sourced</span></h3>
+          <div class="desc">You source your own boxes and run your own design.</div>
+          <ul>
+            <li><span>Product supply</span><span class="price">Direct</span></li>
+            <li><span>Box template specs</span><span class="price">Provided</span></li>
+            <li><span>Flexibility</span><span class="price">Maximum</span></li>
+            <li><span>Per-unit cost</span><span class="price">Lowest</span></li>
+          </ul>
+          <div class="badge"><span>Full Control</span><span>DIY</span></div>
+        </button>
+      </div>
+
+      <div class="s3-foot fade-up d6">
+        <div class="pipes">
+          <span class="seg"><span class="num">01</span><span>Sourcing</span></span>
+          <span class="seg"><span class="num">02</span><span>Design</span></span>
+          <span class="seg"><span class="num">03</span><span>Print</span></span>
+          <span class="seg"><span class="num">04</span><span>Quality Check</span></span>
+          <span class="seg"><span class="num">05</span><span>Fulfillment</span></span>
+        </div>
+        <div>No mark-up on boxes · You pay what we pay</div>
+      </div>
+    </div>
+
+    <div class="deck-foot"><span>Pro Vibe Life · White Label Partnership</span><span class="pn">03 / 06</span></div>
+  </section>
+
+  <!-- =========================================================
+       SLIDE 4 — BOX STUDIO PREVIEW
+  ========================================================== -->
+  <section data-label="04 Box Studio" class="slide" id="slide-4">
+    <div class="grain"></div>
+
+    <div class="deck-head">
+      <div class="brand"><img class="logo" src="assets/pvl-logo.png" alt="Pro Vibe Life"/></div>
+      <div class="rt"><span class="pip">Section 03</span></div>
+    </div>
+
+    <div class="slide-pad">
+      <div class="eyebrow fade-up d1">Interactive Tool · Box Studio</div>
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 70px; margin-top: 30px; align-items:center;">
+        <div>
+          <h2 class="display fade-up d2" style="font-size: 92px;">Preview your <span class="it">brand.</span></h2>
+          <p class="lead fade-up d3" style="margin-top: 28px;">Try our interactive Box Studio — pick from 4 custom finishes, upload your logo, drag to position, and download a high-res mockup. See your brand on premium Shilajit packaging before you commit.</p>
+          
+          <div style="margin-top: 40px; display:flex; flex-direction:column; gap: 16px;">
+            <div class="fade-up d4" style="display:flex; align-items:center; gap: 14px;">
+              <div style="width: 42px; height:42px; border:1px solid var(--amber-deep); border-radius:50%; display:flex; align-items:center; justify-content:center; color: var(--amber); font-family:'Geist Mono',monospace; font-size:14px;">01</div>
+              <div style="font-size:16px; color: #d8cfba;">Pick your finish — Alpine, Midnight, Evergreen, or Ivory</div>
+            </div>
+            <div class="fade-up d5" style="display:flex; align-items:center; gap: 14px;">
+              <div style="width: 42px; height:42px; border:1px solid var(--amber-deep); border-radius:50%; display:flex; align-items:center; justify-content:center; color: var(--amber); font-family:'Geist Mono',monospace; font-size:14px;">02</div>
+              <div style="font-size:16px; color: #d8cfba;">Upload your logo — PNG, SVG, or JPG with transparency</div>
+            </div>
+            <div class="fade-up d6" style="display:flex; align-items:center; gap: 14px;">
+              <div style="width: 42px; height:42px; border:1px solid var(--amber-deep); border-radius:50%; display:flex; align-items:center; justify-content:center; color: var(--amber); font-family:'Geist Mono',monospace; font-size:14px;">03</div>
+              <div style="font-size:16px; color: #d8cfba;">Drag to position, scale, and download a mockup</div>
+            </div>
+          </div>
+
+          <a href="box-studio.html" style="margin-top: 44px; display:inline-flex; align-items:center; gap: 14px; padding: 16px 28px; background: var(--amber); color: var(--bg); font-family:'Geist Mono',monospace; font-size:12px; letter-spacing:.3em; text-transform:uppercase; font-weight:600; text-decoration:none; border:1px solid var(--amber); transition: background .25s ease, transform .25s ease;" class="fade-up d7" onmouseover="this.style.background='var(--amber-2)'; this.style.transform='translateY(-2px)';" onmouseout="this.style.background='var(--amber)'; this.style.transform='translateY(0)';">
+            Open Box Studio →
+          </a>
+        </div>
+
+        <div class="fade-up d3" style="position:relative;">
+          <div style="aspect-ratio: 1/1; border: 1px solid var(--line-2); background: linear-gradient(180deg, var(--surface), var(--bg-2)); padding: 40px; display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden;">
+            <div style="position:absolute; inset:0; background: radial-gradient(60% 70% at 50% 40%, rgba(212,160,90,0.08), transparent 70%); pointer-events:none;"></div>
+            <img src="assets/box-white-mountains.png" style="width: 88%; height: auto; filter: drop-shadow(0 30px 40px rgba(0,0,0,0.4)); position:relative; z-index:1;" alt="Box preview" />
+          </div>
+          <div style="margin-top: 18px; display:flex; gap: 10px; justify-content:center;">
+            <div style="width:10px; height:10px; border-radius:50%; background: var(--amber);"></div>
+            <div style="width:10px; height:10px; border-radius:50%; background: var(--line-2);"></div>
+            <div style="width:10px; height:10px; border-radius:50%; background: var(--line-2);"></div>
+            <div style="width:10px; height:10px; border-radius:50%; background: var(--line-2);"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="deck-foot"><span>Pro Vibe Life · White Label Partnership</span><span class="pn">04 / 07</span></div>
+  </section>
+
+  <!-- =========================================================
+       SLIDE 5 — SAFETY & COMPLIANCE
+  ========================================================== -->
+  <section data-label="05 Safety" class="slide" id="slide-5">
+    <div class="grain"></div>
+
+    <div class="deck-head">
+      <div class="brand"><img class="logo" src="assets/pvl-logo.png" alt="Pro Vibe Life"/></div>
+      <div class="rt"><span class="pip">Section 03</span></div>
+    </div>
+
+    <div class="slide-pad">
+      <div class="s4-grid">
+        <div class="s4-left">
+          <div class="eyebrow fade-up d1">Safety &amp; Compliance · Independent Lab Testing</div>
+          <h2 class="display s4-h fade-up d2" style="margin-top:24px;">Lab tested <span class="it">for your<br/>safety.</span></h2>
+          <p class="s4-lead fade-up d3">Independently verified for purity, potency, and per-serving safety. Every batch is independently tested — white label partners receive full Certificates of Analysis for every production run.</p>
+
+          <div class="s4-tests">
+            <div class="s4-test fade-up d4"><div class="sym">As</div><div class="lbl">Arsenic<small>Heavy metal</small></div></div>
+            <div class="s4-test fade-up d4"><div class="sym">Cd</div><div class="lbl">Cadmium<small>Heavy metal</small></div></div>
+            <div class="s4-test fade-up d5"><div class="sym">Pb</div><div class="lbl">Lead<small>Heavy metal</small></div></div>
+            <div class="s4-test fade-up d5"><div class="sym">Hg</div><div class="lbl">Mercury<small>Heavy metal</small></div></div>
+            <div class="s4-test fade-up d6"><div class="sym">µ</div><div class="lbl">Microbiological<small>Safety panel</small></div></div>
+            <div class="s4-test fade-up d6"><div class="sym">Fa</div><div class="lbl">Potency<small>Fulvic / humic acid</small></div></div>
+          </div>
+        </div>
+
+        <div class="s4-stamp fade-up d4">
+          <svg viewBox="0 0 500 500">
+            <g class="stamp-spin">
+              <circle class="stamp-ring" cx="250" cy="250" r="240"/>
+              <circle class="stamp-ring" cx="250" cy="250" r="230" stroke-dasharray="2 6"/>
+              <defs>
+                <path id="stampcircle" d="M 250,250 m -210,0 a 210,210 0 1,1 420,0 a 210,210 0 1,1 -420,0"/>
+              </defs>
+              <text class="stamp-text"><textPath href="#stampcircle" startOffset="0">CERTIFICATE OF ANALYSIS · PROVIBELIFE · BATCH VERIFIED · LAB TESTED · PURITY · POTENCY · </textPath></text>
+            </g>
+            <circle class="stamp-core" cx="250" cy="250" r="170"/>
+            <circle class="stamp-core" cx="250" cy="250" r="160" stroke-dasharray="1 3"/>
+          </svg>
+          <div class="s4-compliance">
+            <div class="num"><span class="it">05</span></div>
+            <div class="lbl">Compliance Standards Met</div>
+            <div class="stds">
+              <span>Prop 65</span><span>USP &lt;232&gt;</span><span>ICH Q3D</span><span>GMP</span><span>COA Verified</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="deck-foot"><span>Pro Vibe Life · White Label Partnership</span><span class="pn">05 / 07</span></div>
+  </section>
+
+  <!-- =========================================================
+       SLIDE 6 — PRICING / CALCULATOR
+  ========================================================== -->
+  <section data-label="06 Pricing" class="slide" id="slide-6">
+    <div class="grain"></div>
+
+    <div class="deck-head">
+      <div class="brand"><img class="logo" src="assets/pvl-logo.png" alt="Pro Vibe Life"/></div>
+      <div class="rt"><span class="pip">Section 04</span></div>
+    </div>
+
+    <div class="slide-pad">
+      <div class="eyebrow fade-up d1">White Label Pricing · Product + Packaging</div>
+      <div class="s5-head">
+        <h2 class="display s5-h fade-up d2">Drag to <span class="it">price your run.</span></h2>
+        <p class="s5-lead fade-up d3">Product pricing scales with volume. Packaging is priced separately and transparently — we never mark up box costs. You pay exactly what we pay.</p>
+      </div>
+
+      <div class="s5-grid">
+        <!-- Pricing table -->
+        <div class="s5-table fade-up d3" id="pricingTable">
+          <div class="s5-tr head">
+            <div>Order Quantity</div><div>Price / Unit</div><div>Includes</div>
+          </div>
+          <div class="s5-tr" data-min="1000" data-max="2499" data-price="10">
+            <div class="qty">1,000 – 2,499</div><div class="p">$10.00</div><div class="inc">Your label, our product</div>
+          </div>
+          <div class="s5-tr" data-min="2500" data-max="4999" data-price="9">
+            <div class="qty">2,500 – 4,999</div><div class="p">$9.00</div><div class="inc">COA included every run</div>
+          </div>
+          <div class="s5-tr" data-min="5000" data-max="9999" data-price="8">
+            <div class="qty">5,000 – 9,999</div><div class="p">$8.00</div><div class="inc">Priority production slot</div>
+          </div>
+          <div class="s5-tr" data-min="10000" data-max="24999" data-price="7">
+            <div class="qty">10,000 – 24,999</div><div class="p">$7.00</div><div class="inc">Dedicated account manager</div>
+          </div>
+          <div class="s5-tr" data-min="25000" data-max="100000" data-price="6">
+            <div class="qty">25,000 +</div><div class="p">$6.00</div><div class="inc">Custom pricing available</div>
+          </div>
+        </div>
+
+        <!-- Interactive calculator -->
+        <div class="s5-calc fade-up d4">
+          <div class="clab">Your Run · Estimate</div>
+          <div class="qtybig"><span class="v" id="calcQty">2,500</span><span class="u">units</span></div>
+
+          <div class="slider-wrap">
+            <input id="volSlider" class="s5-slider" type="range" min="1000" max="50000" step="500" value="2500" />
+            <div class="s5-ticks">
+              <span>1K</span><span>10K</span><span>25K</span><span>50K</span>
+            </div>
+          </div>
+
+          <div class="s5-break">
+            <div class="s5-row"><span class="k">Product · <span id="calcUnitPrice">$9.00</span> / unit</span><span class="v" id="calcProduct">$22,500</span></div>
+            <div class="s5-row"><span class="k">Boxes · <span id="calcBoxPrice">$0.35</span> / box</span><span class="v" id="calcBoxes">$875</span></div>
+            <div class="s5-row s5-total"><span class="k">Landed Total</span><span class="v" id="calcTotal">$23,375</span></div>
+          </div>
+
+          <div class="s5-rev">
+            <span class="k">@ $29.99 Retail</span><span class="v" id="calcRev">~$75,000</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="s5-note fade-up d6">Boxes sourced at cost · No mark-up · Template provided free · Box fits up to 48g · Graphic design quoted per project</div>
+    </div>
+
+    <div class="deck-foot"><span>Pro Vibe Life · White Label Partnership</span><span class="pn">06 / 07</span></div>
+  </section>
+
+  <!-- =========================================================
+       SLIDE 7 — CTA
+  ========================================================== -->
+  <section data-label="07 Contact" class="slide" id="slide-7">
+    <div class="grain"></div>
+
+    <div class="deck-head">
+      <div class="brand"><img class="logo" src="assets/pvl-logo.png" alt="Pro Vibe Life"/></div>
+      <div class="rt"><span class="dot"></span><span>Let's build your brand</span></div>
+    </div>
+
+    <div class="s6-wrap">
+      <div>
+        <div class="eyebrow fade-up d1">The Next Step</div>
+        <h2 class="display s6-h fade-up d2" style="margin-top:24px;">Ready to <span class="it">launch<br/>your brand?</span></h2>
+        <p class="s6-sub fade-up d3">We're ready to help you build a premium Shilajit brand from the ground up. Contact us to discuss your vision, volume, and packaging options.</p>
+        <div class="s6-tags fade-up d4">
+          <span class="t">Fully Tested</span>
+          <span class="t">Custom Branded</span>
+          <span class="t">Harvest to Shelf</span>
+          <span class="t">Scalable</span>
+        </div>
+      </div>
+
+      <div class="s6-card fade-up d3">
+        <div class="role">Lead of Sales · White Label Partnerships</div>
+        <div class="name">Dane <span style="font-style:italic;color:var(--amber-2);">McKinney</span></div>
+        <div class="org">Pro Vibe Life</div>
+        <div class="div"></div>
+        <div class="links">
+          <a class="lk" href="mailto:dane@provibelife.com"><span><span class="lbl">Email</span><br/>dane@provibelife.com</span><span>→</span></a>
+          <a class="lk" href="https://provibelife.com" target="_blank" rel="noopener"><span><span class="lbl">Web</span><br/>provibelife.com</span><span>→</span></a>
+          <a class="lk" href="#" data-action="schedule"><span><span class="lbl">Calendar</span><br/>Book a 30-min discovery call</span><span>→</span></a>
+        </div>
+        <button class="btn" data-action="proposal">Request a Proposal →</button>
+      </div>
+    </div>
+
+    <div class="s6-marquee">
+      <div class="track">
+        <span>White Label Shilajit <span class="dot">✦</span> Harvest to Shelf <span class="dot">✦</span> Lab Tested &amp; Compliant <span class="dot">✦</span> Custom Branded <span class="dot">✦</span> 50,000+ Units Shipped <span class="dot">✦</span> </span>
+        <span>White Label Shilajit <span class="dot">✦</span> Harvest to Shelf <span class="dot">✦</span> Lab Tested &amp; Compliant <span class="dot">✦</span> Custom Branded <span class="dot">✦</span> 50,000+ Units Shipped <span class="dot">✦</span> </span>
+      </div>
+    </div>
+
+    <div class="deck-foot" style="bottom:90px;"><span>Pro Vibe Life · White Label Partnership</span><span class="pn">07 / 07</span></div>
+  </section>
+
+</deck-stage>
+
+<script src="deck-stage.js"></script>
+<script src="deck.js"></script>
+
+</body>
+</html>

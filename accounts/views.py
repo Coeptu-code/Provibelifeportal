@@ -567,6 +567,14 @@ def free_sample_page(request, token=None):
     )
 
 
+def wlpp_page(request):
+    return render(request, "public/wlpp.html")
+
+
+def wlpp_box_studio(request):
+    return render(request, "public/wlpp_box_studio.html")
+
+
 @sales_required
 def admin_marketing_free_sample_links(request):
     generated_link = ""

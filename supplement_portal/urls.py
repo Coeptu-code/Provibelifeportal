@@ -28,6 +28,8 @@ urlpatterns = [
     path("retailer/create-account/", account_views.retailer_create_account, name="retailer_create_account"),
     path("pages/free-sample/<uuid:token>/", account_views.free_sample_page, name="free_sample_page_token"),
     path("pages/free-sample/", account_views.free_sample_page, name="free_sample_page"),
+    path("pages/wlpp/", account_views.wlpp_page, name="wlpp_page"),
+    path("pages/wlpp/box-studio/", account_views.wlpp_box_studio, name="wlpp_box_studio"),
     path("api/mailer/free-sample-tokens/bulk-create/", mailer_api_views.free_sample_tokens_bulk_create, name="mailer_free_sample_tokens_bulk_create"),
     path("api/mailer/free-sample-tokens/<str:token>/status/", mailer_api_views.free_sample_token_status, name="mailer_free_sample_token_status"),
     path("", include("shopify_integration.urls")),
