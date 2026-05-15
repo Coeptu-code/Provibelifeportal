@@ -76,16 +76,6 @@
     .app{ grid-template-columns: 1fr; grid-template-rows: 64px auto auto auto 40px; }
   }
 
-  @media (hover: none) and (max-width: 820px) {
-    #swipe-hint {
-      display: block;
-      text-align: center; padding: 8px 20px;
-      color: var(--amber); font-family: 'Geist Mono', monospace;
-      font-size: 11px; letter-spacing: .2em; text-transform: uppercase;
-      opacity: 1; transition: opacity 1s;
-    }
-    #swipe-hint.fade { opacity: 0; }
-  }
 
   /* ---------- HEADER ---------- */
   .topbar{
@@ -426,7 +416,6 @@
       <div class="count" id="count"><span class="cur">01</span> / 04</div>
     </div>
 
-    <div id="swipe-hint" style="display:none;">← Swipe to explore styles →</div>
   </main>
 
   <!-- ============ RIGHT PANEL: UPLOAD + CONTROLS ============ -->
@@ -821,32 +810,6 @@ I'd like to discuss:
 Thanks!`);
   window.location.href = `mailto:dane@provibelife.com?subject=${subject}&body=${body}`;
 });
-
-/* Swipe for box variant pager (mobile) — quick swipes only, not sustained drags */
-(function(){
-  var stage = document.querySelector('.stage');
-  if (!stage) return;
-  var sx = 0, st = 0;
-  stage.addEventListener('touchstart', function(e){
-    sx = e.changedTouches[0].clientX;
-    st = Date.now();
-  }, { passive: true });
-  stage.addEventListener('touchend', function(e){
-    var dx = e.changedTouches[0].clientX - sx;
-    var dt = Date.now() - st;
-    if (Math.abs(dx) < 50) return;      // too small to be a swipe
-    if (dt > 300) return;                // too long (drag, not swipe) — let logo drag & slider work
-    if (dx < 0) { document.getElementById('next').click(); }
-    else        { document.getElementById('prev').click(); }
-  }, { passive: true });
-})();
-
-/* Swipe hint fade-out on mobile */
-(function(){
-  var hint = document.getElementById('swipe-hint');
-  if (!hint) return;
-  setTimeout(function(){ hint.classList.add('fade'); }, 3000);
-})();
 </script>
 </body>
 </html>
