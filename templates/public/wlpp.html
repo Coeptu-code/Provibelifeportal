@@ -1292,30 +1292,6 @@
 })();
 
 /* Swipe navigation for deck */
-(function(){
-  var deckEl = document.querySelector('deck-stage');
-  if (!deckEl) return;
-  var touchStartX = 0, touchStartY = 0;
-  var SWIPE_THRESHOLD = 50;
-
-  document.addEventListener('touchstart', function(e){
-    touchStartX = e.changedTouches[0].clientX;
-    touchStartY = e.changedTouches[0].clientY;
-  }, { passive: true });
-
-  document.addEventListener('touchend', function(e){
-    // Don't navigate if lab report overlay is open
-    var overlay = document.getElementById('s5Report');
-    if (overlay && overlay.classList.contains('open')) return;
-
-    var dx = e.changedTouches[0].clientX - touchStartX;
-    var dy = e.changedTouches[0].clientY - touchStartY;
-    if (Math.abs(dx) < SWIPE_THRESHOLD) return;
-    if (Math.abs(dy) > Math.abs(dx)) return; // vertical scroll, ignore
-    if (dx < 0) { deckEl.next(); } else { deckEl.prev(); }
-  }, { passive: true });
-})();
-
 /* Mobile fullscreen: fill width instead of height-constrained letterbox */
 (function(){
   if (!window.matchMedia('(hover: none)').matches) return;
