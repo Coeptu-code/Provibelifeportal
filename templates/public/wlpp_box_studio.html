@@ -822,15 +822,20 @@ Thanks!`);
   window.location.href = `mailto:dane@provibelife.com?subject=${subject}&body=${body}`;
 });
 
-/* Swipe for box variant pager (mobile) */
+/* Swipe for box variant pager (mobile) — quick swipes only, not sustained drags */
 (function(){
   var stage = document.querySelector('.stage');
   if (!stage) return;
-  var sx = 0;
-  stage.addEventListener('touchstart', function(e){ sx = e.changedTouches[0].clientX; }, { passive: true });
+  var sx = 0, st = 0;
+  stage.addEventListener('touchstart', function(e){
+    sx = e.changedTouches[0].clientX;
+    st = Date.now();
+  }, { passive: true });
   stage.addEventListener('touchend', function(e){
     var dx = e.changedTouches[0].clientX - sx;
-    if (Math.abs(dx) < 50) return;
+    var dt = Date.now() - st;
+    if (Math.abs(dx) < 50) return;      // too small to be a swipe
+    if (dt > 300) return;                // too long (drag, not swipe) — let logo drag & slider work
     if (dx < 0) { document.getElementById('next').click(); }
     else        { document.getElementById('prev').click(); }
   }, { passive: true });
