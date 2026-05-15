@@ -1314,6 +1314,21 @@
     if (deckEl) applyWidthFill(deckEl);
   });
 })();
+
+/* Mobile: disable tap zones, always show nav overlay buttons */
+(function(){
+  if (!window.matchMedia('(hover: none)').matches) return;
+  customElements.whenDefined('deck-stage').then(function(){
+    var deckEl = document.querySelector('deck-stage');
+    if (!deckEl || !deckEl.shadowRoot) return;
+    var s = document.createElement('style');
+    s.textContent =
+      '.tapzones { display: none !important; }' +
+      '.overlay { opacity: 1 !important; pointer-events: auto !important;' +
+      ' transform: translate(-50%, 0) scale(1) !important; filter: none !important; }';
+    deckEl.shadowRoot.appendChild(s);
+  });
+})();
 </script>
 
 </body>
